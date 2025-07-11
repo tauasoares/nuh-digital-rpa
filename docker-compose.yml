@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  eace-webhook:
+    build: .
+    container_name: eace-webhook
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - PORT=5000
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./screenshots_sistema:/app/screenshots_sistema
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - eace-network
+
+networks:
+  eace-network:
+    driver: bridge

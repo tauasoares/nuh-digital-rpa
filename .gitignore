@@ -1,0 +1,87 @@
+# Arquivos de ambiente
+.env
+.env.local
+.env.production
+
+# Ambiente virtual Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+logs/
+*.log
+debug.log
+error.log
+
+# Screenshots e arquivos temporários
+screenshots_sistema/
+*.png
+*.jpg
+*.jpeg
+*.html
+*.htm
+debug_*.png
+pos_login.png
+login_page.png
+pagina_pos_login.html
+login_page_clean.html
+
+# Arquivos de configuração e instalação desnecessários
+get-pip.py
+install_dependencies.bat
+install_dependencies.sh
+automation_plan.txt
+init_data.json
+
+# Arquivos de desenvolvimento/debug
+debug_*.py
+test_*.py
+map_*.py
+find_*.py
+click_*.py
+fix_*.py
+install_*.py
+setup.py
+
+# Arquivos de documentação desnecessários
+ANALISE_*.md
+MAPEAMENTO_*.md
+SUCESSO_*.md
+INSTALACAO*.md
+ARQUITETURA.md
+INTEGRACAO_SUPABASE.md
+
+# Arquivos IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Dados sensíveis
+credentials.json
+*.key
+*.pem
