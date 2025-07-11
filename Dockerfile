@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     gnupg \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Chrome e ChromeDriver
@@ -26,11 +27,10 @@ RUN CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3 | cut -d '.' -f1) 
 # Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar requirements
+# Copiar requirements e instalar dependências Python
 COPY requirements_webhook.txt .
-
-# Instalar dependências Python
-RUN pip install --no-cache-dir -r requirements_webhook.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements_webhook.txt
 
 # Copiar código da aplicação
 COPY . .
@@ -38,12 +38,13 @@ COPY . .
 # Criar diretórios necessários
 RUN mkdir -p logs data screenshots_sistema
 
-# Definir usuário não-root por segurança
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
 # Expor porta
 EXPOSE 5000
+
+# Variáveis de ambiente para Chrome
+ENV DISPLAY=:99
+ENV CHROME_BIN=/usr/bin/google-chrome
+ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
 
 # Comando para iniciar aplicação
 CMD ["python", "webhook_realtime.py"]
