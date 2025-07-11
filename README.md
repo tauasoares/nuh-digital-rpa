@@ -1,46 +1,63 @@
-# RPA EACE - Automação de Tickets
+# 🚀 NUH Digital RPA - Sistema EACE Webhook
 
-## Resumo
-Sistema de automação para abertura de tickets no portal EACE (eace.org.br) usando Python e Selenium WebDriver.
+## 📋 Resumo
+Sistema completo de automação para abertura de tickets no portal EACE (eace.org.br) com webhook em tempo real integrado ao n8n.
 
-## Status do Projeto
-✅ **Fase de Análise** - COMPLETA
-- Sistema identificado como Bubble.io
-- API endpoints mapeados
-- Fluxo de login testado e funcionando
-- Estrutura técnica documentada
+## ✅ Status do Projeto - COMPLETO
+- **Webhook em tempo real** funcionando
+- **Automação EACE** completa
+- **Integração Supabase** via triggers
+- **Deploy Docker** otimizado
+- **Sistema n8n** integrado
 
-## Conquistas Até Agora
-1. **Login Automatizado**: Funcionando perfeitamente
-2. **Análise Técnica**: Sistema Bubble.io completamente mapeado
-3. **API Identificada**: Endpoints funcionais localizados
-4. **Seletores Testados**: XPath funcionais identificados
-5. **Documentação**: Memória completa em CLAUDE.md
+## 🎯 Funcionalidades
+- **Webhook /eace** - Processa tickets automaticamente
+- **Extração INEP** - Extrai número INEP dos nomes de sites
+- **Automação Selenium** - Cria OS no sistema EACE
+- **Logs detalhados** - Monitoramento completo
+- **Deploy EasyPanel** - Container Docker
 
-## Arquivos Principais
-- `CLAUDE.md` - Documentação completa e memória do projeto
-- `login_automation.py` - Script de login com Selenium
-- `test_login_analysis.py` - Análise técnica do sistema
-- `requirements.txt` - Dependências Python
+## 🐳 Arquivos Principais
+- `webhook_realtime.py` - Servidor webhook Flask
+- `eace_automation.py` - Automação do sistema EACE
+- `Dockerfile` - Container com Chrome + Python
+- `docker-compose.yml` - Orquestração do sistema
+- `*.sql` - Scripts para configuração do Supabase
 
-## Próximos Passos
-1. Instalar dependências: `pip install -r requirements.txt`
-2. Testar login com Selenium
-3. Resolver seleção de perfil
-4. Mapear interface pós-login
-5. Implementar automação de tickets
+## 🚀 Deploy
+Sistema pronto para deploy no EasyPanel via GitHub:
+1. **Container Docker** com todas as dependências
+2. **Deploy automático** a cada push
+3. **Variáveis de ambiente** configuráveis
+4. **SSL automático** via Let's Encrypt
 
-## Credenciais de Teste
-- **URL**: https://eace.org.br/login?login=login
-- **Usuário**: raiseupbt@gmail.com
-- **Senha**: @Uujpgi8u
-- **Perfil**: Fornecedor
+## 🔧 Configuração
+```bash
+# Copiar template
+cp .env.example .env
 
-## Tecnologias
-- Python 3.12+
-- Selenium WebDriver
-- Bubble.io (plataforma do EACE)
-- Browser MCP (para testes)
+# Configurar variáveis
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_KEY=sua_anon_key
+EACE_USERNAME=seu_usuario
+EACE_PASSWORD=sua_senha
+WEBHOOK_URL=https://seu-dominio.com/webhook/eace
+```
+
+## 🎛️ Integração n8n
+Sistema integrado com n8n para:
+- Detectar dispositivos offline
+- Criar tickets no ITSM
+- Disparar webhook automaticamente
+- Criar OS no EACE em tempo real
+
+## 📊 Tecnologias
+- Python 3.11 + Flask
+- Selenium WebDriver + Chrome
+- Docker + docker-compose
+- PostgreSQL + Supabase
+- GitHub + EasyPanel
+- n8n Workflow
 
 ---
-*Projeto iniciado em 2025-07-11 com Claude Code*
+*Sistema desenvolvido em 2025-07-11 com Claude Code*
