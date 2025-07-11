@@ -47,4 +47,4 @@ ENV CHROME_BIN=/usr/bin/google-chrome
 ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
 
 # Comando para iniciar aplicação
-CMD ["python", "webhook_realtime.py"]
+CMD ["python", "webhook_simple.py"]
