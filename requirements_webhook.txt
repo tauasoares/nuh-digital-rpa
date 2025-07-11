@@ -1,6 +1,1 @@
 flask==2.3.3
-supabase==1.0.4
-python-dotenv==1.0.0
-requests==2.31.0
-selenium==4.15.2
-gunicorn==21.2.0
