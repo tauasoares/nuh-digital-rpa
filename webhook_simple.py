@@ -85,7 +85,8 @@ def home():
             'webhook_eace': '/webhook/eace',
             'screenshots': '/screenshots',
             'latest_screenshot': '/screenshots/latest',
-            'screenshots_gallery': '/screenshots/gallery'
+            'screenshots_gallery': '/screenshots/gallery',
+            'run_test': '/run-test'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -237,6 +238,124 @@ def screenshots_gallery():
     except Exception as e:
         logger.error(f"Erro ao gerar galeria: {e}")
         return f"<h1>Erro ao gerar galeria: {e}</h1>"
+
+@app.route('/run-test', methods=['POST', 'GET'])
+def run_automation_test():
+    """Executa o teste de automação"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_test():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Iniciar Xvfb se necessário
+                try:
+                    subprocess.run(['Xvfb', ':99', '-screen', '0', '1024x768x24'], 
+                                 env=env, timeout=5, capture_output=True)
+                except:
+                    pass  # Pode já estar rodando
+                
+                # Código Python inline para teste básico
+                test_code = '''
+import asyncio
+import os
+from datetime import datetime
+from playwright.async_api import async_playwright
+
+async def test_login():
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Ir para página de login
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        # Screenshot inicial
+        await page.screenshot(path=f"{screenshots_dir}/01_login_page.png")
+        
+        # Preencher credenciais
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.screenshot(path=f"{screenshots_dir}/02_credentials_filled.png")
+        
+        # Fazer login
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        await page.screenshot(path=f"{screenshots_dir}/03_after_login.png")
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+            await page.screenshot(path=f"{screenshots_dir}/04_profile_selected.png")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/05_final_page.png")
+        
+        print(f"✅ Login test completed - URL: {page.url}")
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/error.png")
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    asyncio.run(test_login())
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste: {e}")
+        
+        # Executar em thread separada para não bloquear
+        thread = threading.Thread(target=run_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste de automação iniciado',
+            'note': 'Aguarde alguns minutos e verifique os screenshots',
+            'endpoints': {
+                'gallery': '/screenshots/gallery',
+                'screenshots': '/screenshots',
+                'latest': '/screenshots/latest'
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste: {e}'
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
