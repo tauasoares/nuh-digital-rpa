@@ -209,22 +209,22 @@ def screenshots_gallery():
         </head>
         <body>
             <h1>Screenshots da Automação EACE</h1>
-            <p>Última atualização: {}</p>
-        """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            <p>Última atualização: """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """</p>
+        """
         
         for file_path in files:
             filename = os.path.basename(file_path)
             file_stats = os.stat(file_path)
             created_time = datetime.fromtimestamp(file_stats.st_ctime).strftime("%Y-%m-%d %H:%M:%S")
             
-            html += f"""
+            html += """
             <div class="screenshot">
                 <div class="info">
-                    <strong>Arquivo:</strong> {filename}<br>
-                    <strong>Criado:</strong> {created_time}<br>
-                    <strong>Tamanho:</strong> {file_stats.st_size} bytes
+                    <strong>Arquivo:</strong> """ + filename + """<br>
+                    <strong>Criado:</strong> """ + created_time + """<br>
+                    <strong>Tamanho:</strong> """ + str(file_stats.st_size) + """ bytes
                 </div>
-                <img src="/screenshot/{filename}" alt="{filename}">
+                <img src="/screenshot/""" + filename + """" alt=\"""" + filename + """\">
             </div>
             """
         
@@ -237,7 +237,7 @@ def screenshots_gallery():
         
     except Exception as e:
         logger.error(f"Erro ao gerar galeria: {e}")
-        return f"<h1>Erro ao gerar galeria: {e}</h1>"
+        return "<h1>Erro ao gerar galeria: " + str(e) + "</h1>"
 
 @app.route('/run-test', methods=['POST', 'GET'])
 def run_automation_test():
