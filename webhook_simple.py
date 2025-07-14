@@ -3,10 +3,12 @@
 Versão simplificada do webhook para teste
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import os
 import logging
 from datetime import datetime
+import glob
+import base64
 
 # Configurar logging
 logging.basicConfig(
@@ -80,10 +82,161 @@ def home():
         'endpoints': {
             'status': '/status',
             'webhook_test': '/webhook/test',
-            'webhook_eace': '/webhook/eace'
+            'webhook_eace': '/webhook/eace',
+            'screenshots': '/screenshots',
+            'latest_screenshot': '/screenshots/latest',
+            'screenshots_gallery': '/screenshots/gallery'
         },
         'note': 'Versão simplificada para teste'
     })
+
+@app.route('/screenshots', methods=['GET'])
+def list_screenshots():
+    """Lista todos os screenshots disponíveis"""
+    try:
+        screenshots_dir = "/tmp/screenshots"
+        if not os.path.exists(screenshots_dir):
+            return jsonify({
+                'status': 'error',
+                'message': 'Diretório de screenshots não encontrado',
+                'screenshots': []
+            })
+        
+        # Listar arquivos PNG
+        files = glob.glob(os.path.join(screenshots_dir, "*.png"))
+        screenshots = []
+        
+        for file_path in sorted(files, key=os.path.getctime, reverse=True):
+            filename = os.path.basename(file_path)
+            file_stats = os.stat(file_path)
+            
+            screenshots.append({
+                'filename': filename,
+                'size': file_stats.st_size,
+                'created': datetime.fromtimestamp(file_stats.st_ctime).isoformat(),
+                'download_url': f'/screenshot/{filename}'
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'total_screenshots': len(screenshots),
+            'screenshots': screenshots
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar screenshots: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/screenshot/<filename>', methods=['GET'])
+def get_screenshot(filename):
+    """Retorna um screenshot específico"""
+    try:
+        screenshots_dir = "/tmp/screenshots"
+        file_path = os.path.join(screenshots_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({
+                'status': 'error',
+                'message': 'Screenshot não encontrado'
+            }), 404
+        
+        return send_file(file_path, mimetype='image/png')
+        
+    except Exception as e:
+        logger.error(f"Erro ao servir screenshot: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/screenshots/latest', methods=['GET'])
+def get_latest_screenshot():
+    """Retorna o screenshot mais recente"""
+    try:
+        screenshots_dir = "/tmp/screenshots"
+        if not os.path.exists(screenshots_dir):
+            return jsonify({
+                'status': 'error',
+                'message': 'Diretório de screenshots não encontrado'
+            }), 404
+        
+        # Encontrar o arquivo mais recente
+        files = glob.glob(os.path.join(screenshots_dir, "*.png"))
+        if not files:
+            return jsonify({
+                'status': 'error',
+                'message': 'Nenhum screenshot encontrado'
+            }), 404
+        
+        latest_file = max(files, key=os.path.getctime)
+        return send_file(latest_file, mimetype='image/png')
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter último screenshot: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/screenshots/gallery', methods=['GET'])
+def screenshots_gallery():
+    """Retorna uma galeria HTML dos screenshots"""
+    try:
+        screenshots_dir = "/tmp/screenshots"
+        if not os.path.exists(screenshots_dir):
+            return "<h1>Nenhum screenshot encontrado</h1>"
+        
+        files = glob.glob(os.path.join(screenshots_dir, "*.png"))
+        if not files:
+            return "<h1>Nenhum screenshot encontrado</h1>"
+        
+        files.sort(key=os.path.getctime, reverse=True)
+        
+        html = """
+        <html>
+        <head>
+            <title>Screenshots EACE Automation</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .screenshot { margin: 20px 0; border: 1px solid #ccc; padding: 10px; }
+                .screenshot img { max-width: 800px; height: auto; }
+                .info { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+            <h1>Screenshots da Automação EACE</h1>
+            <p>Última atualização: {}</p>
+        """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        
+        for file_path in files:
+            filename = os.path.basename(file_path)
+            file_stats = os.stat(file_path)
+            created_time = datetime.fromtimestamp(file_stats.st_ctime).strftime("%Y-%m-%d %H:%M:%S")
+            
+            html += f"""
+            <div class="screenshot">
+                <div class="info">
+                    <strong>Arquivo:</strong> {filename}<br>
+                    <strong>Criado:</strong> {created_time}<br>
+                    <strong>Tamanho:</strong> {file_stats.st_size} bytes
+                </div>
+                <img src="/screenshot/{filename}" alt="{filename}">
+            </div>
+            """
+        
+        html += """
+        </body>
+        </html>
+        """
+        
+        return html
+        
+    except Exception as e:
+        logger.error(f"Erro ao gerar galeria: {e}")
+        return f"<h1>Erro ao gerar galeria: {e}</h1>"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

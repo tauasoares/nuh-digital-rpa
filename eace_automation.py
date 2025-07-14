@@ -7,6 +7,7 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 from loguru import logger
 import time
+import base64
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -21,6 +22,11 @@ class EaceAutomation:
         self.password = os.getenv("EACE_PASSWORD")
         self.browser: Optional[Browser] = None
         self.page: Optional[Page] = None
+        self.screenshots_dir = "/tmp/screenshots"
+        self.step_counter = 0
+        
+        # Criar diretório para screenshots
+        os.makedirs(self.screenshots_dir, exist_ok=True)
         
     async def init_browser(self):
         """Inicializa o navegador com configurações anti-detecção"""
@@ -59,6 +65,40 @@ class EaceAutomation:
         
         logger.info("Navegador inicializado com sucesso")
         
+    async def take_screenshot(self, step_name: str, description: str = "") -> str:
+        """Captura screenshot da tela atual"""
+        try:
+            self.step_counter += 1
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"step_{self.step_counter:02d}_{timestamp}_{step_name}.png"
+            filepath = os.path.join(self.screenshots_dir, filename)
+            
+            # Capturar screenshot
+            await self.page.screenshot(path=filepath, full_page=True)
+            
+            # Salvar info no Supabase para consulta posterior
+            screenshot_data = {
+                'step': self.step_counter,
+                'step_name': step_name,
+                'description': description,
+                'filename': filename,
+                'filepath': filepath,
+                'timestamp': datetime.now().isoformat(),
+                'url': self.page.url
+            }
+            
+            try:
+                self.supabase.table('screenshots').insert(screenshot_data).execute()
+            except Exception as e:
+                logger.warning(f"Erro ao salvar screenshot no Supabase: {e}")
+            
+            logger.info(f"Screenshot capturado: {filename} - {description}")
+            return filepath
+            
+        except Exception as e:
+            logger.error(f"Erro ao capturar screenshot: {e}")
+            return None
+        
     async def login(self) -> bool:
         """Realiza login no sistema EACE"""
         try:
@@ -67,30 +107,53 @@ class EaceAutomation:
             await self.page.goto("https://eace.org.br/login?login=login", 
                                 wait_until="networkidle")
             
+            # Screenshot da página de login
+            await self.take_screenshot("login_page", "Página de login carregada")
+            
             # Aguardar carregamento completo
             await self.page.wait_for_timeout(3000)
             
-            # Tentar encontrar campos de login (adaptar conforme necessário)
-            # Você precisará inspecionar o site real para encontrar os seletores corretos
-            await self.page.fill('input[name="username"]', self.username)
-            await self.page.fill('input[name="password"]', self.password)
+            # Usar os seletores que funcionaram nos testes anteriores
+            await self.page.fill('//input[@placeholder="seuemail@email.com"]', self.username)
+            await self.page.fill('//input[@type="password"]', self.password)
+            
+            # Screenshot após preencher dados
+            await self.take_screenshot("login_filled", "Dados de login preenchidos")
             
             # Clicar no botão de login
-            await self.page.click('button[type="submit"]')
+            await self.page.click('//button[contains(text(), "Log In")]')
             
             # Aguardar redirecionamento
             await self.page.wait_for_timeout(5000)
             
+            # Screenshot após clicar login
+            await self.take_screenshot("after_login_click", "Após clicar no botão login")
+            
+            # Verificar se apareceu seleção de perfil
+            if await self.page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+                logger.info("Seleção de perfil encontrada")
+                await self.take_screenshot("profile_selection", "Tela de seleção de perfil")
+                
+                # Clicar no perfil Fornecedor
+                await self.page.click('//*[contains(text(), "Fornecedor")]')
+                await self.page.wait_for_timeout(5000)
+                
+                # Screenshot após selecionar perfil
+                await self.take_screenshot("profile_selected", "Perfil Fornecedor selecionado")
+            
             # Verificar se login foi bem-sucedido
-            if "dashboard" in self.page.url or "home" in self.page.url:
+            if "dashboard" in self.page.url or "fornecedor" in self.page.url:
                 logger.success("Login realizado com sucesso")
+                await self.take_screenshot("login_success", f"Login bem-sucedido - URL: {self.page.url}")
                 return True
             else:
                 logger.error("Falha no login - redirecionamento não ocorreu")
+                await self.take_screenshot("login_failed", f"Falha no login - URL: {self.page.url}")
                 return False
                 
         except Exception as e:
             logger.error(f"Erro durante login: {str(e)}")
+            await self.take_screenshot("login_error", f"Erro no login: {str(e)}")
             return False
     
     async def abrir_ticket(self, ticket_data: Dict) -> bool:
