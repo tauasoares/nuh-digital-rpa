@@ -88,7 +88,8 @@ def home():
             'screenshots_gallery': '/screenshots/gallery',
             'run_test': '/run-test',
             'inspect_page': '/inspect-page',
-            'test_menu_navigation': '/test-menu-navigation'
+            'test_menu_navigation': '/test-menu-navigation',
+            'test_bubble_structure': '/test-bubble-structure'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -1008,6 +1009,297 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste de menu: {e}'
+        }), 500
+
+@app.route('/test-bubble-structure', methods=['POST', 'GET'])
+def test_bubble_structure():
+    """Testa navegação específica para estrutura do Bubble.io"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_bubble_test():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Código Python para teste específico do Bubble.io
+                bubble_test_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+
+async def test_bubble_navigation():
+    screenshots_dir = "/tmp/screenshots"
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Fazer login primeiro
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Screenshot do dashboard
+        await page.screenshot(path=f"{screenshots_dir}/bubble_01_dashboard.png")
+        print("✅ Login realizado, procurando estrutura do Bubble.io...")
+        
+        # Estratégia 1: Procurar por "Gerenciar chamados" (baseado no inspect element)
+        print("🔍 Estratégia 1: Procurando por 'Gerenciar chamados'...")
+        
+        gerenciar_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'Gerenciar')]",
+            "//button[contains(text(), 'chamados')]",
+            "//div[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]",
+            "button[aria-label*='Gerenciar']",
+            "button[title*='Gerenciar']"
+        ]
+        
+        button_found = False
+        for selector in gerenciar_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"✅ Encontrado 'Gerenciar chamados': {selector}")
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/bubble_02_gerenciar_clicked.png")
+                    button_found = True
+                    break
+            except Exception as e:
+                print(f"❌ Erro com {selector}: {e}")
+                continue
+        
+        # Estratégia 2: Procurar por estrutura específica do Bubble.io
+        if not button_found:
+            print("🔍 Estratégia 2: Procurando estrutura específica do Bubble.io...")
+            
+            # Baseado na imagem: generic > button > SvgRoot
+            bubble_selectors = [
+                "div[class*='generic'] button",
+                "div[data-element-type] button",
+                "div[id*='generic'] button",
+                "button[focusable='true']",
+                "button[focusable]",
+                "button:has(svg)",
+                "button svg",
+                "div[class*='bubble'] button"
+            ]
+            
+            for selector in bubble_selectors:
+                try:
+                    elements = await page.locator(selector).count()
+                    if elements > 0:
+                        print(f"📍 Encontrado elementos Bubble: {elements} com {selector}")
+                        
+                        # Tentar clicar no segundo elemento (índice 1)
+                        if elements >= 2:
+                            await page.locator(selector).nth(1).click()
+                            await page.wait_for_timeout(3000)
+                            await page.screenshot(path=f"{screenshots_dir}/bubble_02_structure_clicked.png")
+                            
+                            # Verificar se navegou
+                            current_url = page.url
+                            if 'os' in current_url.lower() or 'chamados' in current_url.lower():
+                                print(f"✅ Sucesso com estrutura! URL: {current_url}")
+                                button_found = True
+                                break
+                        
+                except Exception as e:
+                    continue
+        
+        # Estratégia 3: Procurar por posição no menu lateral (focusable=true)
+        if not button_found:
+            print("🔍 Estratégia 3: Procurando por elementos focusable no menu lateral...")
+            
+            # Obter elementos focusable do lado esquerdo
+            focusable_info = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const focusableElements = document.querySelectorAll('button[focusable="true"], button[focusable], [focusable="true"]');
+                    
+                    focusableElements.forEach((el, index) => {
+                        const rect = el.getBoundingClientRect();
+                        const text = el.textContent?.trim() || '';
+                        
+                        // Filtrar elementos do menu lateral esquerdo
+                        if (rect.left < 150 && rect.width > 10 && rect.height > 10 && rect.top > 50) {
+                            elements.push({
+                                index: index,
+                                text: text,
+                                left: rect.left,
+                                top: rect.top,
+                                width: rect.width,
+                                height: rect.height,
+                                classes: el.className,
+                                id: el.id,
+                                focusable: el.getAttribute('focusable'),
+                                tagName: el.tagName
+                            });
+                        }
+                    });
+                    
+                    return elements.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Elementos focusable encontrados: {len(focusable_info)}")
+            
+            # Tentar clicar no segundo elemento focusable
+            if len(focusable_info) >= 2:
+                second_focusable = focusable_info[1]
+                print(f"🎯 Tentando segundo elemento focusable: {second_focusable}")
+                
+                try:
+                    # Clicar por posição
+                    await page.click(f"button[focusable]:nth-child({second_focusable['index'] + 1})")
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/bubble_02_focusable_clicked.png")
+                    
+                    current_url = page.url
+                    if 'os' in current_url.lower() or 'chamados' in current_url.lower():
+                        print(f"✅ Sucesso com focusable! URL: {current_url}")
+                        button_found = True
+                        
+                except Exception as e:
+                    print(f"❌ Erro ao clicar focusable: {e}")
+        
+        # Estratégia 4: Força bruta - tentar todos os botões do menu lateral
+        if not button_found:
+            print("🔍 Estratégia 4: Força bruta - todos os botões do menu lateral...")
+            
+            all_buttons = await page.evaluate("""
+                () => {
+                    const buttons = [];
+                    document.querySelectorAll('button').forEach((btn, index) => {
+                        const rect = btn.getBoundingClientRect();
+                        if (rect.left < 150 && rect.width > 10 && rect.height > 10 && rect.top > 50) {
+                            buttons.push({
+                                index: index,
+                                text: btn.textContent?.trim() || '',
+                                left: rect.left,
+                                top: rect.top
+                            });
+                        }
+                    });
+                    return buttons.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Todos os botões do menu: {len(all_buttons)}")
+            
+            # Tentar clicar em cada botão até encontrar o correto
+            for i, button in enumerate(all_buttons):
+                try:
+                    print(f"🎯 Tentando botão {i+1}: {button['text']}")
+                    await page.click(f"button:nth-child({button['index'] + 1})")
+                    await page.wait_for_timeout(2000)
+                    
+                    current_url = page.url
+                    if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                        print(f"✅ SUCESSO! Botão {i+1} levou para: {current_url}")
+                        await page.screenshot(path=f"{screenshots_dir}/bubble_02_success.png")
+                        button_found = True
+                        break
+                        
+                except Exception as e:
+                    continue
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/bubble_03_final.png")
+        
+        final_url = page.url
+        print(f"📍 URL final: {final_url}")
+        
+        if button_found:
+            print("✅ NAVEGAÇÃO BEM-SUCEDIDA!")
+        else:
+            print("❌ Não conseguiu encontrar o botão correto")
+        
+        return {
+            "success": button_found,
+            "final_url": final_url,
+            "focusable_elements": len(focusable_info) if 'focusable_info' in locals() else 0,
+            "total_buttons": len(all_buttons) if 'all_buttons' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro no teste: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/bubble_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(test_bubble_navigation())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', bubble_test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste Bubble executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste Bubble: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_bubble_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste específico para Bubble.io iniciado',
+            'note': 'Teste baseado na estrutura do inspect element: button "Gerenciar chamados" focusable=true',
+            'strategies': [
+                '1. Procurar por texto "Gerenciar chamados"',
+                '2. Procurar por estrutura específica do Bubble.io',
+                '3. Procurar por elementos focusable no menu lateral',
+                '4. Força bruta - testar todos os botões do menu'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste Bubble: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste Bubble: {e}'
         }), 500
 
 if __name__ == '__main__':
