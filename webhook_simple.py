@@ -89,7 +89,8 @@ def home():
             'run_test': '/run-test',
             'inspect_page': '/inspect-page',
             'test_menu_navigation': '/test-menu-navigation',
-            'test_bubble_structure': '/test-bubble-structure'
+            'test_bubble_structure': '/test-bubble-structure',
+            'test_direct_click': '/test-direct-click'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -1300,6 +1301,198 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste Bubble: {e}'
+        }), 500
+
+@app.route('/test-direct-click', methods=['POST', 'GET'])
+def test_direct_click():
+    """Teste direto - força bruta em todos os botões do menu lateral"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_direct_test():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Código Python para teste direto
+                direct_test_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+
+async def test_direct_navigation():
+    screenshots_dir = "/tmp/screenshots"
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Fazer login
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Screenshot inicial
+        await page.screenshot(path=f"{screenshots_dir}/direct_01_dashboard.png")
+        print("✅ Login realizado!")
+        
+        # Obter TODOS os botões da página
+        print("🔍 Mapeando TODOS os botões da página...")
+        all_buttons = await page.evaluate("""
+            () => {
+                const buttons = [];
+                document.querySelectorAll('button').forEach((btn, index) => {
+                    const rect = btn.getBoundingClientRect();
+                    const text = btn.textContent?.trim() || '';
+                    const visible = rect.width > 0 && rect.height > 0 && btn.offsetParent !== null;
+                    
+                    if (visible) {
+                        buttons.push({
+                            index: index,
+                            text: text,
+                            left: rect.left,
+                            top: rect.top,
+                            width: rect.width,
+                            height: rect.height,
+                            classes: btn.className,
+                            id: btn.id,
+                            focusable: btn.getAttribute('focusable'),
+                            innerHTML: btn.innerHTML.substring(0, 100)
+                        });
+                    }
+                });
+                return buttons;
+            }
+        """)
+        
+        print(f"📋 Total de botões encontrados: {len(all_buttons)}")
+        
+        # Salvar informações dos botões
+        with open(f"{screenshots_dir}/buttons_info.json", "w") as f:
+            json.dump(all_buttons, f, indent=2)
+        
+        # Tentar clicar em cada botão
+        success_found = False
+        initial_url = page.url
+        
+        for i, button in enumerate(all_buttons):
+            try:
+                print(f"🎯 Testando botão {i+1}/{len(all_buttons)}: '{button['text']}'")
+                
+                # Voltar para dashboard se mudou de página
+                if page.url != initial_url:
+                    await page.goto(initial_url)
+                    await page.wait_for_timeout(2000)
+                
+                # Clicar no botão
+                await page.click(f"button:nth-child({button['index'] + 1})")
+                await page.wait_for_timeout(3000)
+                
+                # Verificar se mudou de página
+                current_url = page.url
+                if current_url != initial_url:
+                    print(f"📍 Botão {i+1} mudou URL para: {current_url}")
+                    await page.screenshot(path=f"{screenshots_dir}/direct_02_button_{i+1}_clicked.png")
+                    
+                    # Verificar se é a página que queremos
+                    if any(keyword in current_url.lower() for keyword in ['os', 'chamados', 'operacao', 'controle']):
+                        print(f"✅ SUCESSO! Botão {i+1} levou para página de OS!")
+                        print(f"   Texto: '{button['text']}'")
+                        print(f"   URL: {current_url}")
+                        await page.screenshot(path=f"{screenshots_dir}/direct_03_SUCCESS.png")
+                        success_found = True
+                        break
+                    else:
+                        print(f"   ❌ Não é a página de OS")
+                
+                # Limite de tentativas para não travar
+                if i >= 20:  # Testar apenas os primeiros 20 botões
+                    print("⚠️ Limite de 20 botões atingido")
+                    break
+                    
+            except Exception as e:
+                print(f"❌ Erro no botão {i+1}: {e}")
+                continue
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/direct_04_final.png")
+        
+        print(f"📍 URL final: {page.url}")
+        if success_found:
+            print("✅ ENCONTROU A PÁGINA DE OS!")
+        else:
+            print("❌ Não encontrou a página de OS")
+        
+        return {
+            "success": success_found,
+            "final_url": page.url,
+            "total_buttons_tested": min(len(all_buttons), 20),
+            "all_buttons_count": len(all_buttons)
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/direct_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(test_direct_navigation())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', direct_test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste direto executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste direto: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_direct_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste direto iniciado - força bruta em todos os botões',
+            'note': 'Este teste clica em cada botão da página até encontrar o que leva para OS',
+            'info': 'Gerará screenshots de cada botão clicado e salvará informações em buttons_info.json'
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste direto: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste direto: {e}'
         }), 500
 
 if __name__ == '__main__':
