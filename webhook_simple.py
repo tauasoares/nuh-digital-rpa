@@ -1745,7 +1745,7 @@ if __name__ == "__main__":
             'message': f'Erro ao iniciar teste inteligente: {e}'
         }), 500
 
-@app.route('/test-expandable-menu', methods=['POST'])
+@app.route('/test-expandable-menu', methods=['GET', 'POST'])
 def test_expandable_menu():
     """Teste para navegação de menu expansível - foco em dois passos: expandir + clicar"""
     try:
