@@ -86,7 +86,8 @@ def home():
             'screenshots': '/screenshots',
             'latest_screenshot': '/screenshots/latest',
             'screenshots_gallery': '/screenshots/gallery',
-            'run_test': '/run-test'
+            'run_test': '/run-test',
+            'inspect_page': '/inspect-page'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -304,10 +305,150 @@ async def test_login():
             await page.wait_for_timeout(5000)
             await page.screenshot(path=f"{screenshots_dir}/04_profile_selected.png")
         
-        # Screenshot final
-        await page.screenshot(path=f"{screenshots_dir}/05_final_page.png")
+        # Screenshot final do dashboard
+        await page.screenshot(path=f"{screenshots_dir}/05_dashboard.png")
         
-        print(f"✅ Login test completed - URL: {page.url}")
+        # Aguardar um pouco para garantir que a página carregou
+        await page.wait_for_timeout(3000)
+        
+        # Procurar pelo menu hamburguer ou menu lateral
+        print("🔍 Procurando menu lateral...")
+        
+        # Tentar diferentes seletores para o menu
+        menu_selectors = [
+            "button[aria-label*='menu']",
+            "button[class*='menu']",
+            "button[class*='hamburger']",
+            ".menu-toggle",
+            ".hamburger",
+            "[data-testid*='menu']",
+            "svg[class*='menu']",
+            "div[class*='menu-button']",
+            "//button[contains(@class, 'menu')]",
+            "//div[contains(@class, 'menu')]//button",
+            "//button[@aria-label='menu']"
+        ]
+        
+        menu_found = False
+        for selector in menu_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"✅ Menu encontrado com seletor: {selector}")
+                    if selector.startswith("//"):
+                        await page.locator(selector).first.click()
+                    else:
+                        await page.locator(selector).first.click()
+                    menu_found = True
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/06_menu_opened.png")
+                    break
+            except Exception as e:
+                continue
+        
+        # Se não encontrou o menu, tentar procurar por texto "OS" ou "Menu"
+        if not menu_found:
+            print("🔍 Procurando por links de OS ou Menu...")
+            os_selectors = [
+                "//a[contains(text(), 'OS')]",
+                "//button[contains(text(), 'OS')]",
+                "//div[contains(text(), 'OS')]",
+                "//a[contains(text(), 'Menu')]",
+                "//button[contains(text(), 'Menu')]",
+                "//div[contains(text(), 'Menu')]",
+                "//a[contains(@href, 'os')]",
+                "//a[contains(@href, 'ordem')]",
+                "//a[contains(@href, 'servico')]",
+                "[href*='os']",
+                "[href*='ordem']",
+                "[href*='servico']"
+            ]
+            
+            for selector in os_selectors:
+                try:
+                    if selector.startswith("//"):
+                        elements = await page.locator(selector).count()
+                    else:
+                        elements = await page.locator(selector).count()
+                    
+                    if elements > 0:
+                        print(f"✅ Link OS encontrado com seletor: {selector}")
+                        if selector.startswith("//"):
+                            await page.locator(selector).first.click()
+                        else:
+                            await page.locator(selector).first.click()
+                        await page.wait_for_timeout(5000)
+                        await page.screenshot(path=f"{screenshots_dir}/07_os_page.png")
+                        menu_found = True
+                        break
+                except Exception as e:
+                    continue
+        
+        # Se ainda não encontrou, vamos explorar a estrutura da página
+        if not menu_found:
+            print("🔍 Explorando estrutura da página...")
+            await page.screenshot(path=f"{screenshots_dir}/06_page_structure.png")
+            
+            # Tentar encontrar todos os elementos clicáveis
+            try:
+                # Procurar por elementos com ícones ou que podem ser menu
+                clickable_elements = await page.evaluate("""
+                    () => {
+                        const elements = [];
+                        const selectors = ['button', 'a', '[role="button"]', 'div[onclick]', '.menu', '.nav'];
+                        
+                        selectors.forEach(selector => {
+                            document.querySelectorAll(selector).forEach(el => {
+                                const text = el.textContent?.trim() || '';
+                                const classes = el.className || '';
+                                const href = el.href || '';
+                                
+                                if (text.toLowerCase().includes('menu') || 
+                                    text.toLowerCase().includes('os') ||
+                                    classes.toLowerCase().includes('menu') ||
+                                    classes.toLowerCase().includes('hamburger') ||
+                                    href.toLowerCase().includes('os')) {
+                                    elements.push({
+                                        text: text,
+                                        classes: classes,
+                                        href: href,
+                                        tagName: el.tagName
+                                    });
+                                }
+                            });
+                        });
+                        
+                        return elements;
+                    }
+                """)
+                
+                print(f"📋 Elementos encontrados: {clickable_elements}")
+                
+                # Tentar clicar no primeiro elemento que pareça ser um menu
+                if clickable_elements:
+                    first_element = clickable_elements[0]
+                    print(f"🔗 Tentando clicar no primeiro elemento: {first_element}")
+                    
+                    # Tentar diferentes maneiras de clicar
+                    try:
+                        await page.click(f"text='{first_element['text']}'")
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/07_clicked_element.png")
+                    except:
+                        pass
+                        
+            except Exception as e:
+                print(f"❌ Erro ao explorar página: {e}")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/08_final_exploration.png")
+        
+        print(f"✅ Exploration completed - URL: {page.url}")
+        print(f"📸 Screenshots salvos em: {screenshots_dir}")
         
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -355,6 +496,191 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste: {e}'
+        }), 500
+
+@app.route('/inspect-page', methods=['POST', 'GET'])
+def inspect_page():
+    """Inspeciona a página atual do dashboard para encontrar elementos de menu"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_inspection():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Código Python para inspeção detalhada
+                inspection_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+
+async def inspect_dashboard():
+    screenshots_dir = "/tmp/screenshots"
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Fazer login primeiro
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Agora inspecionar a página
+        print("🔍 Inspecionando dashboard...")
+        
+        # Obter informações da página
+        page_info = await page.evaluate("""
+            () => {
+                const info = {
+                    url: window.location.href,
+                    title: document.title,
+                    body_classes: document.body.className,
+                    all_buttons: [],
+                    all_links: [],
+                    menu_elements: [],
+                    navigation_elements: []
+                };
+                
+                // Todos os botões
+                document.querySelectorAll('button').forEach((btn, index) => {
+                    info.all_buttons.push({
+                        index: index,
+                        text: btn.textContent?.trim() || '',
+                        classes: btn.className || '',
+                        id: btn.id || '',
+                        visible: btn.offsetParent !== null
+                    });
+                });
+                
+                // Todos os links
+                document.querySelectorAll('a').forEach((link, index) => {
+                    info.all_links.push({
+                        index: index,
+                        text: link.textContent?.trim() || '',
+                        href: link.href || '',
+                        classes: link.className || '',
+                        id: link.id || ''
+                    });
+                });
+                
+                // Elementos que podem ser menu
+                const menuSelectors = [
+                    'nav', '[role="navigation"]', '.menu', '.nav', 
+                    '[class*="menu"]', '[class*="nav"]', '[class*="sidebar"]',
+                    'button[aria-label*="menu"]', 'button[class*="menu"]'
+                ];
+                
+                menuSelectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => {
+                        info.menu_elements.push({
+                            selector: selector,
+                            text: el.textContent?.trim() || '',
+                            classes: el.className || '',
+                            id: el.id || '',
+                            tagName: el.tagName
+                        });
+                    });
+                });
+                
+                // Elementos de navegação específicos
+                const navTexts = ['dashboard', 'menu', 'os', 'ordem', 'serviço'];
+                navTexts.forEach(text => {
+                    const elements = document.querySelectorAll(`*`);
+                    elements.forEach(el => {
+                        const content = el.textContent?.toLowerCase() || '';
+                        if (content.includes(text) && content.length < 50) {
+                            info.navigation_elements.push({
+                                search_term: text,
+                                text: el.textContent?.trim() || '',
+                                tagName: el.tagName,
+                                classes: el.className || '',
+                                id: el.id || ''
+                            });
+                        }
+                    });
+                });
+                
+                return info;
+            }
+        """)
+        
+        # Salvar informações em arquivo
+        with open(f"{screenshots_dir}/page_inspection.json", "w") as f:
+            json.dump(page_info, f, indent=2)
+        
+        # Screenshot da página atual
+        await page.screenshot(path=f"{screenshots_dir}/inspection_screenshot.png")
+        
+        print("✅ Inspeção concluída")
+        print(f"📊 Encontrados: {len(page_info['all_buttons'])} botões, {len(page_info['all_links'])} links")
+        print(f"🔍 Elementos de menu: {len(page_info['menu_elements'])}")
+        print(f"🧭 Elementos de navegação: {len(page_info['navigation_elements'])}")
+        
+        return page_info
+        
+    except Exception as e:
+        print(f"❌ Erro na inspeção: {e}")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(inspect_dashboard())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', inspection_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Inspeção executada - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar inspeção: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_inspection)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Inspeção da página iniciada',
+            'note': 'Aguarde alguns minutos e verifique o arquivo page_inspection.json nos screenshots',
+            'info': 'Este endpoint analisa todos os elementos da página para encontrar menus e navegação'
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar inspeção: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar inspeção: {e}'
         }), 500
 
 if __name__ == '__main__':
