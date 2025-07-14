@@ -87,7 +87,8 @@ def home():
             'latest_screenshot': '/screenshots/latest',
             'screenshots_gallery': '/screenshots/gallery',
             'run_test': '/run-test',
-            'inspect_page': '/inspect-page'
+            'inspect_page': '/inspect-page',
+            'test_menu_navigation': '/test-menu-navigation'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -681,6 +682,280 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar inspeção: {e}'
+        }), 500
+
+@app.route('/test-menu-navigation', methods=['POST', 'GET'])
+def test_menu_navigation():
+    """Testa navegação específica para o segundo item do menu lateral"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_menu_test():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Código Python para teste específico do menu
+                menu_test_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+
+async def test_menu_navigation():
+    screenshots_dir = "/tmp/screenshots"
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Fazer login primeiro
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Screenshot do dashboard
+        await page.screenshot(path=f"{screenshots_dir}/menu_01_dashboard.png")
+        print("✅ Login realizado, agora procurando menu lateral...")
+        
+        # Estratégia 1: Procurar por sidebar ou menu lateral
+        print("🔍 Estratégia 1: Procurando sidebar...")
+        sidebar_found = False
+        
+        sidebar_selectors = [
+            "nav", ".sidebar", ".menu", ".navigation", "[role='navigation']",
+            "div[class*='sidebar']", "div[class*='menu']", "div[class*='nav']",
+            "aside", ".left-menu", ".side-menu"
+        ]
+        
+        for selector in sidebar_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    print(f"📍 Sidebar encontrada: {selector}")
+                    
+                    # Capturar screenshot da sidebar
+                    await page.screenshot(path=f"{screenshots_dir}/menu_02_sidebar_found.png")
+                    
+                    # Procurar pelo segundo item dentro da sidebar
+                    sidebar_items = await page.locator(f"{selector} a, {selector} button, {selector} div[onclick], {selector} li").count()
+                    print(f"📋 Itens encontrados na sidebar: {sidebar_items}")
+                    
+                    if sidebar_items >= 2:
+                        print("🎯 Tentando clicar no segundo item...")
+                        try:
+                            # Tentar clicar no segundo item (índice 1)
+                            await page.locator(f"{selector} a, {selector} button, {selector} div[onclick], {selector} li").nth(1).click()
+                            await page.wait_for_timeout(3000)
+                            await page.screenshot(path=f"{screenshots_dir}/menu_03_second_item_clicked.png")
+                            sidebar_found = True
+                            break
+                        except Exception as e:
+                            print(f"❌ Erro ao clicar no segundo item: {e}")
+                            continue
+                    
+            except Exception as e:
+                continue
+        
+        # Estratégia 2: Se não encontrou sidebar, procurar por padrões de menu
+        if not sidebar_found:
+            print("🔍 Estratégia 2: Procurando padrões de menu...")
+            
+            # Procurar por elementos que podem ser itens de menu
+            menu_patterns = [
+                "//div[contains(@class, 'menu')]//a[2]",
+                "//nav//a[2]",
+                "//div[contains(@class, 'nav')]//a[2]",
+                "//ul[contains(@class, 'menu')]//li[2]",
+                "//ul[contains(@class, 'nav')]//li[2]",
+                "//div[contains(@class, 'sidebar')]//a[2]",
+                "//aside//a[2]"
+            ]
+            
+            for pattern in menu_patterns:
+                try:
+                    elements = await page.locator(pattern).count()
+                    if elements > 0:
+                        print(f"📍 Menu pattern encontrado: {pattern}")
+                        await page.locator(pattern).click()
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/menu_03_pattern_clicked.png")
+                        sidebar_found = True
+                        break
+                except Exception as e:
+                    continue
+        
+        # Estratégia 3: Procurar por coordenadas ou posição
+        if not sidebar_found:
+            print("🔍 Estratégia 3: Análise de posição...")
+            
+            # Obter todos os elementos clicáveis e suas posições
+            elements_info = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const clickable = ['a', 'button', 'div[onclick]', 'li'];
+                    
+                    clickable.forEach(selector => {
+                        document.querySelectorAll(selector).forEach((el, index) => {
+                            const rect = el.getBoundingClientRect();
+                            const text = el.textContent?.trim() || '';
+                            
+                            // Filtrar elementos que podem ser menu lateral (lado esquerdo)
+                            if (rect.left < 300 && rect.width > 20 && rect.height > 20) {
+                                elements.push({
+                                    selector: selector,
+                                    index: index,
+                                    text: text,
+                                    left: rect.left,
+                                    top: rect.top,
+                                    width: rect.width,
+                                    height: rect.height,
+                                    classes: el.className
+                                });
+                            }
+                        });
+                    });
+                    
+                    // Ordenar por posição vertical (top)
+                    return elements.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Elementos no lado esquerdo: {len(elements_info)}")
+            
+            # Tentar clicar no segundo elemento (se existir)
+            if len(elements_info) >= 2:
+                second_element = elements_info[1]
+                print(f"🎯 Tentando clicar no segundo elemento: {second_element['text']}")
+                
+                try:
+                    await page.click(f"{second_element['selector']}:nth-child({second_element['index'] + 1})")
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/menu_03_position_clicked.png")
+                    sidebar_found = True
+                except Exception as e:
+                    print(f"❌ Erro ao clicar por posição: {e}")
+        
+        # Estratégia 4: Procurar especificamente por ícones ou imagens
+        if not sidebar_found:
+            print("🔍 Estratégia 4: Procurando por ícones...")
+            
+            # Procurar por SVGs, ícones, ou elementos que podem ser menu
+            icon_selectors = [
+                "svg:nth-child(2)",
+                "i:nth-child(2)",
+                ".icon:nth-child(2)",
+                "[class*='icon']:nth-child(2)",
+                "//svg[2]",
+                "//i[2]",
+                "//*[contains(@class, 'icon')][2]"
+            ]
+            
+            for selector in icon_selectors:
+                try:
+                    if selector.startswith("//"):
+                        elements = await page.locator(selector).count()
+                    else:
+                        elements = await page.locator(selector).count()
+                    
+                    if elements > 0:
+                        print(f"📍 Ícone encontrado: {selector}")
+                        if selector.startswith("//"):
+                            await page.locator(selector).click()
+                        else:
+                            await page.locator(selector).click()
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/menu_03_icon_clicked.png")
+                        sidebar_found = True
+                        break
+                except Exception as e:
+                    continue
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/menu_04_final_result.png")
+        
+        # Verificar se conseguiu navegar
+        final_url = page.url
+        print(f"📍 URL final: {final_url}")
+        
+        if sidebar_found:
+            print("✅ Navegação bem-sucedida!")
+        else:
+            print("❌ Não conseguiu encontrar o segundo item do menu")
+        
+        return {
+            "success": sidebar_found,
+            "final_url": final_url,
+            "elements_found": len(elements_info) if 'elements_info' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro no teste: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/menu_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(test_menu_navigation())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', menu_test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste de menu executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste de menu: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_menu_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste de navegação do menu iniciado',
+            'note': 'Aguarde alguns minutos. O teste tentará 4 estratégias diferentes para encontrar o segundo item do menu',
+            'strategies': [
+                '1. Procurar por sidebar/menu lateral',
+                '2. Usar padrões XPath para segundo item',
+                '3. Análise de posição dos elementos',
+                '4. Procurar por ícones especificamente'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste de menu: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste de menu: {e}'
         }), 500
 
 if __name__ == '__main__':
