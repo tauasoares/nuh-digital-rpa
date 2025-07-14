@@ -90,7 +90,8 @@ def home():
             'inspect_page': '/inspect-page',
             'test_menu_navigation': '/test-menu-navigation',
             'test_bubble_structure': '/test-bubble-structure',
-            'test_direct_click': '/test-direct-click'
+            'test_direct_click': '/test-direct-click',
+            'test_smart_menu': '/test-smart-menu'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -1493,6 +1494,252 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste direto: {e}'
+        }), 500
+
+@app.route('/test-smart-menu', methods=['POST', 'GET'])
+def test_smart_menu():
+    """Teste inteligente - foca apenas no menu lateral esquerdo e evita links externos"""
+    try:
+        import subprocess
+        import threading
+        
+        def run_smart_test():
+            try:
+                # Criar diretório de screenshots se não existir
+                screenshots_dir = "/tmp/screenshots"
+                os.makedirs(screenshots_dir, exist_ok=True)
+                
+                # Definir variáveis de ambiente
+                env = os.environ.copy()
+                env['EACE_USERNAME'] = 'raiseupbt@gmail.com'
+                env['EACE_PASSWORD'] = '@Uujpgi8u'
+                env['DISPLAY'] = ':99'
+                
+                # Código Python para teste inteligente
+                smart_test_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+
+async def test_smart_navigation():
+    screenshots_dir = "/tmp/screenshots"
+    
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    page = await browser.new_page()
+    
+    try:
+        # Fazer login
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Screenshot inicial
+        await page.screenshot(path=f"{screenshots_dir}/smart_01_dashboard.png")
+        print("✅ Login realizado!")
+        
+        # Obter apenas botões do menu lateral esquerdo (evitando links externos)
+        print("🔍 Mapeando botões do menu lateral...")
+        menu_buttons = await page.evaluate("""
+            () => {
+                const buttons = [];
+                const domain = window.location.hostname;
+                
+                document.querySelectorAll('button').forEach((btn, index) => {
+                    const rect = btn.getBoundingClientRect();
+                    const text = btn.textContent?.trim() || '';
+                    const visible = rect.width > 0 && rect.height > 0 && btn.offsetParent !== null;
+                    
+                    // Filtrar apenas botões do menu lateral esquerdo
+                    if (visible && rect.left < 200 && rect.top > 50) {
+                        // Evitar botões que parecem ser links externos
+                        const isExternal = text.toLowerCase().includes('intranet') || 
+                                         text.toLowerCase().includes('portal') ||
+                                         text.toLowerCase().includes('site') ||
+                                         text.toLowerCase().includes('www') ||
+                                         text.toLowerCase().includes('http');
+                        
+                        if (!isExternal) {
+                            buttons.push({
+                                index: index,
+                                text: text,
+                                left: rect.left,
+                                top: rect.top,
+                                width: rect.width,
+                                height: rect.height,
+                                classes: btn.className,
+                                id: btn.id,
+                                focusable: btn.getAttribute('focusable'),
+                                innerHTML: btn.innerHTML.substring(0, 100)
+                            });
+                        }
+                    }
+                });
+                
+                // Ordenar por posição vertical (menu de cima para baixo)
+                return buttons.sort((a, b) => a.top - b.top);
+            }
+        """)
+        
+        print(f"📋 Botões do menu lateral encontrados: {len(menu_buttons)}")
+        
+        # Salvar informações dos botões
+        with open(f"{screenshots_dir}/menu_buttons_info.json", "w") as f:
+            json.dump(menu_buttons, f, indent=2)
+        
+        # Tentar clicar em cada botão do menu
+        success_found = False
+        initial_url = page.url
+        
+        for i, button in enumerate(menu_buttons):
+            try:
+                print(f"🎯 Testando botão {i+1}/{len(menu_buttons)}: '{button['text']}'")
+                
+                # Garantir que estamos na página inicial
+                if page.url != initial_url:
+                    print(f"   🔄 Voltando para dashboard...")
+                    await page.goto(initial_url)
+                    await page.wait_for_timeout(3000)
+                
+                # Screenshot antes do clique
+                await page.screenshot(path=f"{screenshots_dir}/smart_02_before_button_{i+1}.png")
+                
+                # Clicar no botão usando diferentes métodos
+                click_success = False
+                
+                # Método 1: Clicar por seletor
+                try:
+                    await page.click(f"button:nth-child({button['index'] + 1})")
+                    click_success = True
+                except:
+                    pass
+                
+                # Método 2: Clicar por posição (se o primeiro falhar)
+                if not click_success:
+                    try:
+                        await page.click(f"button", position={"x": button['width']//2, "y": button['height']//2})
+                        click_success = True
+                    except:
+                        pass
+                
+                # Método 3: Clicar por texto (se os outros falharem)
+                if not click_success and button['text']:
+                    try:
+                        await page.click(f"text='{button['text']}'")
+                        click_success = True
+                    except:
+                        pass
+                
+                if not click_success:
+                    print(f"   ❌ Não conseguiu clicar no botão {i+1}")
+                    continue
+                
+                # Aguardar possível mudança de página
+                await page.wait_for_timeout(4000)
+                
+                # Verificar se mudou de página
+                current_url = page.url
+                if current_url != initial_url:
+                    print(f"   📍 Botão {i+1} mudou URL para: {current_url}")
+                    await page.screenshot(path=f"{screenshots_dir}/smart_03_button_{i+1}_result.png")
+                    
+                    # Verificar se ainda está no domínio eace.org.br
+                    if 'eace.org.br' in current_url:
+                        # Verificar se é a página que queremos
+                        if any(keyword in current_url.lower() for keyword in ['os', 'chamados', 'operacao', 'controle']):
+                            print(f"   ✅ SUCESSO! Botão {i+1} levou para página de OS!")
+                            print(f"   Texto: '{button['text']}'")
+                            print(f"   URL: {current_url}")
+                            await page.screenshot(path=f"{screenshots_dir}/smart_04_SUCCESS.png")
+                            success_found = True
+                            break
+                        else:
+                            print(f"   ℹ️  Mudou de página mas não é OS")
+                    else:
+                        print(f"   ⚠️  Saiu do domínio eace.org.br")
+                else:
+                    print(f"   ➡️  Não mudou de página")
+                    
+            except Exception as e:
+                print(f"   ❌ Erro no botão {i+1}: {e}")
+                continue
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/smart_05_final.png")
+        
+        print(f"📍 URL final: {page.url}")
+        if success_found:
+            print("✅ ENCONTROU A PÁGINA DE OS!")
+        else:
+            print("❌ Não encontrou a página de OS nos botões do menu lateral")
+        
+        return {
+            "success": success_found,
+            "final_url": page.url,
+            "menu_buttons_tested": len(menu_buttons),
+            "initial_url": initial_url
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/smart_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(test_smart_navigation())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', smart_test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste inteligente executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste inteligente: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_smart_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste inteligente iniciado - foco no menu lateral e evita links externos',
+            'note': 'Filtra apenas botões do menu lateral esquerdo e evita "intranet", "portal", etc.',
+            'features': [
+                'Foca apenas no menu lateral esquerdo (left < 200px)',
+                'Evita botões com texto "intranet", "portal", "site", etc.',
+                'Sempre volta para dashboard se mudar de página',
+                'Verifica se continua no domínio eace.org.br',
+                'Múltiplos métodos de clique como fallback'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste inteligente: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste inteligente: {e}'
         }), 500
 
 if __name__ == '__main__':
