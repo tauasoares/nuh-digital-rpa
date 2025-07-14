@@ -241,6 +241,10 @@ def screenshots_gallery():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")
+    logger.info(f"🌐 Endpoints disponíveis:")
+    logger.info(f"   - Status: http://0.0.0.0:{port}/status")
+    logger.info(f"   - Screenshots: http://0.0.0.0:{port}/screenshots")
+    logger.info(f"   - Galeria: http://0.0.0.0:{port}/screenshots/gallery")
     
     try:
         app.run(host='0.0.0.0', port=port, debug=False)
