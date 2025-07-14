@@ -9,6 +9,8 @@ import logging
 from datetime import datetime
 import glob
 import base64
+import threading
+import subprocess
 
 # Configurar logging
 logging.basicConfig(
@@ -91,7 +93,8 @@ def home():
             'test_menu_navigation': '/test-menu-navigation',
             'test_bubble_structure': '/test-bubble-structure',
             'test_direct_click': '/test-direct-click',
-            'test_smart_menu': '/test-smart-menu'
+            'test_smart_menu': '/test-smart-menu',
+            'test_expandable_menu': '/test-expandable-menu'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -1740,6 +1743,319 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste inteligente: {e}'
+        }), 500
+
+@app.route('/test-expandable-menu', methods=['POST'])
+def test_expandable_menu():
+    """Teste para navegação de menu expansível - foco em dois passos: expandir + clicar"""
+    try:
+        def run_expandable_test():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código para teste de menu expansível
+                expandable_test_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+
+async def test_expandable_menu():
+    """Teste de menu expansível com dois passos: expandir menu + clicar item"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        # Configurar browser
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 Iniciando teste de menu expansível...")
+        
+        # Fazer login
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/expandable_01_dashboard.png")
+        
+        # FASE 1: Expandir o menu (hambúrguer)
+        print("🔍 FASE 1: Procurando e expandindo o menu...")
+        
+        menu_expanded = False
+        
+        # Seletores para botão de menu hambúrguer
+        menu_toggle_selectors = [
+            "button[class*='menu']",
+            "button[class*='hamburger']", 
+            "button[class*='toggle']",
+            "button[aria-label*='menu']",
+            "button[focusable='true']",
+            "//button[contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[contains(@aria-label, 'menu')]",
+            "//button[1]",  # Primeiro botão da página
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        for selector in menu_toggle_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"📍 Tentando expandir menu com: {selector}")
+                    
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/expandable_02_menu_expanded.png")
+                    
+                    # Verificar se menu foi expandido (procurar por mais elementos visíveis)
+                    visible_elements = await page.evaluate("""
+                        () => {
+                            const elements = document.querySelectorAll('a, button, [role="button"]');
+                            return Array.from(elements).filter(el => {
+                                const rect = el.getBoundingClientRect();
+                                return rect.width > 0 && rect.height > 0;
+                            }).length;
+                        }
+                    """)
+                    
+                    print(f"🔍 Elementos visíveis após clique: {visible_elements}")
+                    
+                    # Assumir que menu foi expandido se há mais elementos visíveis
+                    if visible_elements > 10:  # Threshold arbitrário
+                        menu_expanded = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao expandir menu com {selector}: {e}")
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não conseguiu expandir o menu")
+            await page.screenshot(path=f"{screenshots_dir}/expandable_02_menu_not_expanded.png")
+        
+        # FASE 2: Procurar e clicar no item do menu relacionado a OS
+        print("🔍 FASE 2: Procurando item 'Gerenciar chamados' ou similar...")
+        
+        os_found = False
+        
+        # Primeiro, procurar especificamente por "Gerenciar chamados" (baseado na imagem)
+        specific_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//div[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'chamados')]",
+            "//a[contains(text(), 'chamados')]",
+            "//*[contains(text(), 'chamados')]"
+        ]
+        
+        for selector in specific_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    print(f"📍 Encontrado 'Gerenciar chamados': {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/expandable_03_chamados_clicked.png")
+                    
+                    # Verificar se navegou para página de OS/chamados
+                    current_url = page.url
+                    if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                        print(f"✅ SUCESSO! Navegou para: {current_url}")
+                        os_found = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao clicar em {selector}: {e}")
+                continue
+        
+        # Se não encontrou "Gerenciar chamados", procurar por outros termos
+        if not os_found:
+            print("🔍 Procurando por termos alternativos...")
+            
+            alternative_selectors = [
+                "//*[contains(text(), 'OS')]",
+                "//*[contains(text(), 'Operação')]",
+                "//*[contains(text(), 'Controle')]",
+                "//*[contains(text(), 'Tickets')]",
+                "//*[contains(text(), 'Atendimento')]",
+                "//button[contains(@class, 'generic')]",
+                "//a[contains(@href, 'os')]",
+                "//a[contains(@href, 'chamados')]",
+                "//a[contains(@href, 'controle')]"
+            ]
+            
+            for selector in alternative_selectors:
+                try:
+                    elements = await page.locator(selector).count()
+                    if elements > 0:
+                        print(f"📍 Tentando alternativa: {selector}")
+                        await page.locator(selector).click()
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/expandable_04_alternative_clicked.png")
+                        
+                        current_url = page.url
+                        if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                            print(f"✅ SUCESSO com alternativa! URL: {current_url}")
+                            os_found = True
+                            break
+                            
+                except Exception as e:
+                    print(f"❌ Erro com alternativa {selector}: {e}")
+                    continue
+        
+        # FASE 3: Análise estrutural do menu expandido
+        if not os_found:
+            print("🔍 FASE 3: Analisando estrutura do menu expandido...")
+            
+            # Mapear todos os elementos do menu expandido
+            menu_elements = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const selectors = ['button', 'a', '[role="button"]', 'div[onclick]'];
+                    
+                    selectors.forEach(selector => {
+                        document.querySelectorAll(selector).forEach((el, index) => {
+                            const rect = el.getBoundingClientRect();
+                            const text = el.textContent?.trim() || '';
+                            
+                            // Focar no menu lateral esquerdo
+                            if (rect.left < 200 && rect.width > 10 && rect.height > 10 && text.length > 0) {
+                                elements.push({
+                                    tagName: el.tagName.toLowerCase(),
+                                    text: text,
+                                    classes: el.className,
+                                    href: el.href || '',
+                                    left: rect.left,
+                                    top: rect.top,
+                                    index: index
+                                });
+                            }
+                        });
+                    });
+                    
+                    return elements.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Elementos encontrados no menu: {len(menu_elements)}")
+            
+            # Procurar pelo segundo elemento (baseado no feedback do usuário)
+            if len(menu_elements) >= 2:
+                target_element = menu_elements[1]  # Segundo elemento (índice 1)
+                print(f"🎯 Tentando segundo elemento: {target_element}")
+                
+                try:
+                    # Tentar clicar no elemento por texto
+                    if target_element['text']:
+                        await page.click(f"text='{target_element['text']}'")
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/expandable_05_second_element.png")
+                        
+                        current_url = page.url
+                        if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                            print(f"✅ SUCESSO com segundo elemento! URL: {current_url}")
+                            os_found = True
+                            
+                except Exception as e:
+                    print(f"❌ Erro ao clicar no segundo elemento: {e}")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/expandable_06_final.png")
+        
+        final_url = page.url
+        print(f"📍 URL final: {final_url}")
+        
+        if os_found:
+            print("✅ Teste de menu expansível CONCLUÍDO COM SUCESSO!")
+        else:
+            print("❌ Não conseguiu navegar para página de OS/chamados")
+        
+        return {
+            "success": os_found,
+            "final_url": final_url,
+            "menu_expanded": menu_expanded,
+            "elements_found": len(menu_elements) if 'menu_elements' in locals() else 0
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro no teste expansível: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/expandable_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(test_expandable_menu())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', expandable_test_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste expansível executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste expansível: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_expandable_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste de menu expansível iniciado - abordagem em duas fases',
+            'note': 'Fase 1: Expandir menu hambúrguer + Fase 2: Clicar em "Gerenciar chamados"',
+            'phases': [
+                'Fase 1: Identifica e clica no botão do menu hambúrguer',
+                'Fase 2: Procura por "Gerenciar chamados" no menu expandido',
+                'Fase 3: Se não encontrar, analisa estrutura e tenta segundo elemento',
+                'Foco específico no menu lateral esquerdo (left < 200px)',
+                'Baseado na imagem do inspect element fornecida'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste expansível: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste expansível: {e}'
         }), 500
 
 if __name__ == '__main__':
