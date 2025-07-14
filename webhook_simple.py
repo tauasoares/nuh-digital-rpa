@@ -736,14 +736,21 @@ async def test_menu_navigation():
         await page.screenshot(path=f"{screenshots_dir}/menu_01_dashboard.png")
         print("✅ Login realizado, agora procurando menu lateral...")
         
-        # Estratégia 1: Procurar por sidebar ou menu lateral
-        print("🔍 Estratégia 1: Procurando sidebar...")
+        # Estratégia 1: Procurar especificamente pelo segundo ícone do menu lateral
+        print("🔍 Estratégia 1: Procurando segundo ícone do menu lateral...")
         sidebar_found = False
         
+        # Seletores específicos baseados na imagem do sistema
         sidebar_selectors = [
-            "nav", ".sidebar", ".menu", ".navigation", "[role='navigation']",
-            "div[class*='sidebar']", "div[class*='menu']", "div[class*='nav']",
-            "aside", ".left-menu", ".side-menu"
+            "aside a:nth-child(2)",
+            "nav a:nth-child(2)", 
+            ".sidebar a:nth-child(2)",
+            "div[class*='sidebar'] a:nth-child(2)",
+            "div[class*='menu'] a:nth-child(2)",
+            "ul li:nth-child(2) a",
+            "ul li:nth-child(2)",
+            "nav ul li:nth-child(2)",
+            "aside ul li:nth-child(2)"
         ]
         
         for selector in sidebar_selectors:
@@ -775,19 +782,22 @@ async def test_menu_navigation():
             except Exception as e:
                 continue
         
-        # Estratégia 2: Se não encontrou sidebar, procurar por padrões de menu
+        # Estratégia 2: Se não encontrou, procurar por texto específico "OS" ou "operação"
         if not sidebar_found:
-            print("🔍 Estratégia 2: Procurando padrões de menu...")
+            print("🔍 Estratégia 2: Procurando por texto 'OS' ou 'operação'...")
             
-            # Procurar por elementos que podem ser itens de menu
+            # Procurar por elementos que contenham texto relacionado a OS
             menu_patterns = [
-                "//div[contains(@class, 'menu')]//a[2]",
-                "//nav//a[2]",
-                "//div[contains(@class, 'nav')]//a[2]",
-                "//ul[contains(@class, 'menu')]//li[2]",
-                "//ul[contains(@class, 'nav')]//li[2]",
-                "//div[contains(@class, 'sidebar')]//a[2]",
-                "//aside//a[2]"
+                "//a[contains(text(), 'OS')]",
+                "//a[contains(text(), 'operação')]",
+                "//a[contains(text(), 'Controle')]",
+                "//button[contains(text(), 'OS')]",
+                "//div[contains(text(), 'OS')]",
+                "//li[contains(text(), 'OS')]",
+                "//*[@title='OS']",
+                "//*[@aria-label='OS']",
+                "//a[contains(@href, 'os')]",
+                "//a[contains(@href, 'operacao')]"
             ]
             
             for pattern in menu_patterns:
@@ -803,23 +813,24 @@ async def test_menu_navigation():
                 except Exception as e:
                     continue
         
-        # Estratégia 3: Procurar por coordenadas ou posição
+        # Estratégia 3: Procurar no menu lateral esquerdo (posição específica)
         if not sidebar_found:
-            print("🔍 Estratégia 3: Análise de posição...")
+            print("🔍 Estratégia 3: Análise de posição no menu lateral...")
             
-            # Obter todos os elementos clicáveis e suas posições
+            # Obter elementos especificamente do menu lateral esquerdo
             elements_info = await page.evaluate("""
                 () => {
                     const elements = [];
-                    const clickable = ['a', 'button', 'div[onclick]', 'li'];
+                    const clickable = ['a', 'button', 'div[onclick]', 'li', '[role="button"]'];
                     
                     clickable.forEach(selector => {
                         document.querySelectorAll(selector).forEach((el, index) => {
                             const rect = el.getBoundingClientRect();
                             const text = el.textContent?.trim() || '';
+                            const classes = el.className || '';
                             
-                            // Filtrar elementos que podem ser menu lateral (lado esquerdo)
-                            if (rect.left < 300 && rect.width > 20 && rect.height > 20) {
+                            // Filtrar elementos do menu lateral esquerdo (baseado na imagem)
+                            if (rect.left < 100 && rect.width > 15 && rect.height > 15 && rect.top > 50) {
                                 elements.push({
                                     selector: selector,
                                     index: index,
@@ -828,13 +839,14 @@ async def test_menu_navigation():
                                     top: rect.top,
                                     width: rect.width,
                                     height: rect.height,
-                                    classes: el.className
+                                    classes: classes,
+                                    href: el.href || ''
                                 });
                             }
                         });
                     });
                     
-                    // Ordenar por posição vertical (top)
+                    // Ordenar por posição vertical (top) - o segundo item será o índice 1
                     return elements.sort((a, b) => a.top - b.top);
                 }
             """)
@@ -844,15 +856,55 @@ async def test_menu_navigation():
             # Tentar clicar no segundo elemento (se existir)
             if len(elements_info) >= 2:
                 second_element = elements_info[1]
-                print(f"🎯 Tentando clicar no segundo elemento: {second_element['text']}")
+                print(f"🎯 Tentando clicar no segundo elemento: {second_element}")
                 
                 try:
-                    await page.click(f"{second_element['selector']}:nth-child({second_element['index'] + 1})")
-                    await page.wait_for_timeout(3000)
-                    await page.screenshot(path=f"{screenshots_dir}/menu_03_position_clicked.png")
-                    sidebar_found = True
+                    # Várias tentativas de clicar no segundo elemento
+                    click_attempts = [
+                        f"{second_element['selector']}:nth-child({second_element['index'] + 1})",
+                        f"{second_element['selector']}:nth-of-type(2)",
+                        f"({second_element['selector']})[2]"
+                    ]
+                    
+                    for attempt in click_attempts:
+                        try:
+                            await page.click(attempt)
+                            await page.wait_for_timeout(3000)
+                            await page.screenshot(path=f"{screenshots_dir}/menu_03_position_clicked.png")
+                            
+                            # Verificar se navegou para página de OS
+                            current_url = page.url
+                            if 'os' in current_url.lower() or 'operacao' in current_url.lower():
+                                print(f"✅ Sucesso! Navegou para: {current_url}")
+                                sidebar_found = True
+                                break
+                        except:
+                            continue
+                    
+                    if not sidebar_found:
+                        print("❌ Não conseguiu clicar no segundo elemento")
+                        
                 except Exception as e:
                     print(f"❌ Erro ao clicar por posição: {e}")
+            
+            # Tentar também o primeiro, terceiro e quarto elementos
+            if not sidebar_found and len(elements_info) >= 4:
+                print("🔍 Tentando outros elementos do menu...")
+                for i in [0, 2, 3]:  # primeiro, terceiro, quarto
+                    try:
+                        element = elements_info[i]
+                        print(f"🎯 Tentando elemento {i+1}: {element['text']}")
+                        
+                        await page.click(f"{element['selector']}:nth-child({element['index'] + 1})")
+                        await page.wait_for_timeout(3000)
+                        
+                        current_url = page.url
+                        if 'os' in current_url.lower() or 'operacao' in current_url.lower():
+                            print(f"✅ Sucesso com elemento {i+1}!")
+                            sidebar_found = True
+                            break
+                    except:
+                        continue
         
         # Estratégia 4: Procurar especificamente por ícones ou imagens
         if not sidebar_found:
