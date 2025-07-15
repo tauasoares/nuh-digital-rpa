@@ -2468,6 +2468,15 @@ if __name__ == "__main__":
             'message': f'Erro ao iniciar mapeamento de OS: {e}'
         }), 500
 
+@app.route('/test-simple', methods=['GET'])
+def test_simple():
+    """Endpoint simples para teste"""
+    return jsonify({
+        'message': 'Endpoint funcionando!',
+        'timestamp': datetime.now().isoformat(),
+        'status': 'OK'
+    })
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")
