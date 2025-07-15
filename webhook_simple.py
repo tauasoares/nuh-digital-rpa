@@ -3,7 +3,7 @@
 Versão simplificada do webhook para teste
 """
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 import os
 import logging
 from datetime import datetime
@@ -76,7 +76,73 @@ def webhook_eace():
 
 @app.route('/', methods=['GET'])
 def home():
-    """Página inicial"""
+    """Página inicial - interface HTML"""
+    try:
+        # Tenta servir o arquivo HTML
+        if os.path.exists('endpoints.html'):
+            return send_file('endpoints.html')
+        else:
+            # Se não existir, tenta com caminho absoluto
+            abs_path = os.path.abspath('endpoints.html')
+            if os.path.exists(abs_path):
+                return send_file(abs_path)
+            else:
+                raise FileNotFoundError("endpoints.html não encontrado")
+    except Exception as e:
+        logger.error(f"Erro ao servir endpoints.html: {e}")
+        # Fallback para JSON se arquivo não existir
+        return jsonify({
+            'service': 'EACE Webhook System',
+            'status': 'running',
+            'version': '1.0.0-simple',
+            'message': 'Interface HTML não encontrada - usando fallback JSON',
+            'endpoints': {
+                'status': '/status',
+                'webhook_test': '/webhook/test',
+                'webhook_eace': '/webhook/eace',
+                'screenshots': '/screenshots',
+                'latest_screenshot': '/screenshots/latest',
+                'screenshots_gallery': '/screenshots/gallery',
+                'run_test': '/run-test',
+                'inspect_page': '/inspect-page',
+                'test_menu_navigation': '/test-menu-navigation',
+                'test_bubble_structure': '/test-bubble-structure',
+                'test_direct_click': '/test-direct-click',
+                'test_smart_menu': '/test-smart-menu',
+                'test_expandable_menu': '/test-expandable-menu'
+            },
+            'note': 'Acesse /endpoints.html para interface visual ou /debug para diagnóstico'
+        })
+
+@app.route('/debug', methods=['GET'])
+def debug_files():
+    """Debug - lista arquivos no diretório"""
+    try:
+        files = os.listdir('.')
+        return jsonify({
+            'current_directory': os.getcwd(),
+            'files': files,
+            'endpoints_html_exists': os.path.exists('endpoints.html'),
+            'endpoints_html_size': os.path.getsize('endpoints.html') if os.path.exists('endpoints.html') else 0
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/endpoints.html', methods=['GET'])
+def endpoints_page():
+    """Serve a página HTML dos endpoints"""
+    try:
+        return send_file('endpoints.html')
+    except Exception as e:
+        logger.error(f"Erro ao servir endpoints.html: {e}")
+        return jsonify({
+            'error': 'Arquivo endpoints.html não encontrado',
+            'message': 'Use /api para informações JSON'
+        }), 404
+
+@app.route('/api', methods=['GET'])
+def api_info():
+    """Informações da API em formato JSON"""
     return jsonify({
         'service': 'EACE Webhook System',
         'status': 'running',
