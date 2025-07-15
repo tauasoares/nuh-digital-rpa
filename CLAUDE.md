@@ -44,20 +44,27 @@ Automatizar o acesso ao sistema EACE (https://eace.org.br) para abertura de tick
   - Fase 3: Análise estrutural e clique no segundo elemento do menu lateral
 - **URL de destino**: `https://eace.org.br/dashboard_fornecedor/[ID]` → Página "Controle de OS"
 
-## 📋 ESTADO ATUAL DO PROJETO (2025-07-14)
+## 📋 ESTADO ATUAL DO PROJETO (2025-07-15)
 ### ✅ O que está funcionando 100%:
 1. **Login completo**: Email + senha + seleção de perfil Fornecedor
 2. **Navegação para página de OS**: Menu hambúrguer → "Gerenciar chamados" → Controle de OS
 3. **Sistema de monitoramento visual**: Screenshots automáticos de cada etapa
 4. **Webhook funcionando**: Endpoints para testes via browser
 5. **Deploy automático**: GitHub → EasyPanel → VPS
+6. **Interface HTML organizada**: Página com todos os endpoints categorizados
+7. **Endpoint `/test-expandable-menu`**: 100% funcional, chega na página de Controle de OS
 
 ### 🎯 Próximo passo imediato:
-**Mapear a interface da página "Controle de OS"** para identificar:
-- Botão "Adicionar nova OS" (como visto na imagem)
-- Formulário de criação de ticket
-- Campos obrigatórios
-- Fluxo de preenchimento
+**Mapear botão "Adicionar nova OS" na página de Controle de OS**:
+- Usar como base o endpoint `/test-expandable-menu` que já funciona
+- Screenshot `expandable_05_second_element.png` mostra a página de Controle de OS
+- Identificar e clicar no botão "Adicionar nova OS"
+- Mapear formulário de criação (sem preencher)
+
+### 🔧 Endpoints Ativos:
+- `/test-expandable-menu` - ✅ Navegação completa até página de OS
+- `/debug-os-mapping` - 🔍 Debug detalhado para troubleshooting
+- Interface HTML `/` - 📱 Página visual com todos os endpoints
 
 ### 📁 Arquivos principais:
 - `webhook_simple.py`: Endpoint `/test-expandable-menu` (FUNCIONANDO)
