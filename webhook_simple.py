@@ -5488,6 +5488,802 @@ if __name__ == "__main__":
             'message': f'Erro ao iniciar análise detalhada: {e}'
         }), 500
 
+@app.route('/working-code-detailed', methods=['GET'])
+def working_code_detailed():
+    """Endpoint baseado no código que funciona com logs detalhados e visualização"""
+    try:
+        # Retornar página HTML com visualização completa
+        html_content = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código Que Funciona - Logs Detalhados</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+        }
+        
+        .header h1 {
+            color: #00ff00;
+            font-size: 2em;
+            margin: 0 0 10px 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+        }
+        
+        .btn:hover {
+            background: #00cc00;
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 80vh;
+        }
+        
+        .panel {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel h2 {
+            color: #00ff00;
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #333;
+            border-left: 4px solid #00ff00;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .log-timestamp {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .log-phase {
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .log-message {
+            color: #00ff00;
+        }
+        
+        .log-success {
+            border-left-color: #00ff00;
+            background: #1a3d1a;
+        }
+        
+        .log-error {
+            border-left-color: #ff0000;
+            background: #3d1a1a;
+        }
+        
+        .log-warning {
+            border-left-color: #ffff00;
+            background: #3d3d1a;
+        }
+        
+        .log-info {
+            border-left-color: #00ffff;
+            background: #1a3d3d;
+        }
+        
+        .screenshot-item {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .screenshot-item img {
+            max-width: 100%;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        
+        .screenshot-caption {
+            color: #ffff00;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .status-running {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+        
+        .status-success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .status-error {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        
+        .element-details {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #00ffff;
+        }
+        
+        .element-details h4 {
+            color: #00ffff;
+            margin: 0 0 5px 0;
+        }
+        
+        .element-details pre {
+            color: #cccccc;
+            font-size: 11px;
+            margin: 5px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Código Que Funciona - Logs Detalhados</h1>
+            <p>Baseado no endpoint /test-expandable-menu com logs completos</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startDetailedTest()">
+                🚀 Executar Teste Detalhado
+            </button>
+            <button class="btn" onclick="clearAll()">
+                🗑️ Limpar Tudo
+            </button>
+            <button class="btn" onclick="refreshImages()">
+                🔄 Atualizar Imagens
+            </button>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+            Aguardando...
+        </div>
+        
+        <div class="main-grid">
+            <div class="panel">
+                <h2>📋 Logs Detalhados</h2>
+                <div id="logsContainer"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>📸 Screenshots</h2>
+                <div id="screenshotsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testRunning = false;
+        
+        function updateStatus(status, message) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.textContent = message;
+            indicator.className = 'status-indicator status-' + status;
+        }
+        
+        function addLog(phase, message, type = 'info') {
+            const container = document.getElementById('logsContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-phase">${phase}:</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addElementDetails(title, element) {
+            const container = document.getElementById('logsContainer');
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'element-details';
+            
+            detailsDiv.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${JSON.stringify(element, null, 2)}</pre>
+            `;
+            
+            container.appendChild(detailsDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addScreenshot(filename, caption) {
+            const container = document.getElementById('screenshotsContainer');
+            const screenshotDiv = document.createElement('div');
+            screenshotDiv.className = 'screenshot-item';
+            
+            screenshotDiv.innerHTML = `
+                <img src="/screenshots/${filename}" alt="${caption}" loading="lazy">
+                <div class="screenshot-caption">${caption}</div>
+            `;
+            
+            container.appendChild(screenshotDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearAll() {
+            document.getElementById('logsContainer').innerHTML = '';
+            document.getElementById('screenshotsContainer').innerHTML = '';
+            updateStatus('idle', 'Aguardando...');
+        }
+        
+        function refreshImages() {
+            fetch('/screenshots')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('screenshotsContainer');
+                    container.innerHTML = '<h2>📸 Screenshots</h2>';
+                    
+                    // Filtrar screenshots do teste detalhado
+                    const workingScreenshots = data.screenshots.filter(s => 
+                        s.filename.includes('working_detailed_') || 
+                        s.filename.includes('expandable_')
+                    );
+                    
+                    workingScreenshots.forEach(screenshot => {
+                        addScreenshot(screenshot.filename, screenshot.description || screenshot.filename);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar screenshots:', error));
+        }
+        
+        function startDetailedTest() {
+            if (testRunning) return;
+            
+            testRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            updateStatus('running', 'Executando teste...');
+            clearAll();
+            
+            // Iniciar teste no servidor
+            fetch('/execute-working-detailed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    detailed_logs: true,
+                    component_analysis: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus('success', 'Teste iniciado com sucesso');
+                    startMonitoring();
+                } else {
+                    updateStatus('error', 'Erro ao iniciar teste');
+                    addLog('ERRO', data.message, 'error');
+                    testRunning = false;
+                    document.getElementById('startBtn').disabled = false;
+                }
+            })
+            .catch(error => {
+                updateStatus('error', 'Erro de conexão');
+                addLog('ERRO', error.message, 'error');
+                testRunning = false;
+                document.getElementById('startBtn').disabled = false;
+            });
+        }
+        
+        function startMonitoring() {
+            const phases = [
+                'LOGIN - Navegando para página de login',
+                'LOGIN - Preenchendo credenciais',
+                'LOGIN - Realizando autenticação',
+                'PERFIL - Selecionando perfil Fornecedor',
+                'DASHBOARD - Analisando dashboard inicial',
+                'MENU - Expandindo menu hambúrguer',
+                'NAVEGAÇÃO - Procurando "Gerenciar chamados"',
+                'ANÁLISE - Mapeando elementos do menu',
+                'CONTROLE - Acessando página de OS',
+                'FINAL - Análise da página de controle'
+            ];
+            
+            let currentPhase = 0;
+            
+            const monitoringInterval = setInterval(() => {
+                if (currentPhase < phases.length) {
+                    addLog('FASE ' + (currentPhase + 1), phases[currentPhase], 'info');
+                    currentPhase++;
+                } else {
+                    clearInterval(monitoringInterval);
+                    updateStatus('success', 'Monitoramento concluído');
+                    testRunning = false;
+                    document.getElementById('startBtn').disabled = false;
+                    refreshImages();
+                }
+            }, 3000);
+        }
+        
+        // Atualizar imagens a cada 10 segundos
+        setInterval(refreshImages, 10000);
+        
+        // Carregar imagens iniciais
+        refreshImages();
+    </script>
+</body>
+</html>
+        '''
+        
+        return html_content
+        
+    except Exception as e:
+        logger.error(f"Erro no endpoint working-code-detailed: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro no endpoint working-code-detailed: {e}'
+        }), 500
+
+@app.route('/execute-working-detailed', methods=['POST'])
+def execute_working_detailed():
+    """Executa o código que funciona com logs detalhados"""
+    try:
+        def run_working_detailed():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código baseado EXATAMENTE no test-expandable-menu que funciona
+                working_detailed_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def working_detailed_test():
+    """Teste baseado no código que funciona (/test-expandable-menu) com logs detalhados"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("working_detailed_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 INICIANDO TESTE COM CÓDIGO QUE FUNCIONA...")
+        print("📋 Baseado no endpoint /test-expandable-menu")
+        
+        # FASE 1: LOGIN
+        print("\\n🔐 FASE 1: LOGIN")
+        print("📍 Navegando para página de login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_01_login.png")
+        print("✅ Página de login carregada")
+        
+        print("📍 Preenchendo credenciais...")
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_02_credentials.png")
+        print("✅ Credenciais preenchidas")
+        
+        print("📍 Clicando no botão de login...")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_03_logged_in.png")
+        print("✅ Login realizado")
+        
+        # FASE 2: SELEÇÃO DE PERFIL
+        print("\\n👤 FASE 2: SELEÇÃO DE PERFIL")
+        fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
+        print(f"📍 Elementos 'Fornecedor' encontrados: {fornecedor_count}")
+        
+        if fornecedor_count > 0:
+            print("📍 Clicando no perfil Fornecedor...")
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+            await page.screenshot(path=f"{screenshots_dir}/working_detailed_04_profile_selected.png")
+            print("✅ Perfil Fornecedor selecionado")
+        else:
+            print("ℹ️ Perfil Fornecedor não encontrado ou já selecionado")
+        
+        # FASE 3: DASHBOARD
+        print("\\n🏠 FASE 3: ANÁLISE DO DASHBOARD")
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_05_dashboard.png")
+        print("📍 Dashboard carregado")
+        
+        # Contar elementos do dashboard
+        dashboard_elements = await page.evaluate("""
+            () => {
+                const elements = document.querySelectorAll('button, a, input, select');
+                return elements.length;
+            }
+        """)
+        print(f"📊 Total de elementos no dashboard: {dashboard_elements}")
+        
+        # FASE 4: EXPANSÃO DO MENU (CÓDIGO IDÊNTICO AO QUE FUNCIONA)
+        print("\\n🔍 FASE 4: EXPANSÃO DO MENU")
+        print("📍 Procurando e expandindo o menu hambúrguer...")
+        
+        menu_expanded = False
+        
+        # Seletores EXATOS do código que funciona
+        menu_toggle_selectors = [
+            "button[class*='menu']",
+            "button[class*='hamburger']", 
+            "button[class*='toggle']",
+            "button[aria-label*='menu']",
+            "button[focusable='true']",
+            "//button[contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[contains(@aria-label, 'menu')]",
+            "//button[1]",
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        for i, selector in enumerate(menu_toggle_selectors):
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                print(f"🔍 Seletor {i+1}: {selector} - Elementos: {elements}")
+                
+                if elements > 0:
+                    print(f"📍 Tentando expandir menu com: {selector}")
+                    
+                    # Clicar no elemento
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/working_detailed_06_menu_click_{i+1}.png")
+                    
+                    # Verificar se menu foi expandido
+                    visible_elements = await page.evaluate("""
+                        () => {
+                            const elements = document.querySelectorAll('a, button, [role="button"]');
+                            return Array.from(elements).filter(el => {
+                                const rect = el.getBoundingClientRect();
+                                return rect.width > 0 && rect.height > 0;
+                            }).length;
+                        }
+                    """)
+                    
+                    print(f"🔍 Elementos visíveis após clique: {visible_elements}")
+                    
+                    if visible_elements > 10:
+                        print("✅ Menu expandido com sucesso!")
+                        menu_expanded = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao expandir menu com {selector}: {e}")
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não conseguiu expandir o menu")
+            await page.screenshot(path=f"{screenshots_dir}/working_detailed_06_menu_not_expanded.png")
+        
+        # FASE 5: PROCURA POR "GERENCIAR CHAMADOS" (CÓDIGO IDÊNTICO)
+        print("\\n🔍 FASE 5: PROCURA POR 'GERENCIAR CHAMADOS'")
+        
+        os_found = False
+        
+        # Seletores EXATOS do código que funciona
+        specific_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//div[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'chamados')]",
+            "//a[contains(text(), 'chamados')]",
+            "//*[contains(text(), 'chamados')]"
+        ]
+        
+        for i, selector in enumerate(specific_selectors):
+            try:
+                elements = await page.locator(selector).count()
+                print(f"🔍 Seletor {i+1}: {selector} - Elementos: {elements}")
+                
+                if elements > 0:
+                    print(f"📍 Encontrado 'Gerenciar chamados': {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/working_detailed_07_chamados_clicked.png")
+                    
+                    current_url = page.url
+                    print(f"📍 URL após clique: {current_url}")
+                    
+                    if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                        print(f"✅ SUCESSO! Navegou para: {current_url}")
+                        os_found = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao clicar em {selector}: {e}")
+                continue
+        
+        # FASE 6: ANÁLISE ESTRUTURAL (CÓDIGO IDÊNTICO)
+        if not os_found:
+            print("\\n🔍 FASE 6: ANÁLISE ESTRUTURAL DO MENU")
+            
+            # Mapear elementos do menu (CÓDIGO IDÊNTICO)
+            menu_elements = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const selectors = ['button', 'a', '[role="button"]', 'div[onclick]'];
+                    
+                    selectors.forEach(selector => {
+                        document.querySelectorAll(selector).forEach((el, index) => {
+                            const rect = el.getBoundingClientRect();
+                            const text = el.textContent?.trim() || '';
+                            
+                            if (rect.left < 200 && rect.width > 10 && rect.height > 10 && text.length > 0) {
+                                elements.push({
+                                    tagName: el.tagName.toLowerCase(),
+                                    text: text,
+                                    classes: el.className,
+                                    href: el.href || '',
+                                    left: rect.left,
+                                    top: rect.top,
+                                    index: index
+                                });
+                            }
+                        });
+                    });
+                    
+                    return elements.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Elementos encontrados no menu: {len(menu_elements)}")
+            
+            # Salvar elementos para análise
+            with open(f"{screenshots_dir}/menu_elements_analysis.json", "w") as f:
+                json.dump(menu_elements, f, indent=2)
+            
+            # Tentar segundo elemento (CÓDIGO IDÊNTICO)
+            if len(menu_elements) >= 2:
+                target_element = menu_elements[1]
+                print(f"🎯 Tentando segundo elemento: {target_element}")
+                
+                try:
+                    if target_element['text']:
+                        await page.click(f"text='{target_element['text']}'")
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/working_detailed_08_second_element.png")
+                        
+                        current_url = page.url
+                        print(f"📍 URL após segundo elemento: {current_url}")
+                        
+                        if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                            print(f"✅ SUCESSO com segundo elemento! URL: {current_url}")
+                            os_found = True
+                            
+                except Exception as e:
+                    print(f"❌ Erro ao clicar no segundo elemento: {e}")
+        
+        # FASE 7: ANÁLISE DA PÁGINA DE CONTROLE DE OS
+        if os_found:
+            print("\\n🎯 FASE 7: ANÁLISE DA PÁGINA DE CONTROLE DE OS")
+            
+            # Mapear elementos da página de OS
+            os_page_elements = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const allButtons = document.querySelectorAll('button');
+                    const allLinks = document.querySelectorAll('a');
+                    
+                    allButtons.forEach((btn, index) => {
+                        const rect = btn.getBoundingClientRect();
+                        const text = btn.textContent?.trim() || '';
+                        
+                        if (rect.width > 0 && rect.height > 0 && text) {
+                            elements.push({
+                                type: 'button',
+                                text: text,
+                                classes: btn.className,
+                                id: btn.id,
+                                position: {
+                                    x: rect.left,
+                                    y: rect.top,
+                                    width: rect.width,
+                                    height: rect.height
+                                }
+                            });
+                        }
+                    });
+                    
+                    allLinks.forEach((link, index) => {
+                        const rect = link.getBoundingClientRect();
+                        const text = link.textContent?.trim() || '';
+                        
+                        if (rect.width > 0 && rect.height > 0 && text) {
+                            elements.push({
+                                type: 'link',
+                                text: text,
+                                href: link.href,
+                                classes: link.className,
+                                id: link.id,
+                                position: {
+                                    x: rect.left,
+                                    y: rect.top,
+                                    width: rect.width,
+                                    height: rect.height
+                                }
+                            });
+                        }
+                    });
+                    
+                    return elements;
+                }
+            """)
+            
+            print(f"🔍 Elementos mapeados na página de OS: {len(os_page_elements)}")
+            
+            # Salvar análise da página de OS
+            with open(f"{screenshots_dir}/os_page_elements.json", "w") as f:
+                json.dump(os_page_elements, f, indent=2)
+            
+            # Procurar especificamente pelo botão "Adicionar nova OS"
+            adicionar_buttons = [el for el in os_page_elements if 'adicionar' in el['text'].lower() and 'os' in el['text'].lower()]
+            print(f"🎯 Botões 'Adicionar nova OS' encontrados: {len(adicionar_buttons)}")
+            
+            for btn in adicionar_buttons:
+                print(f"📍 Botão encontrado: {btn}")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_09_final.png")
+        
+        final_url = page.url
+        print(f"\\n📍 URL FINAL: {final_url}")
+        
+        if os_found:
+            print("✅ TESTE CONCLUÍDO COM SUCESSO!")
+            print("🎉 Navegação para página de Controle de OS realizada")
+        else:
+            print("❌ NÃO CONSEGUIU NAVEGAR PARA PÁGINA DE OS")
+        
+        # Resultado final
+        result = {
+            "success": os_found,
+            "final_url": final_url,
+            "menu_expanded": menu_expanded,
+            "elements_found": len(menu_elements) if 'menu_elements' in locals() else 0,
+            "os_elements": len(os_page_elements) if 'os_page_elements' in locals() else 0
+        }
+        
+        print(f"\\n📊 RESULTADO FINAL:")
+        print(json.dumps(result, indent=2))
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ ERRO GERAL: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/working_detailed_error.png")
+        return {"success": False, "error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(working_detailed_test())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', working_detailed_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Teste detalhado executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar teste detalhado: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_working_detailed)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Teste detalhado iniciado baseado no código que funciona'
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar teste detalhado: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar teste detalhado: {e}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")
