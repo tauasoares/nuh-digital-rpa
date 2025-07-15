@@ -112,7 +112,8 @@ def home():
                 'test_expandable_menu': '/test-expandable-menu',
                 'test_os_page_mapping': '/test-os-page-mapping',
                 'map_adicionar_os_button': '/map-adicionar-os-button',
-                'map_os_button_fixed': '/map-os-button-fixed'
+                'map_os_button_fixed': '/map-os-button-fixed',
+                'debug_step_by_step': '/debug-step-by-step'
             },
             'note': 'Acesse /endpoints.html para interface visual ou /debug para diagnóstico'
         })
@@ -166,7 +167,8 @@ def api_info():
             'test_expandable_menu': '/test-expandable-menu',
             'test_os_page_mapping': '/test-os-page-mapping',
             'map_adicionar_os_button': '/map-adicionar-os-button',
-            'map_os_button_fixed': '/map-os-button-fixed'
+            'map_os_button_fixed': '/map-os-button-fixed',
+            'debug_step_by_step': '/debug-step-by-step'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -3559,6 +3561,293 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar mapeamento corrigido: {e}'
+        }), 500
+
+@app.route('/debug-step-by-step', methods=['GET', 'POST'])
+def debug_step_by_step():
+    """Debug passo a passo com logs detalhados para identificar onde trava"""
+    try:
+        def run_step_by_step_debug():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código com logs extremamente detalhados
+                debug_step_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def debug_step_by_step():
+    """Debug passo a passo com logs extremamente detalhados"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Arquivo de log
+    log_file = f"{screenshots_dir}/step_by_step_log.txt"
+    
+    def log_step(step, message):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_msg = f"[{timestamp}] STEP {step}: {message}"
+        print(log_msg)
+        with open(log_file, "a") as f:
+            f.write(log_msg + "\\n")
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        log_step("01", "Iniciando browser...")
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        log_step("02", "Browser iniciado com sucesso")
+        
+        # STEP 1: Ir para página de login
+        log_step("03", "Navegando para página de login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        log_step("04", "Página de login carregada")
+        
+        # Screenshot login
+        await page.screenshot(path=f"{screenshots_dir}/step_01_login_page.png")
+        log_step("05", "Screenshot da página de login salvo")
+        
+        # STEP 2: Preencher email
+        log_step("06", "Preenchendo email...")
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        log_step("07", "Email preenchido")
+        
+        # STEP 3: Preencher senha
+        log_step("08", "Preenchendo senha...")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        log_step("09", "Senha preenchida")
+        
+        # Screenshot com credenciais
+        await page.screenshot(path=f"{screenshots_dir}/step_02_credentials_filled.png")
+        log_step("10", "Screenshot com credenciais preenchidas")
+        
+        # STEP 4: Clicar no botão de login
+        log_step("11", "Clicando no botão de login...")
+        await page.click('//button[contains(text(), "Log In")]')
+        log_step("12", "Botão de login clicado")
+        
+        # Aguardar processamento
+        await page.wait_for_timeout(5000)
+        log_step("13", "Aguardou 5 segundos após login")
+        
+        # Screenshot após login
+        await page.screenshot(path=f"{screenshots_dir}/step_03_after_login.png")
+        log_step("14", "Screenshot após login salvo")
+        
+        # STEP 5: Verificar se precisa selecionar perfil
+        log_step("15", "Verificando se precisa selecionar perfil Fornecedor...")
+        fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
+        log_step("16", f"Elementos 'Fornecedor' encontrados: {fornecedor_count}")
+        
+        if fornecedor_count > 0:
+            log_step("17", "Perfil Fornecedor encontrado, clicando...")
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            log_step("18", "Clicou no perfil Fornecedor")
+            
+            # Aguardar seleção
+            await page.wait_for_timeout(5000)
+            log_step("19", "Aguardou 5 segundos após seleção de perfil")
+            
+            # Screenshot após seleção de perfil
+            await page.screenshot(path=f"{screenshots_dir}/step_04_profile_selected.png")
+            log_step("20", "Screenshot após seleção de perfil salvo")
+        else:
+            log_step("17", "Perfil Fornecedor não encontrado ou já selecionado")
+        
+        # STEP 6: Screenshot do dashboard
+        await page.screenshot(path=f"{screenshots_dir}/step_05_dashboard.png")
+        log_step("21", "Screenshot do dashboard salvo")
+        
+        # STEP 7: Verificar URL atual
+        current_url = page.url
+        log_step("22", f"URL atual: {current_url}")
+        
+        # STEP 8: Verificar título da página
+        page_title = await page.title()
+        log_step("23", f"Título da página: {page_title}")
+        
+        # STEP 9: Contar elementos visíveis
+        visible_elements = await page.evaluate("""
+            () => {
+                const elements = document.querySelectorAll('*');
+                return Array.from(elements).filter(el => {
+                    const rect = el.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                }).length;
+            }
+        """)
+        log_step("24", f"Elementos visíveis na página: {visible_elements}")
+        
+        # STEP 10: Procurar botões focusable
+        log_step("25", "Procurando botões focusable...")
+        focusable_buttons = await page.locator("button[focusable='true']").count()
+        log_step("26", f"Botões focusable encontrados: {focusable_buttons}")
+        
+        # STEP 11: Procurar primeiro botão
+        log_step("27", "Procurando primeiro botão...")
+        first_button = await page.locator("//button[1]").count()
+        log_step("28", f"Primeiro botão encontrado: {first_button}")
+        
+        # STEP 12: Tentar expandir menu
+        log_step("29", "INICIANDO TENTATIVA DE EXPANDIR MENU...")
+        
+        menu_selectors = [
+            "button[focusable='true']",
+            "//button[@focusable='true']",
+            "//button[1]"
+        ]
+        
+        menu_expanded = False
+        
+        for i, selector in enumerate(menu_selectors):
+            log_step(f"30.{i+1}", f"Tentando seletor: {selector}")
+            
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                log_step(f"31.{i+1}", f"Elementos encontrados com {selector}: {elements}")
+                
+                if elements > 0:
+                    log_step(f"32.{i+1}", f"Clicando com seletor: {selector}")
+                    
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    log_step(f"33.{i+1}", f"Clique executado com {selector}")
+                    
+                    # Aguardar
+                    await page.wait_for_timeout(3000)
+                    log_step(f"34.{i+1}", "Aguardou 3 segundos após clique")
+                    
+                    # Screenshot após clique
+                    await page.screenshot(path=f"{screenshots_dir}/step_06_menu_click_{i+1}.png")
+                    log_step(f"35.{i+1}", f"Screenshot após clique {i+1} salvo")
+                    
+                    # Verificar se menu expandiu
+                    new_elements = await page.evaluate("""
+                        () => {
+                            const elements = document.querySelectorAll('a, button, [role="button"]');
+                            return Array.from(elements).filter(el => {
+                                const rect = el.getBoundingClientRect();
+                                return rect.width > 0 && rect.height > 0;
+                            }).length;
+                        }
+                    """)
+                    
+                    log_step(f"36.{i+1}", f"Elementos após clique: {new_elements}")
+                    
+                    if new_elements > 15:
+                        log_step(f"37.{i+1}", "Menu parece ter expandido!")
+                        menu_expanded = True
+                        break
+                    else:
+                        log_step(f"37.{i+1}", "Menu não expandiu, tentando próximo seletor")
+                        
+                else:
+                    log_step(f"32.{i+1}", f"Nenhum elemento encontrado com {selector}")
+                    
+            except Exception as e:
+                log_step(f"ERROR.{i+1}", f"Erro com {selector}: {str(e)}")
+                continue
+        
+        log_step("38", f"Resultado da expansão do menu: {menu_expanded}")
+        
+        # STEP 13: Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/step_07_final_debug.png")
+        log_step("39", "Screenshot final do debug salvo")
+        
+        # STEP 14: Salvar resultado
+        result = {
+            'menu_expanded': menu_expanded,
+            'current_url': current_url,
+            'page_title': page_title,
+            'visible_elements': visible_elements,
+            'focusable_buttons': focusable_buttons,
+            'first_button': first_button,
+            'fornecedor_count': fornecedor_count,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        with open(f"{screenshots_dir}/debug_result.json", "w") as f:
+            json.dump(result, f, indent=2)
+        
+        log_step("40", "Resultado salvo em debug_result.json")
+        log_step("41", "DEBUG CONCLUÍDO")
+        
+        return result
+        
+    except Exception as e:
+        log_step("ERROR", f"Erro geral: {str(e)}")
+        await page.screenshot(path=f"{screenshots_dir}/step_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+        log_step("42", "Browser fechado")
+
+if __name__ == "__main__":
+    result = asyncio.run(debug_step_by_step())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', debug_step_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Debug step-by-step executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar debug step-by-step: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_step_by_step_debug)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Debug step-by-step iniciado',
+            'note': 'Logs extremamente detalhados para identificar onde trava',
+            'outputs': [
+                'step_by_step_log.txt - Log detalhado de cada passo',
+                'step_01_login_page.png - Página de login',
+                'step_02_credentials_filled.png - Credenciais preenchidas',
+                'step_03_after_login.png - Após login',
+                'step_04_profile_selected.png - Perfil selecionado',
+                'step_05_dashboard.png - Dashboard',
+                'step_06_menu_click_X.png - Tentativas de clique no menu',
+                'step_07_final_debug.png - Estado final',
+                'debug_result.json - Resultado completo'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar debug step-by-step: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar debug step-by-step: {e}'
         }), 500
 
 if __name__ == '__main__':
