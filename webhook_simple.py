@@ -2477,6 +2477,292 @@ def test_simple():
         'status': 'OK'
     })
 
+@app.route('/debug-os-mapping', methods=['GET', 'POST'])
+def debug_os_mapping():
+    """Debug do mapeamento de OS com logs detalhados"""
+    try:
+        def run_debug_test():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código simplificado para debug
+                debug_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def debug_os_mapping():
+    """Debug do mapeamento de OS com logs detalhados"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Log detalhado
+    log_file = f"{screenshots_dir}/debug_log.txt"
+    
+    def log_message(message):
+        print(message)
+        with open(log_file, "a") as f:
+            f.write(f"{datetime.now()}: {message}\\n")
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        log_message("🚀 Iniciando debug do mapeamento...")
+        
+        # Configurar browser
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        log_message("✅ Browser iniciado")
+        
+        # ETAPA 1: Login
+        log_message("🔐 Iniciando login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        log_message("✅ Página de login carregada")
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        log_message("✅ Credenciais preenchidas")
+        
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        log_message("✅ Login realizado")
+        
+        # Screenshot 1
+        await page.screenshot(path=f"{screenshots_dir}/debug_01_login.png")
+        log_message("📸 Screenshot 1 - Login")
+        
+        # ETAPA 2: Seleção de perfil
+        log_message("👤 Verificando seleção de perfil...")
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+            log_message("✅ Perfil Fornecedor selecionado")
+        else:
+            log_message("ℹ️ Perfil já selecionado ou não necessário")
+        
+        # Screenshot 2
+        await page.screenshot(path=f"{screenshots_dir}/debug_02_perfil.png")
+        log_message("📸 Screenshot 2 - Perfil")
+        
+        # ETAPA 3: Expandir menu
+        log_message("🔍 Tentando expandir menu...")
+        menu_expanded = False
+        
+        menu_selectors = [
+            "button[focusable='true']",
+            "//button[@focusable='true']",
+            "//button[1]"
+        ]
+        
+        for i, selector in enumerate(menu_selectors):
+            try:
+                log_message(f"🔍 Tentando seletor {i+1}: {selector}")
+                
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                log_message(f"📊 Elementos encontrados: {elements}")
+                
+                if elements > 0:
+                    log_message(f"✅ Clicando com seletor: {selector}")
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    await page.wait_for_timeout(2000)
+                    menu_expanded = True
+                    log_message("✅ Menu expandido com sucesso")
+                    break
+                else:
+                    log_message(f"❌ Nenhum elemento encontrado com: {selector}")
+                    
+            except Exception as e:
+                log_message(f"❌ Erro com seletor {selector}: {e}")
+                continue
+        
+        # Screenshot 3
+        await page.screenshot(path=f"{screenshots_dir}/debug_03_menu.png")
+        log_message("📸 Screenshot 3 - Menu")
+        
+        if not menu_expanded:
+            log_message("❌ ERRO: Menu não foi expandido")
+            return {"error": "Menu não expandido", "step": "menu_expansion"}
+        
+        # ETAPA 4: Procurar "Gerenciar chamados"
+        log_message("🔍 Procurando 'Gerenciar chamados'...")
+        
+        chamados_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'chamados')]"
+        ]
+        
+        os_page_reached = False
+        for i, selector in enumerate(chamados_selectors):
+            try:
+                log_message(f"🔍 Tentando seletor chamados {i+1}: {selector}")
+                elements = await page.locator(selector).count()
+                log_message(f"📊 Elementos 'chamados' encontrados: {elements}")
+                
+                if elements > 0:
+                    log_message(f"✅ Clicando em 'Gerenciar chamados': {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(5000)
+                    os_page_reached = True
+                    log_message("✅ Página de OS alcançada")
+                    break
+                else:
+                    log_message(f"❌ Nenhum elemento 'chamados' encontrado com: {selector}")
+                    
+            except Exception as e:
+                log_message(f"❌ Erro com seletor chamados {selector}: {e}")
+                continue
+        
+        # Screenshot 4
+        await page.screenshot(path=f"{screenshots_dir}/debug_04_os_page.png")
+        log_message("📸 Screenshot 4 - Página OS")
+        
+        if not os_page_reached:
+            log_message("❌ ERRO: Página de OS não foi alcançada")
+            return {"error": "Página de OS não alcançada", "step": "os_navigation"}
+        
+        # ETAPA 5: Analisar página atual
+        log_message("🔍 Analisando página atual...")
+        current_url = page.url
+        log_message(f"📍 URL atual: {current_url}")
+        
+        # Buscar botões relacionados a OS
+        buttons_info = await page.evaluate("""
+            () => {
+                const buttons = [];
+                document.querySelectorAll('button, a').forEach((el, index) => {
+                    const rect = el.getBoundingClientRect();
+                    const text = el.textContent?.trim() || '';
+                    const visible = rect.width > 0 && rect.height > 0;
+                    
+                    if (visible && text.length > 0) {
+                        buttons.push({
+                            index: index,
+                            text: text,
+                            tagName: el.tagName.toLowerCase(),
+                            classes: el.className || '',
+                            id: el.id || ''
+                        });
+                    }
+                });
+                return buttons;
+            }
+        """)
+        
+        log_message(f"📊 Total de botões encontrados: {len(buttons_info)}")
+        
+        # Procurar botão "Adicionar nova OS"
+        os_buttons = []
+        for button in buttons_info:
+            text_lower = button['text'].lower()
+            if ('adicionar' in text_lower and 'os' in text_lower) or \
+               ('nova' in text_lower and 'os' in text_lower) or \
+               ('novo' in text_lower and 'os' in text_lower):
+                os_buttons.append(button)
+                log_message(f"🎯 Botão OS encontrado: {button['text']}")
+        
+        log_message(f"📊 Botões de OS encontrados: {len(os_buttons)}")
+        
+        # Screenshot 5
+        await page.screenshot(path=f"{screenshots_dir}/debug_05_analysis.png")
+        log_message("📸 Screenshot 5 - Análise")
+        
+        # Salvar dados completos
+        debug_data = {
+            'timestamp': datetime.now().isoformat(),
+            'current_url': current_url,
+            'menu_expanded': menu_expanded,
+            'os_page_reached': os_page_reached,
+            'total_buttons': len(buttons_info),
+            'os_buttons_found': len(os_buttons),
+            'os_buttons': os_buttons,
+            'all_buttons': buttons_info[:10]  # Primeiros 10 para não sobrecarregar
+        }
+        
+        with open(f"{screenshots_dir}/debug_analysis.json", "w") as f:
+            json.dump(debug_data, f, indent=2)
+        
+        log_message("✅ Debug concluído com sucesso")
+        
+        return {
+            'success': True,
+            'current_url': current_url,
+            'os_buttons_found': len(os_buttons),
+            'total_buttons': len(buttons_info),
+            'menu_expanded': menu_expanded,
+            'os_page_reached': os_page_reached
+        }
+        
+    except Exception as e:
+        log_message(f"❌ ERRO GERAL: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/debug_error.png")
+        return {"error": str(e), "step": "general_error"}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+        log_message("🔚 Browser fechado")
+
+if __name__ == "__main__":
+    result = asyncio.run(debug_os_mapping())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', debug_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Debug executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar debug: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_debug_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Debug do mapeamento de OS iniciado',
+            'note': 'Versão com logs detalhados para identificar onde está falhando',
+            'outputs': [
+                'debug_log.txt - Log detalhado de cada etapa',
+                'debug_analysis.json - Análise completa dos elementos',
+                'Screenshots numerados de cada etapa',
+                'Identificação do ponto de falha'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar debug: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar debug: {e}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")
