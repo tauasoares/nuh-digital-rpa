@@ -109,7 +109,8 @@ def home():
                 'test_bubble_structure': '/test-bubble-structure',
                 'test_direct_click': '/test-direct-click',
                 'test_smart_menu': '/test-smart-menu',
-                'test_expandable_menu': '/test-expandable-menu'
+                'test_expandable_menu': '/test-expandable-menu',
+                'test_os_page_mapping': '/test-os-page-mapping'
             },
             'note': 'Acesse /endpoints.html para interface visual ou /debug para diagnóstico'
         })
@@ -160,7 +161,8 @@ def api_info():
             'test_bubble_structure': '/test-bubble-structure',
             'test_direct_click': '/test-direct-click',
             'test_smart_menu': '/test-smart-menu',
-            'test_expandable_menu': '/test-expandable-menu'
+            'test_expandable_menu': '/test-expandable-menu',
+            'test_os_page_mapping': '/test-os-page-mapping'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -2122,6 +2124,348 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar teste expansível: {e}'
+        }), 500
+
+@app.route('/test-os-page-mapping', methods=['GET', 'POST'])
+def test_os_page_mapping():
+    """Mapeia a página 'Controle de OS' e procura pelo botão 'Adicionar nova OS'"""
+    try:
+        def run_os_mapping_test():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código para mapear página de OS
+                os_mapping_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def map_os_page():
+    """Mapeia a página de Controle de OS e procura pelo botão Adicionar nova OS"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        # Configurar browser
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 Iniciando mapeamento da página de Controle de OS...")
+        
+        # ETAPA 1: Fazer login e navegar até página de OS
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/os_map_01_dashboard.png")
+        
+        # ETAPA 2: Navegar para página de Controle de OS (usando método que já funciona)
+        print("🔍 Navegando para página de Controle de OS...")
+        
+        # Expandir menu hambúrguer
+        menu_expanded = False
+        menu_selectors = [
+            "button[focusable='true']",
+            "//button[@focusable='true']",
+            "//button[1]",
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        for selector in menu_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"📍 Expandindo menu com: {selector}")
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    await page.wait_for_timeout(2000)
+                    menu_expanded = True
+                    break
+            except Exception as e:
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não conseguiu expandir o menu")
+            return {"error": "Menu não expandido"}
+        
+        await page.screenshot(path=f"{screenshots_dir}/os_map_02_menu_expanded.png")
+        
+        # Procurar por "Gerenciar chamados"
+        chamados_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]"
+        ]
+        
+        os_page_reached = False
+        for selector in chamados_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    print(f"✅ Clicando em 'Gerenciar chamados': {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(5000)
+                    os_page_reached = True
+                    break
+            except Exception as e:
+                continue
+        
+        if not os_page_reached:
+            print("❌ Não conseguiu chegar na página de OS")
+            return {"error": "Página de OS não alcançada"}
+        
+        await page.screenshot(path=f"{screenshots_dir}/os_map_03_os_page_reached.png")
+        
+        # ETAPA 3: Mapear a página de Controle de OS
+        print("🔍 Mapeando página de Controle de OS...")
+        
+        current_url = page.url
+        print(f"📍 URL atual: {current_url}")
+        
+        # Analisar todos os elementos da página
+        page_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const selectors = ['button', 'a', 'input', 'div', 'span', 'h1', 'h2', 'h3', 'p'];
+                
+                selectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach((el, index) => {
+                        const rect = el.getBoundingClientRect();
+                        const text = el.textContent?.trim() || '';
+                        const visible = rect.width > 0 && rect.height > 0 && el.offsetParent !== null;
+                        
+                        if (visible && text.length > 0) {
+                            elements.push({
+                                tagName: el.tagName.toLowerCase(),
+                                text: text,
+                                classes: el.className || '',
+                                id: el.id || '',
+                                type: el.type || '',
+                                href: el.href || '',
+                                onclick: el.onclick ? 'true' : 'false',
+                                left: rect.left,
+                                top: rect.top,
+                                width: rect.width,
+                                height: rect.height,
+                                focusable: el.getAttribute('focusable') || '',
+                                ariaLabel: el.getAttribute('aria-label') || '',
+                                title: el.getAttribute('title') || ''
+                            });
+                        }
+                    });
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"📋 Total de elementos encontrados: {len(page_elements)}")
+        
+        # ETAPA 4: Procurar especificamente pelo botão "Adicionar nova OS"
+        print("🔍 Procurando pelo botão 'Adicionar nova OS'...")
+        
+        adicionar_os_buttons = []
+        for element in page_elements:
+            text_lower = element['text'].lower()
+            if ('adicionar' in text_lower and 'os' in text_lower) or \
+               ('nova' in text_lower and 'os' in text_lower) or \
+               ('criar' in text_lower and 'os' in text_lower) or \
+               ('novo' in text_lower and 'os' in text_lower):
+                adicionar_os_buttons.append(element)
+        
+        print(f"🎯 Botões relacionados a 'Adicionar OS' encontrados: {len(adicionar_os_buttons)}")
+        
+        # Salvar análise completa
+        analysis_data = {
+            'url': current_url,
+            'timestamp': datetime.now().isoformat(),
+            'total_elements': len(page_elements),
+            'adicionar_os_buttons': adicionar_os_buttons,
+            'all_buttons': [el for el in page_elements if el['tagName'] == 'button'],
+            'all_links': [el for el in page_elements if el['tagName'] == 'a'],
+            'form_elements': [el for el in page_elements if el['tagName'] in ['input', 'textarea', 'select']]
+        }
+        
+        with open(f"{screenshots_dir}/os_page_analysis.json", "w") as f:
+            json.dump(analysis_data, f, indent=2)
+        
+        # ETAPA 5: Tentar clicar no botão "Adicionar nova OS" se encontrado
+        button_clicked = False
+        if adicionar_os_buttons:
+            target_button = adicionar_os_buttons[0]  # Primeiro botão encontrado
+            print(f"🎯 Tentando clicar no botão: {target_button['text']}")
+            
+            try:
+                # Tentar diferentes métodos para clicar
+                click_methods = [
+                    f"text='{target_button['text']}'",
+                    f"button:has-text('{target_button['text'][:20]}')",
+                    f"//button[contains(text(), '{target_button['text'][:20]}')]"
+                ]
+                
+                for method in click_methods:
+                    try:
+                        if method.startswith("//"):
+                            await page.locator(method).click()
+                        else:
+                            await page.click(method)
+                        await page.wait_for_timeout(3000)
+                        button_clicked = True
+                        print(f"✅ Clique realizado com método: {method}")
+                        break
+                    except Exception as e:
+                        continue
+                
+                if button_clicked:
+                    await page.screenshot(path=f"{screenshots_dir}/os_map_04_button_clicked.png")
+                    
+                    # Verificar se navegou para formulário
+                    new_url = page.url
+                    if new_url != current_url:
+                        print(f"✅ Navegou para nova página: {new_url}")
+                        
+                        # Mapear formulário rapidamente
+                        await page.wait_for_timeout(3000)
+                        form_elements = await page.evaluate("""
+                            () => {
+                                const inputs = [];
+                                document.querySelectorAll('input, textarea, select').forEach(el => {
+                                    const rect = el.getBoundingClientRect();
+                                    if (rect.width > 0 && rect.height > 0) {
+                                        inputs.push({
+                                            tagName: el.tagName.toLowerCase(),
+                                            type: el.type || '',
+                                            name: el.name || '',
+                                            id: el.id || '',
+                                            placeholder: el.placeholder || '',
+                                            required: el.required || false,
+                                            classes: el.className || ''
+                                        });
+                                    }
+                                });
+                                return inputs;
+                            }
+                        """)
+                        
+                        await page.screenshot(path=f"{screenshots_dir}/os_map_05_form_page.png")
+                        
+                        analysis_data['form_reached'] = True
+                        analysis_data['form_url'] = new_url
+                        analysis_data['form_elements_detailed'] = form_elements
+                        
+                        with open(f"{screenshots_dir}/os_page_analysis.json", "w") as f:
+                            json.dump(analysis_data, f, indent=2)
+                        
+                        print(f"✅ Formulário mapeado com {len(form_elements)} campos")
+                    else:
+                        print("ℹ️ Permaneceu na mesma página após clique")
+                        
+            except Exception as e:
+                print(f"❌ Erro ao clicar no botão: {e}")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/os_map_06_final.png")
+        
+        # Resultado final
+        result = {
+            'success': True,
+            'current_url': page.url,
+            'os_buttons_found': len(adicionar_os_buttons),
+            'button_clicked': button_clicked,
+            'form_reached': analysis_data.get('form_reached', False),
+            'total_elements_analyzed': len(page_elements)
+        }
+        
+        if adicionar_os_buttons:
+            result['target_button'] = adicionar_os_buttons[0]
+        
+        print(f"✅ Mapeamento concluído: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Erro no mapeamento: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/os_map_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(map_os_page())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', os_mapping_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Mapeamento de OS executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar mapeamento de OS: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_os_mapping_test)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Mapeamento da página de OS iniciado',
+            'note': 'Mapeia a página "Controle de OS" e procura pelo botão "Adicionar nova OS"',
+            'objectives': [
+                '1. Navegar para página de Controle de OS',
+                '2. Mapear todos os elementos da página',
+                '3. Encontrar botão "Adicionar nova OS"', 
+                '4. Tentar clicar no botão',
+                '5. Mapear formulário se alcançado',
+                '6. Salvar análise completa em JSON'
+            ],
+            'outputs': [
+                'Screenshots do processo completo',
+                'Arquivo os_page_analysis.json com análise detalhada',
+                'Mapeamento de elementos do formulário (se encontrado)'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar mapeamento de OS: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar mapeamento de OS: {e}'
         }), 500
 
 if __name__ == '__main__':
