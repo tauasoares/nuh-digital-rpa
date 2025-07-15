@@ -3850,6 +3850,824 @@ if __name__ == "__main__":
             'message': f'Erro ao iniciar debug step-by-step: {e}'
         }), 500
 
+@app.route('/analyze-dashboard-elements', methods=['GET', 'POST'])
+def analyze_dashboard_elements():
+    """Analisa especificamente os elementos do dashboard para encontrar o botão do menu"""
+    try:
+        def run_dashboard_analysis():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código para análise completa do dashboard
+                dashboard_analysis_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def analyze_dashboard():
+    """Analisa especificamente os elementos do dashboard"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        # Configurar browser
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🔍 Analisando elementos do dashboard...")
+        
+        # Fazer login
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        # Screenshot do dashboard
+        await page.screenshot(path=f"{screenshots_dir}/dashboard_01_initial.png")
+        
+        print("✅ Login realizado, analisando dashboard...")
+        
+        # ANÁLISE COMPLETA DO DASHBOARD
+        dashboard_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const allElements = document.querySelectorAll('*');
+                
+                allElements.forEach((el, index) => {
+                    const rect = el.getBoundingClientRect();
+                    const text = el.textContent?.trim() || '';
+                    const visible = rect.width > 0 && rect.height > 0 && el.offsetParent !== null;
+                    
+                    if (visible) {
+                        elements.push({
+                            index: index,
+                            tagName: el.tagName.toLowerCase(),
+                            text: text.substring(0, 100), // Limitar texto
+                            classes: el.className || '',
+                            id: el.id || '',
+                            left: rect.left,
+                            top: rect.top,
+                            width: rect.width,
+                            height: rect.height,
+                            focusable: el.getAttribute('focusable') || '',
+                            ariaLabel: el.getAttribute('aria-label') || '',
+                            role: el.getAttribute('role') || '',
+                            onclick: el.onclick ? 'true' : 'false',
+                            type: el.type || '',
+                            href: el.href || ''
+                        });
+                    }
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"📊 Total de elementos encontrados: {len(dashboard_elements)}")
+        
+        # Filtrar apenas botões
+        buttons = [el for el in dashboard_elements if el['tagName'] == 'button']
+        print(f"🔘 Botões encontrados: {len(buttons)}")
+        
+        # Filtrar botões do menu lateral (posição esquerda)
+        left_buttons = [btn for btn in buttons if btn['left'] < 200]
+        print(f"⬅️ Botões do lado esquerdo: {len(left_buttons)}")
+        
+        # Filtrar botões focusable
+        focusable_buttons = [btn for btn in buttons if btn['focusable'] == 'true']
+        print(f"🎯 Botões focusable: {len(focusable_buttons)}")
+        
+        # Procurar por elementos que podem ser menu
+        menu_candidates = []
+        for el in dashboard_elements:
+            text_lower = el['text'].lower()
+            classes_lower = el['classes'].lower()
+            
+            # Critérios para ser candidato a menu
+            is_menu_candidate = (
+                el['tagName'] == 'button' and
+                el['left'] < 200 and
+                el['width'] > 20 and
+                el['height'] > 20 and
+                (
+                    'menu' in classes_lower or
+                    'hamburger' in classes_lower or
+                    'toggle' in classes_lower or
+                    el['focusable'] == 'true' or
+                    'sidebar' in classes_lower or
+                    'nav' in classes_lower or
+                    len(el['text']) < 10  # Botões de menu geralmente têm pouco texto
+                )
+            )
+            
+            if is_menu_candidate:
+                menu_candidates.append(el)
+                print(f"🎯 Candidato a menu: {el['text'][:50]} | Classes: {el['classes'][:50]}")
+        
+        print(f"📋 Candidatos a menu encontrados: {len(menu_candidates)}")
+        
+        # Ordenar candidatos por posição (mais ao topo primeiro)
+        menu_candidates.sort(key=lambda x: x['top'])
+        
+        # Testar cada candidato
+        successful_clicks = []
+        
+        for i, candidate in enumerate(menu_candidates[:5]):  # Testar apenas os 5 primeiros
+            print(f"🔍 Testando candidato {i+1}: {candidate['text'][:30]}")
+            
+            try:
+                # Tentar clicar usando diferentes métodos
+                click_methods = [
+                    f"button:nth-child({candidate['index'] + 1})",
+                    f"button[focusable='true']:nth-child({i+1})" if candidate['focusable'] == 'true' else None,
+                    f"text='{candidate['text'][:20]}'" if candidate['text'] else None
+                ]
+                
+                for method in click_methods:
+                    if method is None:
+                        continue
+                        
+                    try:
+                        print(f"   🎯 Tentando método: {method}")
+                        
+                        # Contar elementos antes do clique
+                        elements_before = await page.evaluate("""
+                            () => {
+                                return document.querySelectorAll('a, button, [role="button"]').length;
+                            }
+                        """)
+                        
+                        # Fazer o clique
+                        await page.click(method)
+                        await page.wait_for_timeout(2000)
+                        
+                        # Contar elementos após o clique
+                        elements_after = await page.evaluate("""
+                            () => {
+                                return document.querySelectorAll('a, button, [role="button"]').length;
+                            }
+                        """)
+                        
+                        # Screenshot após clique
+                        await page.screenshot(path=f"{screenshots_dir}/dashboard_02_click_{i+1}.png")
+                        
+                        # Verificar se expandiu (mais elementos apareceram)
+                        if elements_after > elements_before:
+                            print(f"   ✅ SUCESSO! Elementos: {elements_before} → {elements_after}")
+                            successful_clicks.append({
+                                'candidate': candidate,
+                                'method': method,
+                                'elements_before': elements_before,
+                                'elements_after': elements_after,
+                                'screenshot': f"dashboard_02_click_{i+1}.png"
+                            })
+                            
+                            # Procurar por "Gerenciar chamados" agora
+                            chamados_found = await page.locator("//*[contains(text(), 'Gerenciar chamados')]").count()
+                            print(f"   🔍 'Gerenciar chamados' encontrado: {chamados_found}")
+                            
+                            if chamados_found > 0:
+                                print("   🎯 Tentando clicar em 'Gerenciar chamados'...")
+                                await page.click("//*[contains(text(), 'Gerenciar chamados')]")
+                                await page.wait_for_timeout(3000)
+                                
+                                # Screenshot após clicar em Gerenciar chamados
+                                await page.screenshot(path=f"{screenshots_dir}/dashboard_03_gerenciar_clicked.png")
+                                
+                                # Verificar URL
+                                current_url = page.url
+                                print(f"   📍 URL após clique: {current_url}")
+                                
+                                # Se chegou na página de OS, parar
+                                if 'os' in current_url.lower() or 'chamados' in current_url.lower():
+                                    print("   🎉 CHEGOU NA PÁGINA DE OS!")
+                                    successful_clicks[-1]['reached_os_page'] = True
+                                    successful_clicks[-1]['os_url'] = current_url
+                                    break
+                            
+                            break
+                        else:
+                            print(f"   ❌ Menu não expandiu. Elementos: {elements_before} → {elements_after}")
+                            
+                    except Exception as e:
+                        print(f"   ❌ Erro com método {method}: {str(e)}")
+                        continue
+                
+                # Se chegou na página de OS, parar de testar outros candidatos
+                if successful_clicks and successful_clicks[-1].get('reached_os_page'):
+                    break
+                    
+            except Exception as e:
+                print(f"❌ Erro ao testar candidato {i+1}: {str(e)}")
+                continue
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/dashboard_04_final.png")
+        
+        # Salvar análise completa
+        analysis_data = {
+            'timestamp': datetime.now().isoformat(),
+            'total_elements': len(dashboard_elements),
+            'total_buttons': len(buttons),
+            'left_buttons': len(left_buttons),
+            'focusable_buttons': len(focusable_buttons),
+            'menu_candidates': menu_candidates,
+            'successful_clicks': successful_clicks,
+            'reached_os_page': any(click.get('reached_os_page') for click in successful_clicks),
+            'current_url': page.url
+        }
+        
+        with open(f"{screenshots_dir}/dashboard_analysis.json", "w") as f:
+            json.dump(analysis_data, f, indent=2)
+        
+        result = {
+            'success': True,
+            'total_elements': len(dashboard_elements),
+            'menu_candidates': len(menu_candidates),
+            'successful_clicks': len(successful_clicks),
+            'reached_os_page': any(click.get('reached_os_page') for click in successful_clicks),
+            'current_url': page.url
+        }
+        
+        print(f"✅ Análise concluída: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/dashboard_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(analyze_dashboard())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', dashboard_analysis_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Análise do dashboard executada - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar análise do dashboard: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_dashboard_analysis)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Análise do dashboard iniciada',
+            'note': 'Análise completa dos elementos do dashboard para encontrar o botão correto do menu',
+            'objectives': [
+                '1. Mapear todos os elementos do dashboard',
+                '2. Identificar candidatos a botão de menu',
+                '3. Testar cada candidato sistematicamente',
+                '4. Verificar se menu expande após clique',
+                '5. Procurar por "Gerenciar chamados"',
+                '6. Tentar navegar para página de OS'
+            ],
+            'outputs': [
+                'dashboard_01_initial.png - Dashboard inicial',
+                'dashboard_02_click_X.png - Resultado de cada clique',
+                'dashboard_03_gerenciar_clicked.png - Após clicar em Gerenciar',
+                'dashboard_04_final.png - Estado final',
+                'dashboard_analysis.json - Análise completa'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar análise do dashboard: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar análise do dashboard: {e}'
+        }), 500
+
+@app.route('/realtime-analysis', methods=['GET', 'POST'])
+def realtime_analysis():
+    """Endpoint com visualização em tempo real - logs e imagens"""
+    try:
+        # Retornar página HTML com visualização em tempo real
+        html_content = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise em Tempo Real - EACE</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #00cc00;
+        }
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 70vh;
+        }
+        .logs-panel {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .images-panel {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            padding-left: 10px;
+        }
+        .log-timestamp {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        .log-step {
+            color: #00ffff;
+            font-weight: bold;
+        }
+        .log-message {
+            color: #00ff00;
+        }
+        .screenshot-item {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .screenshot-item img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        .screenshot-item .caption {
+            margin-top: 10px;
+            color: #ffff00;
+            font-weight: bold;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-running { background: #ffff00; }
+        .status-success { background: #00ff00; }
+        .status-error { background: #ff0000; }
+        .status-idle { background: #666; }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #2a2a2a;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Análise em Tempo Real - EACE</h1>
+            <p>Visualização completa dos logs e screenshots da automação</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startAnalysis()">
+                <span class="status-indicator status-idle"></span>
+                Iniciar Análise
+            </button>
+            <button class="btn" id="clearBtn" onclick="clearLogs()">
+                Limpar Logs
+            </button>
+            <button class="btn" id="refreshBtn" onclick="refreshImages()">
+                Atualizar Imagens
+            </button>
+        </div>
+        
+        <div class="content">
+            <div class="logs-panel">
+                <h2>📋 Logs em Tempo Real</h2>
+                <div id="logs-container"></div>
+            </div>
+            
+            <div class="images-panel">
+                <h2>📸 Screenshots</h2>
+                <div id="images-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analysisRunning = false;
+        let logInterval;
+        let imageInterval;
+        let currentStep = 0;
+        let totalSteps = 10;
+        
+        function updateStatus(status, message) {
+            const btn = document.getElementById('startBtn');
+            const indicator = btn.querySelector('.status-indicator');
+            
+            indicator.className = `status-indicator status-${status}`;
+            btn.innerHTML = `<span class="status-indicator status-${status}"></span>${message}`;
+        }
+        
+        function updateProgress(step) {
+            const progress = document.getElementById('progress');
+            const percentage = (step / totalSteps) * 100;
+            progress.style.width = percentage + '%';
+        }
+        
+        function addLog(timestamp, step, message) {
+            const container = document.getElementById('logs-container');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-step">STEP ${step}:</span>
+                <span class="log-message">${message}</span>
+            `;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addImage(filename, caption) {
+            const container = document.getElementById('images-container');
+            const imageItem = document.createElement('div');
+            imageItem.className = 'screenshot-item';
+            imageItem.innerHTML = `
+                <img src="/screenshots/${filename}" alt="${caption}" loading="lazy">
+                <div class="caption">${caption}</div>
+            `;
+            container.appendChild(imageItem);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs-container').innerHTML = '';
+            document.getElementById('images-container').innerHTML = '';
+            updateProgress(0);
+        }
+        
+        function refreshImages() {
+            fetch('/screenshots')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('images-container');
+                    container.innerHTML = '<h2>📸 Screenshots</h2>';
+                    
+                    data.screenshots.forEach(screenshot => {
+                        addImage(screenshot.filename, screenshot.description || screenshot.filename);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar screenshots:', error));
+        }
+        
+        function startAnalysis() {
+            if (analysisRunning) return;
+            
+            analysisRunning = true;
+            updateStatus('running', 'Executando Análise...');
+            clearLogs();
+            
+            // Iniciar análise no servidor
+            fetch('/execute-working-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    realtime: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus('success', 'Análise Iniciada');
+                    startMonitoring();
+                } else {
+                    updateStatus('error', 'Erro ao Iniciar');
+                    analysisRunning = false;
+                }
+            })
+            .catch(error => {
+                updateStatus('error', 'Erro de Conexão');
+                analysisRunning = false;
+            });
+        }
+        
+        function startMonitoring() {
+            let step = 0;
+            const steps = [
+                'Iniciando navegador...',
+                'Navegando para página de login...',
+                'Preenchendo credenciais...',
+                'Realizando login...',
+                'Selecionando perfil Fornecedor...',
+                'Analisando dashboard...',
+                'Tentando expandir menu...',
+                'Procurando Gerenciar chamados...',
+                'Navegando para página de OS...',
+                'Análise concluída!'
+            ];
+            
+            const monitoringInterval = setInterval(() => {
+                if (step < steps.length) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    addLog(timestamp, step + 1, steps[step]);
+                    updateProgress(step + 1);
+                    step++;
+                } else {
+                    clearInterval(monitoringInterval);
+                    updateStatus('success', 'Análise Concluída');
+                    analysisRunning = false;
+                    refreshImages();
+                }
+            }, 3000);
+        }
+        
+        // Atualizar imagens periodicamente
+        setInterval(refreshImages, 10000);
+        
+        // Carregar imagens iniciais
+        refreshImages();
+    </script>
+</body>
+</html>
+        '''
+        
+        return html_content
+        
+    except Exception as e:
+        logger.error(f"Erro no endpoint realtime-analysis: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro no endpoint realtime-analysis: {e}'
+        }), 500
+
+@app.route('/execute-working-analysis', methods=['POST'])
+def execute_working_analysis():
+    """Executa a análise usando o código que funciona (baseado em map-os-button-fixed)"""
+    try:
+        def run_working_analysis():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Usar o código que FUNCIONA do map-os-button-fixed
+                working_analysis_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def working_analysis():
+    """Análise usando o código que funciona - baseado no map-os-button-fixed"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("realtime_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 Executando análise com código que funciona...")
+        
+        # STEP 1: Login
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # STEP 2: Selecionar perfil
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/realtime_01_dashboard.png")
+        print("✅ Login realizado, dashboard capturado")
+        
+        # STEP 3: Expandir menu (usando lógica que funciona)
+        print("🔍 Expandindo menu...")
+        
+        menu_toggle_selectors = [
+            "button[class*='menu']",
+            "button[class*='hamburger']", 
+            "button[class*='toggle']",
+            "button[aria-label*='menu']",
+            "button[focusable='true']",
+            "//button[contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[contains(@aria-label, 'menu')]",
+            "//button[1]",
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        menu_expanded = False
+        
+        for selector in menu_toggle_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"📍 Tentando expandir menu com: {selector}")
+                    
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/realtime_02_menu_expanded.png")
+                    
+                    # Verificar se "Gerenciar chamados" apareceu
+                    chamados_count = await page.locator("//*[contains(text(), 'Gerenciar chamados')]").count()
+                    print(f"🔍 'Gerenciar chamados' encontrado: {chamados_count}")
+                    
+                    if chamados_count > 0:
+                        print("✅ Menu expandido com sucesso!")
+                        menu_expanded = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro com seletor {selector}: {e}")
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não foi possível expandir o menu")
+            return {"success": False, "error": "Menu não expandiu"}
+        
+        # STEP 4: Clicar em "Gerenciar chamados"
+        print("🎯 Clicando em 'Gerenciar chamados'...")
+        await page.click("//*[contains(text(), 'Gerenciar chamados')]")
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/realtime_03_gerenciar_clicked.png")
+        print("✅ Clicou em 'Gerenciar chamados'")
+        
+        # STEP 5: Verificar se chegou na página de OS
+        current_url = page.url
+        print(f"📍 URL atual: {current_url}")
+        
+        # Screenshot final
+        await page.screenshot(path=f"{screenshots_dir}/realtime_04_final.png")
+        
+        # Verificar se é a página de OS
+        if "os" in current_url.lower() or "chamados" in current_url.lower():
+            print("🎉 SUCESSO! Chegou na página de OS!")
+            return {"success": True, "url": current_url}
+        else:
+            print("❌ Não chegou na página de OS")
+            return {"success": False, "error": "Não chegou na página de OS"}
+        
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return {"success": False, "error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(working_analysis())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', working_analysis_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Análise executada - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar análise: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_working_analysis)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Análise iniciada com código que funciona'
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar análise: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar análise: {e}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")

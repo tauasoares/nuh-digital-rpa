@@ -55,21 +55,54 @@ Automatizar o acesso ao sistema EACE (https://eace.org.br) para abertura de tick
 7. **Endpoint `/test-expandable-menu`**: 100% funcional, chega na página de Controle de OS
 
 ### 🎯 Próximo passo imediato:
-**Mapear botão "Adicionar nova OS" na página de Controle de OS**:
-- Usar como base o endpoint `/test-expandable-menu` que já funciona
-- Screenshot `expandable_05_second_element.png` mostra a página de Controle de OS
-- Identificar e clicar no botão "Adicionar nova OS"
-- Mapear formulário de criação (sem preencher)
+**Executar análise sistemática com endpoint `/analyze-dashboard-elements`** para:
+- Identificar o botão correto do menu hambúrguer
+- Testar todos os candidatos a menu sistematicamente
+- Verificar qual expande o menu e mostra "Gerenciar chamados"
+- Navegar corretamente para a página "Controle de OS"
+- Após navegação bem-sucedida, mapear o botão "Adicionar nova OS"
 
 ### 🔧 Endpoints Ativos:
 - `/test-expandable-menu` - ✅ Navegação completa até página de OS
-- `/debug-os-mapping` - 🔍 Debug detalhado para troubleshooting
+- `/map-os-button-fixed` - ✅ **FUNCIONA**: Usa código idêntico ao test-expandable-menu
+- `/analyze-dashboard-elements` - 🔍 Análise sistemática completa do dashboard
+- `/realtime-analysis` - 🖥️ **NOVO**: Visualização em tempo real com logs e screenshots
+- `/debug-step-by-step` - ❌ **PROBLEMA**: Para no dashboard, não navega para OS
 - Interface HTML `/` - 📱 Página visual com todos os endpoints
 
 ### 📁 Arquivos principais:
-- `webhook_simple.py`: Endpoint `/test-expandable-menu` (FUNCIONANDO)
+- `webhook_simple.py`: Endpoint `/test-expandable-menu` (FUNCIONANDO) + `/analyze-dashboard-elements` (NOVO)
+- `endpoints.html`: Interface HTML atualizada com novo endpoint
 - `CLAUDE.md`: Este arquivo (documentação atualizada)
 - Screenshots em `/tmp/screenshots` via galeria web
+
+### 🔍 Análise dos Endpoints:
+
+#### ✅ **Endpoints que FUNCIONAM**:
+1. **`/test-expandable-menu`**: Navegação completa para página de OS
+   - Usa lógica robusta com múltiplos seletores
+   - Verifica expansão do menu efetivamente
+   - Procura por "Gerenciar chamados" após expansão
+   - **RESULTADO**: Gera `expandable_05_second_element.png` e `expandable_06_final.png` na página de OS
+
+2. **`/map-os-button-fixed`**: Código idêntico ao test-expandable-menu
+   - Mesma lógica de expansão de menu
+   - Mesma verificação de "Gerenciar chamados"
+   - **RESULTADO**: Gera `expandable_01_dashboard.png`, `expandable_02_menu_not_expanded.png`, `expandable_05_second_element.png`, `expandable_06_final.png`
+
+#### ❌ **Endpoint com PROBLEMA**:
+1. **`/debug-step-by-step`**: Para no dashboard, não navega para OS
+   - Usa lógica diferente e limitada (apenas 3 seletores)
+   - Critério diferente para verificar expansão (>15 elementos)
+   - **RESULTADO**: Gera apenas `step_01_login_page.png`, `step_02_credentials_filled.png`, `step_03_after_login.png`, `step_04_profile_selected.png`, `step_05_dashboard.png`, `step_07_final_debug.png`
+
+#### 🖥️ **Novo Endpoint de Visualização**:
+- **`/realtime-analysis`**: Interface visual em tempo real
+  - Visualiza logs ao vivo durante execução
+  - Mostra screenshots conforme são gerados
+  - Usa código que funciona do `/map-os-button-fixed`
+  - Interface terminal verde com progresso visual
+  - Atualização automática de imagens a cada 10 segundos
 
 ## Próximos Passos
 1. [x] Instalar Selenium WebDriver - **CONCLUÍDO**
