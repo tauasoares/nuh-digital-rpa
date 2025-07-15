@@ -111,7 +111,8 @@ def home():
                 'test_smart_menu': '/test-smart-menu',
                 'test_expandable_menu': '/test-expandable-menu',
                 'test_os_page_mapping': '/test-os-page-mapping',
-                'map_adicionar_os_button': '/map-adicionar-os-button'
+                'map_adicionar_os_button': '/map-adicionar-os-button',
+                'map_os_button_fixed': '/map-os-button-fixed'
             },
             'note': 'Acesse /endpoints.html para interface visual ou /debug para diagnóstico'
         })
@@ -164,7 +165,8 @@ def api_info():
             'test_smart_menu': '/test-smart-menu',
             'test_expandable_menu': '/test-expandable-menu',
             'test_os_page_mapping': '/test-os-page-mapping',
-            'map_adicionar_os_button': '/map-adicionar-os-button'
+            'map_adicionar_os_button': '/map-adicionar-os-button',
+            'map_os_button_fixed': '/map-os-button-fixed'
         },
         'note': 'Versão simplificada para teste'
     })
@@ -3171,6 +3173,392 @@ if __name__ == "__main__":
         return jsonify({
             'status': 'error',
             'message': f'Erro ao iniciar mapeamento botão OS: {e}'
+        }), 500
+
+@app.route('/map-os-button-fixed', methods=['GET', 'POST'])
+def map_os_button_fixed():
+    """Versão corrigida - copia EXATAMENTE o test-expandable-menu e adiciona mapeamento do botão"""
+    try:
+        def run_fixed_mapping():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código IDÊNTICO ao test-expandable-menu + mapeamento do botão
+                fixed_mapping_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def map_os_button_fixed():
+    """Versão corrigida - copia EXATAMENTE o test-expandable-menu funcionando"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        # Configurar browser
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 Versão corrigida - baseada EXATAMENTE no test-expandable-menu")
+        
+        # CÓDIGO IDÊNTICO AO TEST-EXPANDABLE-MENU QUE FUNCIONA
+        print("🔐 Fazendo login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        # Selecionar perfil se necessário
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/fixed_01_dashboard.png")
+        
+        # FASE 1: Expandir o menu (hambúrguer) - CÓDIGO IDÊNTICO
+        print("🔍 FASE 1: Procurando e expandindo o menu...")
+        
+        menu_expanded = False
+        
+        # Seletores para botão de menu hambúrguer - IDÊNTICOS AO ORIGINAL
+        menu_toggle_selectors = [
+            "button[class*='menu']",
+            "button[class*='hamburger']", 
+            "button[class*='toggle']",
+            "button[aria-label*='menu']",
+            "button[focusable='true']",
+            "//button[contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[contains(@aria-label, 'menu')]",
+            "//button[1]",  # Primeiro botão da página
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        for selector in menu_toggle_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"📍 Tentando expandir menu com: {selector}")
+                    
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/fixed_02_menu_expanded.png")
+                    
+                    # Verificar se menu foi expandido (procurar por mais elementos visíveis)
+                    visible_elements = await page.evaluate("""
+                        () => {
+                            const elements = document.querySelectorAll('a, button, [role="button"]');
+                            return Array.from(elements).filter(el => {
+                                const rect = el.getBoundingClientRect();
+                                return rect.width > 0 && rect.height > 0;
+                            }).length;
+                        }
+                    """)
+                    
+                    print(f"🔍 Elementos visíveis após clique: {visible_elements}")
+                    
+                    # Assumir que menu foi expandido se há mais elementos visíveis
+                    if visible_elements > 10:  # Threshold arbitrário
+                        menu_expanded = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao expandir menu com {selector}: {e}")
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não conseguiu expandir o menu")
+            await page.screenshot(path=f"{screenshots_dir}/fixed_02_menu_not_expanded.png")
+            return {"error": "Menu não expandido"}
+        
+        # FASE 2: Procurar e clicar no item do menu relacionado a OS - CÓDIGO IDÊNTICO
+        print("🔍 FASE 2: Procurando item 'Gerenciar chamados' ou similar...")
+        
+        os_found = False
+        
+        # Primeiro, procurar especificamente por "Gerenciar chamados" - IDÊNTICO
+        specific_selectors = [
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//div[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'chamados')]",
+            "//a[contains(text(), 'chamados')]",
+            "//*[contains(text(), 'chamados')]"
+        ]
+        
+        for selector in specific_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    print(f"📍 Encontrado 'Gerenciar chamados': {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    await page.screenshot(path=f"{screenshots_dir}/fixed_03_chamados_clicked.png")
+                    
+                    # Verificar se navegou para página de OS/chamados
+                    current_url = page.url
+                    if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                        print(f"✅ SUCESSO! Navegou para: {current_url}")
+                        os_found = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro ao clicar em {selector}: {e}")
+                continue
+        
+        # Se não encontrou "Gerenciar chamados", procurar por outros termos - IDÊNTICO
+        if not os_found:
+            print("🔍 Procurando por termos alternativos...")
+            
+            alternative_selectors = [
+                "//*[contains(text(), 'OS')]",
+                "//*[contains(text(), 'Operação')]",
+                "//*[contains(text(), 'Controle')]",
+                "//*[contains(text(), 'Tickets')]",
+                "//*[contains(text(), 'Atendimento')]",
+                "//button[contains(@class, 'generic')]",
+                "//a[contains(@href, 'os')]",
+                "//a[contains(@href, 'chamados')]",
+                "//a[contains(@href, 'controle')]"
+            ]
+            
+            for selector in alternative_selectors:
+                try:
+                    elements = await page.locator(selector).count()
+                    if elements > 0:
+                        print(f"📍 Tentando alternativa: {selector}")
+                        await page.locator(selector).click()
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/fixed_04_alternative_clicked.png")
+                        
+                        current_url = page.url
+                        if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                            print(f"✅ SUCESSO com alternativa! URL: {current_url}")
+                            os_found = True
+                            break
+                            
+                except Exception as e:
+                    print(f"❌ Erro com alternativa {selector}: {e}")
+                    continue
+        
+        # FASE 3: Análise estrutural do menu expandido - CÓDIGO IDÊNTICO
+        if not os_found:
+            print("🔍 FASE 3: Analisando estrutura do menu expandido...")
+            
+            # Mapear todos os elementos do menu expandido
+            menu_elements = await page.evaluate("""
+                () => {
+                    const elements = [];
+                    const selectors = ['button', 'a', '[role="button"]', 'div[onclick]'];
+                    
+                    selectors.forEach(selector => {
+                        document.querySelectorAll(selector).forEach((el, index) => {
+                            const rect = el.getBoundingClientRect();
+                            const text = el.textContent?.trim() || '';
+                            
+                            // Focar no menu lateral esquerdo
+                            if (rect.left < 200 && rect.width > 10 && rect.height > 10 && text.length > 0) {
+                                elements.push({
+                                    tagName: el.tagName.toLowerCase(),
+                                    text: text,
+                                    classes: el.className,
+                                    href: el.href || '',
+                                    left: rect.left,
+                                    top: rect.top,
+                                    index: index
+                                });
+                            }
+                        });
+                    });
+                    
+                    return elements.sort((a, b) => a.top - b.top);
+                }
+            """)
+            
+            print(f"📋 Elementos encontrados no menu: {len(menu_elements)}")
+            
+            # Procurar pelo segundo elemento (baseado no feedback do usuário) - IDÊNTICO
+            if len(menu_elements) >= 2:
+                target_element = menu_elements[1]  # Segundo elemento (índice 1)
+                print(f"🎯 Tentando segundo elemento: {target_element}")
+                
+                try:
+                    # Tentar clicar no elemento por texto
+                    if target_element['text']:
+                        await page.click(f"text='{target_element['text']}'")
+                        await page.wait_for_timeout(3000)
+                        await page.screenshot(path=f"{screenshots_dir}/fixed_05_second_element.png")
+                        
+                        current_url = page.url
+                        if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
+                            print(f"✅ SUCESSO com segundo elemento! URL: {current_url}")
+                            os_found = True
+                            
+                except Exception as e:
+                    print(f"❌ Erro ao clicar no segundo elemento: {e}")
+        
+        # Screenshot da página final
+        await page.screenshot(path=f"{screenshots_dir}/fixed_06_final_page.png")
+        
+        if not os_found:
+            print("❌ Não conseguiu navegar para página de OS/chamados")
+            return {"error": "Página de OS não alcançada"}
+        
+        # AGORA ADICIONAR O MAPEAMENTO DO BOTÃO "ADICIONAR NOVA OS"
+        print("🎯 ADICIONANDO: Mapeamento do botão 'Adicionar nova OS'...")
+        
+        current_url = page.url
+        print(f"📍 URL da página de OS: {current_url}")
+        
+        # Mapear todos os elementos da página
+        page_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const selectors = ['button', 'a', 'div', 'span', 'input'];
+                
+                selectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach((el, index) => {
+                        const rect = el.getBoundingClientRect();
+                        const text = el.textContent?.trim() || '';
+                        const visible = rect.width > 0 && rect.height > 0 && el.offsetParent !== null;
+                        
+                        if (visible && text.length > 0) {
+                            elements.push({
+                                tagName: el.tagName.toLowerCase(),
+                                text: text,
+                                classes: el.className || '',
+                                id: el.id || '',
+                                type: el.type || '',
+                                href: el.href || '',
+                                left: rect.left,
+                                top: rect.top,
+                                width: rect.width,
+                                height: rect.height,
+                                focusable: el.getAttribute('focusable') || '',
+                                onclick: el.onclick ? 'true' : 'false'
+                            });
+                        }
+                    });
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"📊 Total de elementos na página: {len(page_elements)}")
+        
+        # Procurar especificamente pelo botão "Adicionar nova OS"
+        adicionar_os_buttons = []
+        for element in page_elements:
+            text_lower = element['text'].lower()
+            if ('adicionar' in text_lower and ('os' in text_lower or 'nova' in text_lower)) or \
+               ('nova' in text_lower and 'os' in text_lower) or \
+               ('criar' in text_lower and 'os' in text_lower) or \
+               ('novo' in text_lower and 'os' in text_lower) or \
+               ('adicionar nova' in text_lower):
+                adicionar_os_buttons.append(element)
+                print(f"🎯 Botão encontrado: '{element['text']}' - {element['tagName']}")
+        
+        print(f"📊 Botões 'Adicionar OS' encontrados: {len(adicionar_os_buttons)}")
+        
+        # Salvar análise completa
+        analysis_data = {
+            'timestamp': datetime.now().isoformat(),
+            'current_url': current_url,
+            'total_elements': len(page_elements),
+            'adicionar_os_buttons': adicionar_os_buttons,
+            'all_buttons': [el for el in page_elements if el['tagName'] == 'button'][:20],
+            'success': os_found and len(adicionar_os_buttons) > 0
+        }
+        
+        with open(f"{screenshots_dir}/fixed_button_analysis.json", "w") as f:
+            json.dump(analysis_data, f, indent=2)
+        
+        result = {
+            'success': os_found,
+            'os_page_reached': os_found,
+            'current_url': current_url,
+            'os_buttons_found': len(adicionar_os_buttons),
+            'total_elements': len(page_elements),
+            'target_buttons': adicionar_os_buttons
+        }
+        
+        print(f"✅ Mapeamento corrigido concluído: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        await page.screenshot(path=f"{screenshots_dir}/fixed_error.png")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(map_os_button_fixed())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', fixed_mapping_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Mapeamento corrigido executado - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar mapeamento corrigido: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_fixed_mapping)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Mapeamento corrigido do botão "Adicionar nova OS" iniciado',
+            'note': 'Copia EXATAMENTE o código do test-expandable-menu que funciona',
+            'changes': [
+                'Código idêntico ao test-expandable-menu',
+                'Adiciona apenas o mapeamento do botão no final',
+                'Mesma lógica de 3 fases que funciona',
+                'Screenshots fixed_01 até fixed_06'
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar mapeamento corrigido: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar mapeamento corrigido: {e}'
         }), 500
 
 if __name__ == '__main__':
