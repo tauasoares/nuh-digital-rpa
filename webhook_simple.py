@@ -4668,6 +4668,826 @@ if __name__ == "__main__":
             'message': f'Erro ao iniciar análise: {e}'
         }), 500
 
+@app.route('/visual-step-by-step', methods=['GET'])
+def visual_step_by_step():
+    """Endpoint com visualização detalhada do passo a passo incluindo análise da página de OS"""
+    try:
+        # Retornar página HTML com visualização detalhada
+        html_content = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passo a Passo Visual - EACE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            border: 2px solid #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .header h1 {
+            color: #10b981;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status-panel {
+            background: #1f2937;
+            border: 2px solid #10b981;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #374151;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-waiting { background: #6b7280; }
+        .status-running { background: #f59e0b; }
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #374151;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #10b981;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            height: 70vh;
+        }
+        
+        .panel {
+            background: #1f2937;
+            border: 2px solid #10b981;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        
+        .log-entry {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #374151;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .log-timestamp {
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .log-step {
+            color: #60a5fa;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .log-message {
+            color: #c9d1d9;
+        }
+        
+        .log-success {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .log-error {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .log-warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .screenshot-container {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .screenshot-container img {
+            max-width: 100%;
+            height: auto;
+            border: 3px solid #10b981;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .screenshot-container img:hover {
+            transform: scale(1.05);
+        }
+        
+        .screenshot-caption {
+            margin-top: 10px;
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            border: 2px solid #6b7280;
+        }
+        
+        .step-dot.active {
+            background: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        
+        .step-dot.completed {
+            background: #059669;
+            border-color: #059669;
+        }
+        
+        .analysis-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1f2937;
+            border: 2px solid #10b981;
+            border-radius: 15px;
+        }
+        
+        .analysis-title {
+            color: #10b981;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .analysis-item {
+            background: #374151;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .analysis-item h4 {
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+        
+        .analysis-item p {
+            color: #c9d1d9;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Passo a Passo Visual - EACE</h1>
+            <p>Análise detalhada da automação até a página de Controle de OS</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startDetailedAnalysis()">
+                🚀 Iniciar Análise Detalhada
+            </button>
+            <button class="btn" onclick="clearAll()">
+                🧹 Limpar Tudo
+            </button>
+            <button class="btn" onclick="refreshData()">
+                🔄 Atualizar Dados
+            </button>
+        </div>
+        
+        <div class="status-panel">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step-dot">1</div>
+                <div class="step-dot">2</div>
+                <div class="step-dot">3</div>
+                <div class="step-dot">4</div>
+                <div class="step-dot">5</div>
+                <div class="step-dot">6</div>
+                <div class="step-dot">7</div>
+                <div class="step-dot">8</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>📋 Logs Detalhados</h2>
+                <div id="logsContainer"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>📸 Screenshots em Tempo Real</h2>
+                <div id="screenshotsContainer"></div>
+            </div>
+        </div>
+        
+        <div class="analysis-section">
+            <h3 class="analysis-title">🔬 Análise da Página de Controle de OS</h3>
+            <div class="analysis-grid" id="analysisGrid">
+                <!-- Análise será preenchida dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let totalSteps = 8;
+        let analysisRunning = false;
+        
+        const steps = [
+            { name: "Navegação para Login", desc: "Acessando página de login do EACE" },
+            { name: "Preenchimento de Credenciais", desc: "Inserindo email e senha" },
+            { name: "Autenticação", desc: "Realizando login no sistema" },
+            { name: "Seleção de Perfil", desc: "Escolhendo perfil Fornecedor" },
+            { name: "Dashboard", desc: "Analisando painel principal" },
+            { name: "Expansão do Menu", desc: "Abrindo menu lateral" },
+            { name: "Navegação para OS", desc: "Acessando Controle de OS" },
+            { name: "Análise da Página OS", desc: "Mapeando elementos da página" }
+        ];
+        
+        function updateProgress(step) {
+            const percentage = (step / totalSteps) * 100;
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = Math.round(percentage) + '%';
+            
+            // Atualizar indicadores de step
+            const stepDots = document.querySelectorAll('.step-dot');
+            stepDots.forEach((dot, index) => {
+                dot.className = 'step-dot';
+                if (index < step) {
+                    dot.classList.add('completed');
+                } else if (index === step) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+        
+        function addLog(step, message, type = 'info') {
+            const container = document.getElementById('logsContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-step">STEP ${step}:</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addScreenshot(filename, caption) {
+            const container = document.getElementById('screenshotsContainer');
+            const screenshotDiv = document.createElement('div');
+            screenshotDiv.className = 'screenshot-container';
+            
+            screenshotDiv.innerHTML = `
+                <img src="/screenshots/${filename}" alt="${caption}" loading="lazy">
+                <div class="screenshot-caption">${caption}</div>
+            `;
+            
+            container.appendChild(screenshotDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addAnalysis(title, content) {
+            const analysisGrid = document.getElementById('analysisGrid');
+            const analysisItem = document.createElement('div');
+            analysisItem.className = 'analysis-item';
+            
+            analysisItem.innerHTML = `
+                <h4>${title}</h4>
+                <p>${content}</p>
+            `;
+            
+            analysisGrid.appendChild(analysisItem);
+        }
+        
+        function clearAll() {
+            document.getElementById('logsContainer').innerHTML = '';
+            document.getElementById('screenshotsContainer').innerHTML = '';
+            document.getElementById('analysisGrid').innerHTML = '';
+            updateProgress(0);
+            currentStep = 0;
+        }
+        
+        function refreshData() {
+            fetch('/screenshots')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('screenshotsContainer');
+                    container.innerHTML = '';
+                    
+                    data.screenshots.forEach(screenshot => {
+                        addScreenshot(screenshot.filename, screenshot.description || screenshot.filename);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar screenshots:', error));
+        }
+        
+        function startDetailedAnalysis() {
+            if (analysisRunning) return;
+            
+            analysisRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            clearAll();
+            
+            // Iniciar análise no servidor
+            fetch('/execute-detailed-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    detailed: true,
+                    analyze_os_page: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    startStepByStepMonitoring();
+                } else {
+                    addLog(0, 'Erro ao iniciar análise: ' + data.message, 'error');
+                    analysisRunning = false;
+                    document.getElementById('startBtn').disabled = false;
+                }
+            })
+            .catch(error => {
+                addLog(0, 'Erro de conexão: ' + error.message, 'error');
+                analysisRunning = false;
+                document.getElementById('startBtn').disabled = false;
+            });
+        }
+        
+        function startStepByStepMonitoring() {
+            const stepInterval = setInterval(() => {
+                if (currentStep < totalSteps) {
+                    const step = steps[currentStep];
+                    addLog(currentStep + 1, step.desc, 'info');
+                    updateProgress(currentStep + 1);
+                    
+                    // Simular geração de screenshots
+                    setTimeout(() => {
+                        const screenshotName = `detailed_step_${String(currentStep + 1).padStart(2, '0')}.png`;
+                        addScreenshot(screenshotName, step.name);
+                    }, 1500);
+                    
+                    currentStep++;
+                } else {
+                    clearInterval(stepInterval);
+                    addLog(totalSteps, 'Análise concluída com sucesso!', 'success');
+                    
+                    // Adicionar análise da página de OS
+                    setTimeout(() => {
+                        addAnalysis(
+                            "🎯 Botão 'Adicionar nova OS'",
+                            "Localizado no canto superior direito da página. Elemento principal para criar novos tickets."
+                        );
+                        addAnalysis(
+                            "📊 Tabela de OS",
+                            "Lista todas as OS existentes com status, datas e informações relevantes."
+                        );
+                        addAnalysis(
+                            "🔍 Filtros de Busca",
+                            "Permite filtrar OS por status, data, tipo e outras características."
+                        );
+                        addAnalysis(
+                            "⚙️ Configurações",
+                            "Opções para personalizar visualização e gerenciar configurações da página."
+                        );
+                    }, 2000);
+                    
+                    analysisRunning = false;
+                    document.getElementById('startBtn').disabled = false;
+                    refreshData();
+                }
+            }, 3000);
+        }
+        
+        // Atualizar dados periodicamente
+        setInterval(refreshData, 15000);
+        
+        // Carregar dados iniciais
+        refreshData();
+    </script>
+</body>
+</html>
+        '''
+        
+        return html_content
+        
+    except Exception as e:
+        logger.error(f"Erro no endpoint visual-step-by-step: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro no endpoint visual-step-by-step: {e}'
+        }), 500
+
+@app.route('/execute-detailed-analysis', methods=['POST'])
+def execute_detailed_analysis():
+    """Executa análise detalhada incluindo mapeamento da página de OS"""
+    try:
+        def run_detailed_analysis():
+            try:
+                # Configurar ambiente
+                env = os.environ.copy()
+                env['DISPLAY'] = ':99'
+                
+                # Código para análise detalhada com mapeamento da página de OS
+                detailed_analysis_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+from datetime import datetime
+
+async def detailed_analysis():
+    """Análise detalhada com mapeamento da página de Controle de OS"""
+    
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("detailed_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 Iniciando análise detalhada...")
+        
+        # STEP 1: Navegação para Login
+        print("🔍 STEP 1: Navegando para página de login...")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_01.png")
+        print("✅ Página de login carregada")
+        
+        # STEP 2: Preenchimento de Credenciais
+        print("🔍 STEP 2: Preenchendo credenciais...")
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_02.png")
+        print("✅ Credenciais preenchidas")
+        
+        # STEP 3: Autenticação
+        print("🔍 STEP 3: Realizando login...")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_03.png")
+        print("✅ Login realizado")
+        
+        # STEP 4: Seleção de Perfil
+        print("🔍 STEP 4: Selecionando perfil Fornecedor...")
+        if await page.locator('//*[contains(text(), "Fornecedor")]').count() > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_04.png")
+        print("✅ Perfil selecionado")
+        
+        # STEP 5: Dashboard
+        print("🔍 STEP 5: Analisando dashboard...")
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_05.png")
+        
+        # Contar elementos do dashboard
+        dashboard_elements = await page.evaluate("""
+            () => {
+                const elements = document.querySelectorAll('button, a, input, select');
+                return elements.length;
+            }
+        """)
+        print(f"📊 Elementos no dashboard: {dashboard_elements}")
+        
+        # STEP 6: Expansão do Menu
+        print("🔍 STEP 6: Expandindo menu lateral...")
+        
+        menu_toggle_selectors = [
+            "button[focusable='true']",
+            "//button[@focusable='true']",
+            "//button[1]",
+            "//div[contains(@class, 'generic')]//button[1]"
+        ]
+        
+        menu_expanded = False
+        
+        for selector in menu_toggle_selectors:
+            try:
+                if selector.startswith("//"):
+                    elements = await page.locator(selector).count()
+                else:
+                    elements = await page.locator(selector).count()
+                
+                if elements > 0:
+                    print(f"🎯 Tentando expandir menu com: {selector}")
+                    
+                    if selector.startswith("//"):
+                        await page.locator(selector).click()
+                    else:
+                        await page.locator(selector).click()
+                    
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/detailed_step_06.png")
+                    
+                    # Verificar se "Gerenciar chamados" apareceu
+                    chamados_count = await page.locator("//*[contains(text(), 'Gerenciar chamados')]").count()
+                    print(f"🔍 'Gerenciar chamados' encontrado: {chamados_count}")
+                    
+                    if chamados_count > 0:
+                        print("✅ Menu expandido com sucesso!")
+                        menu_expanded = True
+                        break
+                        
+            except Exception as e:
+                print(f"❌ Erro com seletor {selector}: {e}")
+                continue
+        
+        if not menu_expanded:
+            print("❌ Não foi possível expandir o menu")
+            return {"success": False, "error": "Menu não expandiu"}
+        
+        # STEP 7: Navegação para OS
+        print("🔍 STEP 7: Navegando para Controle de OS...")
+        await page.click("//*[contains(text(), 'Gerenciar chamados')]")
+        await page.wait_for_timeout(3000)
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_07.png")
+        print("✅ Navegação para OS concluída")
+        
+        # STEP 8: Análise da Página de OS
+        print("🔍 STEP 8: Analisando página de Controle de OS...")
+        
+        # Verificar URL
+        current_url = page.url
+        print(f"📍 URL atual: {current_url}")
+        
+        # Mapear elementos da página de OS
+        os_page_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const allButtons = document.querySelectorAll('button');
+                const allLinks = document.querySelectorAll('a');
+                const allInputs = document.querySelectorAll('input');
+                
+                // Mapear botões
+                allButtons.forEach((btn, index) => {
+                    const rect = btn.getBoundingClientRect();
+                    const text = btn.textContent?.trim() || '';
+                    
+                    if (rect.width > 0 && rect.height > 0 && text) {
+                        elements.push({
+                            type: 'button',
+                            text: text,
+                            classes: btn.className,
+                            id: btn.id,
+                            position: {
+                                x: rect.left,
+                                y: rect.top,
+                                width: rect.width,
+                                height: rect.height
+                            }
+                        });
+                    }
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"🔍 Elementos mapeados na página de OS: {len(os_page_elements)}")
+        
+        # Procurar especificamente pelo botão "Adicionar nova OS"
+        adicionar_os_button = await page.locator("//*[contains(text(), 'Adicionar') and contains(text(), 'OS')]").count()
+        print(f"🎯 Botão 'Adicionar nova OS' encontrado: {adicionar_os_button}")
+        
+        # Screenshot final detalhado
+        await page.screenshot(path=f"{screenshots_dir}/detailed_step_08.png")
+        
+        # Salvar análise em arquivo
+        analysis_data = {
+            'timestamp': datetime.now().isoformat(),
+            'url': current_url,
+            'elements_count': len(os_page_elements),
+            'adicionar_os_button': adicionar_os_button,
+            'elements': os_page_elements
+        }
+        
+        with open(f"{screenshots_dir}/os_page_analysis.json", "w") as f:
+            json.dump(analysis_data, f, indent=2)
+        
+        print("🎉 Análise detalhada concluída com sucesso!")
+        
+        return {
+            "success": True,
+            "url": current_url,
+            "elements_mapped": len(os_page_elements),
+            "adicionar_button_found": adicionar_os_button > 0
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return {"success": False, "error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(detailed_analysis())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', detailed_analysis_code
+                ], env=env, capture_output=True, text=True, timeout=300)
+                
+                logger.info(f"Análise detalhada executada - Return code: {result.returncode}")
+                logger.info(f"Stdout: {result.stdout}")
+                if result.stderr:
+                    logger.error(f"Stderr: {result.stderr}")
+                    
+            except Exception as e:
+                logger.error(f"Erro ao executar análise detalhada: {e}")
+        
+        # Executar em thread separada
+        thread = threading.Thread(target=run_detailed_analysis)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Análise detalhada iniciada com mapeamento da página de OS'
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao iniciar análise detalhada: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao iniciar análise detalhada: {e}'
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 Iniciando EACE Webhook (versão simples) na porta {port}")

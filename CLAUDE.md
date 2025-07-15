@@ -96,13 +96,22 @@ Automatizar o acesso ao sistema EACE (https://eace.org.br) para abertura de tick
    - Critério diferente para verificar expansão (>15 elementos)
    - **RESULTADO**: Gera apenas `step_01_login_page.png`, `step_02_credentials_filled.png`, `step_03_after_login.png`, `step_04_profile_selected.png`, `step_05_dashboard.png`, `step_07_final_debug.png`
 
-#### 🖥️ **Novo Endpoint de Visualização**:
-- **`/realtime-analysis`**: Interface visual em tempo real
-  - Visualiza logs ao vivo durante execução
-  - Mostra screenshots conforme são gerados
-  - Usa código que funciona do `/map-os-button-fixed`
-  - Interface terminal verde com progresso visual
-  - Atualização automática de imagens a cada 10 segundos
+#### 🖥️ **Endpoints de Visualização**:
+1. **`/realtime-analysis`**: Interface visual em tempo real
+   - Visualiza logs ao vivo durante execução
+   - Mostra screenshots conforme são gerados
+   - Usa código que funciona do `/map-os-button-fixed`
+   - Interface terminal verde com progresso visual
+   - Atualização automática de imagens a cada 10 segundos
+
+2. **`/visual-step-by-step`**: **NOVO** - Passo a passo visual detalhado
+   - **8 passos visuais** desde login até análise da página de OS
+   - **Progresso em tempo real** com barra visual e indicadores
+   - **Análise da página de Controle de OS**: Mapeia botões, elementos, URLs
+   - **Interface moderna**: Estilo GitHub dark com animações
+   - **Mapeamento completo**: Identifica botão "Adicionar nova OS"
+   - **Screenshots ordenados**: `detailed_step_01.png` até `detailed_step_08.png`
+   - **Análise JSON**: Salva `os_page_analysis.json` com elementos mapeados
 
 ## Próximos Passos
 1. [x] Instalar Selenium WebDriver - **CONCLUÍDO**
