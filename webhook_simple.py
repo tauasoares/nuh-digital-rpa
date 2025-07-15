@@ -6724,7 +6724,7 @@ def save_log(message, level="info"):
         "level": level
     }}
     
-    logs_file = "{logs_file}"
+    logs_file = "/tmp/current_logs.json"
     
     # Carregar logs existentes
     try:
@@ -6743,7 +6743,7 @@ def save_log(message, level="info"):
     with open(logs_file, 'w') as f:
         json.dump(logs, f, indent=2)
     
-    print(f"[{{timestamp}}] [{{level.upper()}}] {{message}}")
+    print(f"[{timestamp}] [{{level.upper()}}] {message}")
     sys.stdout.flush()
 
 async def run_real_working_test():
@@ -6783,17 +6783,17 @@ async def run_real_working_test():
         # Preencher email (seletor EXATO)
         email_selector = '//input[@placeholder="seuemail@email.com"]'
         await page.fill(email_selector, "raiseupbt@gmail.com")
-        save_log(f"✅ Email preenchido usando: {{email_selector}}", "success")
+        save_log(f"✅ Email preenchido usando: {email_selector}", "success")
         
         # Preencher senha (seletor EXATO)
         password_selector = '//input[@type="password"]'
         await page.fill(password_selector, "@Uujpgi8u")
-        save_log(f"✅ Senha preenchida usando: {{password_selector}}", "success")
+        save_log(f"✅ Senha preenchida usando: {password_selector}", "success")
         
         # Clicar no botão de login (seletor EXATO)
         login_button_selector = '//button[contains(text(), "Log In")]'
         await page.click(login_button_selector)
-        save_log(f"✅ Botão de login clicado: {{login_button_selector}}", "success")
+        save_log(f"✅ Botão de login clicado: {login_button_selector}", "success")
         
         await page.wait_for_timeout(5000)
         
@@ -6803,15 +6803,15 @@ async def run_real_working_test():
         
         if profile_count > 0:
             await page.click(profile_selector)
-            save_log(f"✅ Perfil Fornecedor selecionado: {{profile_selector}}", "success")
+            save_log(f"✅ Perfil Fornecedor selecionado: {profile_selector}", "success")
             await page.wait_for_timeout(5000)
         else:
             save_log("ℹ️ Seleção de perfil não necessária", "info")
         
         # Screenshot do dashboard
-        dashboard_screenshot = f"{{screenshots_dir}}/fixed_01_dashboard.png"
+        dashboard_screenshot = f"/tmp/screenshots/fixed_01_dashboard.png"
         await page.screenshot(path=dashboard_screenshot)
-        save_log(f"📸 Screenshot do dashboard salvo: {{dashboard_screenshot}}", "success")
+        save_log(f"📸 Screenshot do dashboard salvo: {dashboard_screenshot}", "success")
         
         # ===================
         # FASE 1: EXPANDIR MENU (CÓDIGO EXATO)
@@ -6836,17 +6836,17 @@ async def run_real_working_test():
         
         for selector in menu_toggle_selectors:
             try:
-                save_log(f"🔍 Testando seletor de menu: {{selector}}", "info")
+                save_log(f"🔍 Testando seletor de menu: {selector}", "info")
                 
                 if selector.startswith("//"):
                     elements = await page.locator(selector).count()
                 else:
                     elements = await page.locator(selector).count()
                 
-                save_log(f"📊 Elementos encontrados com {{selector}}: {{elements}}", "info")
+                save_log(f"📊 Elementos encontrados com {selector}: {elements}", "info")
                 
                 if elements > 0:
-                    save_log(f"🎯 Clicando no menu com: {{selector}}", "info")
+                    save_log(f"🎯 Clicando no menu com: {selector}", "info")
                     
                     if selector.startswith("//"):
                         await page.locator(selector).click()
@@ -6856,9 +6856,9 @@ async def run_real_working_test():
                     await page.wait_for_timeout(2000)
                     
                     # Screenshot do menu expandido
-                    menu_screenshot = f"{{screenshots_dir}}/fixed_02_menu_expanded.png"
+                    menu_screenshot = f"/tmp/screenshots/fixed_02_menu_expanded.png"
                     await page.screenshot(path=menu_screenshot)
-                    save_log(f"📸 Screenshot do menu expandido salvo: {{menu_screenshot}}", "success")
+                    save_log(f"📸 Screenshot do menu expandido salvo: {menu_screenshot}", "success")
                     
                     # Verificar se menu foi expandido (código EXATO)
                     visible_elements = await page.evaluate("""
@@ -6871,17 +6871,17 @@ async def run_real_working_test():
                         }}
                     """)
                     
-                    save_log(f"📊 Elementos visíveis após expansão: {{visible_elements}}", "info")
+                    save_log(f"📊 Elementos visíveis após expansão: {visible_elements}", "info")
                     
                     if visible_elements > 10:  # Threshold EXATO
-                        save_log(f"✅ Menu expandido com sucesso usando: {{selector}}", "success")
+                        save_log(f"✅ Menu expandido com sucesso usando: {selector}", "success")
                         menu_expanded = True
                         break
                     else:
-                        save_log(f"❌ Menu não expandiu suficientemente com: {{selector}}", "error")
+                        save_log(f"❌ Menu não expandiu suficientemente com: {selector}", "error")
                         
             except Exception as e:
-                save_log(f"❌ Erro ao expandir menu com {{selector}}: {{e}}", "error")
+                save_log(f"❌ Erro ao expandir menu com {selector}: {e}", "error")
                 continue
         
         # ===================
@@ -6904,39 +6904,39 @@ async def run_real_working_test():
         
         for selector in specific_selectors:
             try:
-                save_log(f"🔍 Testando seletor para chamados: {{selector}}", "info")
+                save_log(f"🔍 Testando seletor para chamados: {selector}", "info")
                 
                 elements = await page.locator(selector).count()
-                save_log(f"📊 Elementos encontrados com {{selector}}: {{elements}}", "info")
+                save_log(f"📊 Elementos encontrados com {selector}: {elements}", "info")
                 
                 if elements > 0:
-                    save_log(f"✅ Encontrado 'Gerenciar chamados' com: {{selector}}", "success")
+                    save_log(f"✅ Encontrado 'Gerenciar chamados' com: {selector}", "success")
                     
                     # Obter o texto do elemento antes de clicar
                     element_text = await page.locator(selector).first.text_content()
-                    save_log(f"📝 Texto do elemento: '{{element_text}}'", "info")
+                    save_log(f"📝 Texto do elemento: '{element_text}'", "info")
                     
                     await page.locator(selector).click()
                     await page.wait_for_timeout(3000)
                     
                     # Screenshot após clicar
-                    chamados_screenshot = f"{{screenshots_dir}}/fixed_03_chamados_clicked.png"
+                    chamados_screenshot = f"/tmp/screenshots/fixed_03_chamados_clicked.png"
                     await page.screenshot(path=chamados_screenshot)
-                    save_log(f"📸 Screenshot após clicar salvo: {{chamados_screenshot}}", "success")
+                    save_log(f"📸 Screenshot após clicar salvo: {chamados_screenshot}", "success")
                     
                     # Verificar se navegou para página de OS/chamados (código EXATO)
                     current_url = page.url
-                    save_log(f"🌐 URL atual após clique: {{current_url}}", "info")
+                    save_log(f"🌐 URL atual após clique: {current_url}", "info")
                     
                     if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
-                        save_log(f"✅ SUCESSO! Navegou para página de OS: {{current_url}}", "success")
+                        save_log(f"✅ SUCESSO! Navegou para página de OS: {current_url}", "success")
                         os_found = True
                         break
                     else:
-                        save_log(f"❌ URL não corresponde a página de OS: {{current_url}}", "error")
+                        save_log(f"❌ URL não corresponde a página de OS: {current_url}", "error")
                         
             except Exception as e:
-                save_log(f"❌ Erro ao clicar em {{selector}}: {{e}}", "error")
+                save_log(f"❌ Erro ao clicar em {selector}: {e}", "error")
                 continue
         
         # ===================
@@ -6993,31 +6993,31 @@ async def run_real_working_test():
                         await page.wait_for_timeout(3000)
                         
                         # Screenshot do segundo elemento
-                        second_screenshot = f"{{screenshots_dir}}/fixed_04_second_element.png"
+                        second_screenshot = f"/tmp/screenshots/fixed_04_second_element.png"
                         await page.screenshot(path=second_screenshot)
-                        save_log(f"📸 Screenshot do segundo elemento salvo: {{second_screenshot}}", "success")
+                        save_log(f"📸 Screenshot do segundo elemento salvo: {second_screenshot}", "success")
                         
                         current_url = page.url
-                        save_log(f"🌐 URL após clicar no segundo elemento: {{current_url}}", "info")
+                        save_log(f"🌐 URL após clicar no segundo elemento: {current_url}", "info")
                         
                         if 'os' in current_url.lower() or 'chamados' in current_url.lower() or 'controle' in current_url.lower():
-                            save_log(f"✅ SUCESSO com segundo elemento! URL: {{current_url}}", "success")
+                            save_log(f"✅ SUCESSO com segundo elemento! URL: {current_url}", "success")
                             os_found = True
                         else:
-                            save_log(f"❌ Segundo elemento não levou à página de OS: {{current_url}}", "error")
+                            save_log(f"❌ Segundo elemento não levou à página de OS: {current_url}", "error")
                             
                 except Exception as e:
-                    save_log(f"❌ Erro ao clicar no segundo elemento: {{e}}", "error")
+                    save_log(f"❌ Erro ao clicar no segundo elemento: {e}", "error")
             else:
                 save_log("❌ Menos de 2 elementos encontrados no menu", "error")
         
         # Screenshot final
-        final_screenshot = f"{{screenshots_dir}}/fixed_05_final.png"
+        final_screenshot = f"/tmp/screenshots/fixed_05_final.png"
         await page.screenshot(path=final_screenshot)
-        save_log(f"📸 Screenshot final salvo: {{final_screenshot}}", "success")
+        save_log(f"📸 Screenshot final salvo: {final_screenshot}", "success")
         
         final_url = page.url
-        save_log(f"🌐 URL final: {{final_url}}", "info")
+        save_log(f"🌐 URL final: {final_url}", "info")
         
         if os_found:
             save_log("🎉 TESTE CONCLUÍDO COM SUCESSO! Navegação para Controle de OS realizada!", "success")
@@ -7032,10 +7032,10 @@ async def run_real_working_test():
         }}
         
     except Exception as e:
-        save_log(f"❌ ERRO CRÍTICO no teste: {{e}}", "error")
-        error_screenshot = f"{{screenshots_dir}}/fixed_error.png"
+        save_log(f"❌ ERRO CRÍTICO no teste: {e}", "error")
+        error_screenshot = f"/tmp/screenshots/fixed_error.png"
         await page.screenshot(path=error_screenshot)
-        save_log(f"📸 Screenshot do erro salvo: {{error_screenshot}}", "error")
+        save_log(f"📸 Screenshot do erro salvo: {error_screenshot}", "error")
         return {{"error": str(e)}}
     
     finally:
@@ -7239,7 +7239,7 @@ def test_expandable_real_working():
             env['DISPLAY'] = ':99'
             
             # Código Python EXATO do endpoint que funciona + sistema de logs
-            working_code = f'''
+            working_code = '''
 import asyncio
 import json
 import sys
