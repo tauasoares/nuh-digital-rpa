@@ -8808,7 +8808,7 @@ def test_direct_os_access():
                                 📸 Passo ${stepNumber}: ${stepName}
                             </div>
                             <div style="text-align: center;">
-                                <img src="/screenshots/${screenshot.filename}" 
+                                <img src="/screenshot/${screenshot.filename}" 
                                      alt="${stepName}" 
                                      style="max-width: 100%; height: auto; border: 2px solid #00ff00; border-radius: 5px; cursor: pointer;"
                                      onclick="openImageModal('${screenshot.filename}', '${stepName}')"
@@ -8857,7 +8857,7 @@ def test_direct_os_access():
                     <div style="color: #ffff00; font-weight: bold; margin-bottom: 10px; font-size: 18px;">
                         ${stepName}
                     </div>
-                    <img src="/screenshots/${filename}" 
+                    <img src="/screenshot/${filename}" 
                          style="max-width: 100%; max-height: 80vh; border: 2px solid #00ff00; border-radius: 5px;">
                     <div style="color: #888; margin-top: 10px; font-size: 14px;">
                         ${filename} - Clique para fechar
@@ -9054,15 +9054,62 @@ async def direct_os_access():
         # PASSO 5: Procurar e clicar em "Adicionar nova OS"
         print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
         
+        # Primeiro, vamos mapear todos os elementos visíveis para debug
+        all_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const allElements = document.querySelectorAll('button, a, div, span');
+                
+                allElements.forEach((el, index) => {
+                    const rect = el.getBoundingClientRect();
+                    const text = el.textContent?.trim() || '';
+                    
+                    if (rect.width > 0 && rect.height > 0 && text.length > 0) {
+                        elements.push({
+                            tagName: el.tagName,
+                            text: text,
+                            classes: el.className,
+                            id: el.id,
+                            index: index
+                        });
+                    }
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"🔍 ADICIONAR OS - Total de elementos visíveis: {len(all_elements)}")
+        
+        # Procurar elementos que contenham "Adicionar" ou "Nova"
+        adicionar_elements = [el for el in all_elements if 
+                            'adicionar' in el['text'].lower() or 
+                            'nova' in el['text'].lower() or 
+                            'novo' in el['text'].lower()]
+        
+        print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo': {len(adicionar_elements)}")
+        for el in adicionar_elements:
+            print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']}")
+        
         adicionar_clicked = False
+        
+        # Seletores mais específicos e variados
         adicionar_selectors = [
             "//button[contains(text(), 'Adicionar nova OS')]",
             "//button[contains(text(), 'Adicionar OS')]",
+            "//button[contains(text(), 'Nova OS')]",
             "//button[contains(text(), 'Adicionar')]",
             "//a[contains(text(), 'Adicionar nova OS')]",
             "//a[contains(text(), 'Adicionar OS')]",
+            "//a[contains(text(), 'Nova OS')]",
+            "//a[contains(text(), 'Adicionar')]",
             "//*[contains(text(), 'Adicionar nova OS')]",
-            "//*[contains(text(), 'Adicionar OS')]"
+            "//*[contains(text(), 'Adicionar OS')]",
+            "//*[contains(text(), 'Nova OS')]",
+            "//*[contains(text(), 'Adicionar')]",
+            "//button[contains(@class, 'btn') and contains(text(), 'Adicionar')]",
+            "//button[contains(@class, 'button') and contains(text(), 'Adicionar')]",
+            "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]"
         ]
         
         for selector in adicionar_selectors:
@@ -9072,6 +9119,10 @@ async def direct_os_access():
                 
                 if elements > 0:
                     print(f"📍 ADICIONAR OS - Clicando: {selector}")
+                    
+                    # Aguardar um pouco mais antes de clicar
+                    await page.wait_for_timeout(1000)
+                    
                     await page.locator(selector).click()
                     await page.wait_for_timeout(3000)
                     
@@ -9079,8 +9130,10 @@ async def direct_os_access():
                     screenshots.append("direct_04_adicionar_clicked.png")
                     print("📸 Screenshot: direct_04_adicionar_clicked.png")
                     
+                    # Aguardar modal/página carregar
+                    await page.wait_for_timeout(3000)
+                    
                     # Screenshot final
-                    await page.wait_for_timeout(2000)
                     await page.screenshot(path=f"{screenshots_dir}/direct_05_final.png")
                     screenshots.append("direct_05_final.png")
                     print("📸 Screenshot: direct_05_final.png")
@@ -9095,6 +9148,9 @@ async def direct_os_access():
         
         if not adicionar_clicked:
             print("❌ ADICIONAR OS - Nenhum botão encontrado")
+            print("🔍 ADICIONAR OS - Elementos disponíveis para debug:")
+            for el in adicionar_elements:
+                print(f"   - {el['tagName']}: '{el['text']}'")
         
         return {
             "success": True,
@@ -9121,10 +9177,28 @@ if __name__ == "__main__":
                 ], capture_output=True, text=True, timeout=120)
                 
                 if result.returncode == 0:
-                    output = json.loads(result.stdout)
-                    return output
+                    try:
+                        # Separar prints do JSON - o JSON sempre vem na última linha
+                        output_lines = result.stdout.strip().split('\n')
+                        json_line = output_lines[-1]
+                        
+                        # Log dos prints para debug
+                        print_lines = output_lines[:-1]
+                        for line in print_lines:
+                            logger.info(f"Python print: {line}")
+                        
+                        # Parse do JSON
+                        output = json.loads(json_line)
+                        return output
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Erro JSON decode: {e}")
+                        logger.error(f"Stdout completo: {result.stdout}")
+                        logger.error(f"Stderr: {result.stderr}")
+                        return {"error": f"Erro ao decodificar JSON: {e}", "stdout": result.stdout, "stderr": result.stderr}
                 else:
-                    return {"error": result.stderr}
+                    logger.error(f"Subprocess falhou com código {result.returncode}")
+                    logger.error(f"Stderr: {result.stderr}")
+                    return {"error": result.stderr, "returncode": result.returncode}
                     
             except Exception as e:
                 return {"error": str(e)}
