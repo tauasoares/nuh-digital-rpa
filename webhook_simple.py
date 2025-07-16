@@ -9470,144 +9470,179 @@ async def direct_os_access():
                                     json.dump(screen_analysis, f, indent=2)
                                 print("📄 ADICIONAR OS - Análise completa salva em screen_analysis.json")
                                 
-                                # Aguardar validação do INEP e procurar próximo passo
-                                print("⏳ ADICIONAR OS - Aguardando validação do INEP...")
+                                # Aguardar validação do INEP e procurar sugestão para selecionar
+                                print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
                                 await page.wait_for_timeout(3000)
                                 
-                                # Procurar por botões de confirmação/próximo passo
-                                next_step = await page.evaluate("""
+                                # Procurar e clicar na sugestão do INEP para ativar o botão "Incluir"
+                                suggestion_selected = await page.evaluate(f"""
+                                    () => {{
+                                        const inepValue = '{inep_example}';
+                                        
+                                        // Procurar por elementos clicáveis que contenham o INEP
+                                        const clickableElements = document.querySelectorAll('div, span, li, button, a, .suggestion, .option');
+                                        
+                                        for (let element of clickableElements) {{
+                                            const text = element.textContent?.trim();
+                                            const rect = element.getBoundingClientRect();
+                                            
+                                            // Verificar se o elemento está visível e contém o INEP
+                                            if (rect.width > 0 && rect.height > 0 && 
+                                                text && text.includes(inepValue)) {{
+                                                
+                                                // Verificar se é clicável (cursor pointer, onclick, etc.)
+                                                const style = window.getComputedStyle(element);
+                                                const isClickable = style.cursor === 'pointer' || 
+                                                                  element.onclick || 
+                                                                  element.getAttribute('onclick') ||
+                                                                  element.tagName === 'BUTTON' ||
+                                                                  element.tagName === 'A' ||
+                                                                  element.classList.contains('clickable') ||
+                                                                  element.classList.contains('suggestion');
+                                                
+                                                if (isClickable) {{
+                                                    element.click();
+                                                    return {{
+                                                        success: true,
+                                                        text: text,
+                                                        tagName: element.tagName,
+                                                        classes: element.className
+                                                    }};
+                                                }}
+                                            }}
+                                        }}
+                                        
+                                        return {{ success: false }};
+                                    }}
+                                """)
+                                
+                                if suggestion_selected['success']:
+                                    print(f"✅ ADICIONAR OS - Sugestão selecionada com sucesso!")
+                                    print(f"   - Texto: {suggestion_selected['text']}")
+                                    print(f"   - Elemento: {suggestion_selected['tagName']}")
+                                    print(f"   - Classes: {suggestion_selected['classes']}")
+                                    
+                                    # Aguardar um pouco para o botão "Incluir" ser ativado
+                                    await page.wait_for_timeout(2000)
+                                    
+                                    # Screenshot após selecionar a sugestão
+                                    await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
+                                    screenshots.append("direct_08_suggestion_selected.png")
+                                    print("📸 Screenshot: direct_08_suggestion_selected.png")
+                                    
+                                else:
+                                    print("⚠️ ADICIONAR OS - Nenhuma sugestão clicável encontrada")
+                                    print("🔍 ADICIONAR OS - Procurando por sugestões alternativas...")
+                                    
+                                    # Estratégia alternativa: procurar por qualquer elemento com o INEP
+                                    alternative_selection = await page.evaluate(f"""
+                                        () => {{
+                                            const inepValue = '{inep_example}';
+                                            const allElements = document.querySelectorAll('*');
+                                            
+                                            for (let element of allElements) {{
+                                                const text = element.textContent?.trim();
+                                                const rect = element.getBoundingClientRect();
+                                                
+                                                if (rect.width > 0 && rect.height > 0 && 
+                                                    text && text === inepValue) {{
+                                                    
+                                                    // Tentar clicar mesmo sem indicação visual de clicável
+                                                    element.click();
+                                                    return {{
+                                                        success: true,
+                                                        text: text,
+                                                        tagName: element.tagName,
+                                                        classes: element.className
+                                                    }};
+                                                }}
+                                            }}
+                                            
+                                            return {{ success: false }};
+                                        }}
+                                    """)
+                                    
+                                    if alternative_selection['success']:
+                                        print(f"✅ ADICIONAR OS - Elemento alternativo selecionado!")
+                                        print(f"   - Texto: {alternative_selection['text']}")
+                                        print(f"   - Elemento: {alternative_selection['tagName']}")
+                                        
+                                        await page.wait_for_timeout(2000)
+                                        await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
+                                        screenshots.append("direct_08_suggestion_selected.png")
+                                        print("📸 Screenshot: direct_08_suggestion_selected.png")
+                                        
+                                    else:
+                                        print("❌ ADICIONAR OS - Falha ao selecionar sugestão do INEP")
+                                
+                                # Verificar estado dos botões (especialmente "Incluir" e "Fechar")
+                                button_status = await page.evaluate("""
                                     () => {
-                                        const nextButtons = [];
+                                        const buttons = [];
                                         const allButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
                                         
                                         allButtons.forEach(btn => {
-                                            const text = (btn.textContent || btn.value || '').toLowerCase().trim();
+                                            const text = (btn.textContent || btn.value || '').trim();
                                             const rect = btn.getBoundingClientRect();
                                             
-                                            if (rect.width > 0 && rect.height > 0) {
-                                                // Procurar por botões de próximo passo
-                                                if (text.includes('confirmar') || 
-                                                    text.includes('próximo') || 
-                                                    text.includes('proximo') ||
-                                                    text.includes('continuar') ||
-                                                    text.includes('avançar') ||
-                                                    text.includes('avancar') ||
-                                                    text.includes('salvar') ||
-                                                    text.includes('criar') ||
-                                                    text.includes('adicionar') ||
-                                                    text.includes('ok') ||
-                                                    btn.type === 'submit') {
-                                                    
-                                                    nextButtons.push({
-                                                        text: btn.textContent || btn.value || '',
-                                                        type: btn.type || 'button',
-                                                        classes: btn.className,
-                                                        id: btn.id,
-                                                        disabled: btn.disabled
-                                                    });
-                                                }
+                                            if (rect.width > 0 && rect.height > 0 && text) {
+                                                buttons.push({
+                                                    text: text,
+                                                    type: btn.type || 'button',
+                                                    classes: btn.className,
+                                                    id: btn.id,
+                                                    disabled: btn.disabled,
+                                                    visible: true
+                                                });
                                             }
                                         });
                                         
-                                        // Verificar se há novos campos que apareceram
-                                        const newFields = [];
-                                        const allInputs = document.querySelectorAll('input[type="text"], textarea, select');
-                                        
-                                        allInputs.forEach(input => {
-                                            const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
-                                            const placeholder = input.placeholder || '';
-                                            const labelText = label ? label.textContent : '';
-                                            
-                                            // Pular o campo escola que já preenchemos
-                                            if (!labelText.toLowerCase().includes('escola') && 
-                                                !placeholder.toLowerCase().includes('escola') &&
-                                                !labelText.toLowerCase().includes('inep') &&
-                                                !placeholder.toLowerCase().includes('inep')) {
-                                                
-                                                const rect = input.getBoundingClientRect();
-                                                if (rect.width > 0 && rect.height > 0) {
-                                                    newFields.push({
-                                                        label: labelText,
-                                                        placeholder: placeholder,
-                                                        type: input.type,
-                                                        required: input.required,
-                                                        id: input.id
-                                                    });
-                                                }
-                                            }
-                                        });
-                                        
-                                        return {
-                                            nextButtons: nextButtons,
-                                            newFields: newFields
-                                        };
+                                        return { buttons: buttons };
                                     }
                                 """)
                                 
-                                print("🔍 ADICIONAR OS - Análise do próximo passo:")
-                                print(f"   - Botões de próximo passo: {len(next_step['nextButtons'])}")
-                                for button in next_step['nextButtons']:
+                                print("🔍 ADICIONAR OS - Estado dos botões após seleção:")
+                                print(f"   - Total de botões encontrados: {len(button_status['buttons'])}")
+                                
+                                incluir_button = None
+                                fechar_button = None
+                                
+                                for button in button_status['buttons']:
                                     status = "DESABILITADO" if button['disabled'] else "HABILITADO"
                                     print(f"     * '{button['text']}' ({button['type']}) - {status}")
-                                
-                                print(f"   - Novos campos encontrados: {len(next_step['newFields'])}")
-                                for field in next_step['newFields']:
-                                    required = "OBRIGATÓRIO" if field['required'] else "OPCIONAL"
-                                    print(f"     * '{field['label']}' | Placeholder: '{field['placeholder']}' | {required}")
-                                
-                                # Se há botões habilitados, tentar clicar no mais provável
-                                enabled_buttons = [btn for btn in next_step['nextButtons'] if not btn['disabled']]
-                                if enabled_buttons:
-                                    # Priorizar botões por texto
-                                    priority_order = ['confirmar', 'próximo', 'proximo', 'continuar', 'avançar', 'avancar', 'salvar', 'criar']
-                                    best_button = None
                                     
-                                    for priority in priority_order:
-                                        for btn in enabled_buttons:
-                                            if priority in btn['text'].lower():
-                                                best_button = btn
-                                                break
-                                        if best_button:
-                                            break
-                                    
-                                    if not best_button and enabled_buttons:
-                                        best_button = enabled_buttons[0]  # Pegar o primeiro se não encontrar prioridade
-                                    
-                                    if best_button:
-                                        try:
-                                            print(f"🎯 ADICIONAR OS - Tentando clicar em '{best_button['text']}'...")
-                                            
-                                            # Tentar clicar no botão
-                                            button_clicked = await page.evaluate(f"""
-                                                () => {{
-                                                    const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
-                                                    for (let btn of buttons) {{
-                                                        if ((btn.textContent || btn.value || '').includes('{best_button['text']}')) {{
-                                                            btn.click();
-                                                            return true;
-                                                        }}
-                                                    }}
-                                                    return false;
-                                                }}
-                                            """)
-                                            
-                                            if button_clicked:
-                                                print(f"✅ ADICIONAR OS - Botão '{best_button['text']}' clicado com sucesso!")
-                                                
-                                                # Aguardar resposta e fazer screenshot final
-                                                await page.wait_for_timeout(3000)
-                                                await page.screenshot(path=f"{screenshots_dir}/direct_08_next_step.png")
-                                                screenshots.append("direct_08_next_step.png")
-                                                print("📸 Screenshot: direct_08_next_step.png")
-                                                
-                                            else:
-                                                print(f"❌ ADICIONAR OS - Falha ao clicar no botão '{best_button['text']}'")
-                                                
-                                        except Exception as e:
-                                            print(f"❌ ADICIONAR OS - Erro ao clicar no botão: {e}")
+                                    # Identificar botões específicos
+                                    if 'incluir' in button['text'].lower():
+                                        incluir_button = button
+                                    elif 'fechar' in button['text'].lower():
+                                        fechar_button = button
                                 
+                                # Verificar se o botão "Incluir" foi ativado
+                                if incluir_button:
+                                    if not incluir_button['disabled']:
+                                        print("✅ ADICIONAR OS - Botão 'Incluir' está ATIVO!")
+                                        print("🎯 ADICIONAR OS - Objetivo alcançado: botão ativado, mas NÃO clicando para não incluir ainda")
+                                    else:
+                                        print("⚠️ ADICIONAR OS - Botão 'Incluir' ainda está DESABILITADO")
+                                        print("💡 ADICIONAR OS - Pode precisar selecionar novamente a sugestão do INEP")
                                 else:
-                                    print("ℹ️ ADICIONAR OS - Nenhum botão habilitado encontrado, formulário pode estar aguardando mais dados")
+                                    print("❌ ADICIONAR OS - Botão 'Incluir' não encontrado")
+                                
+                                if fechar_button:
+                                    print(f"ℹ️ ADICIONAR OS - Botão 'Fechar' disponível: {fechar_button['text']}")
+                                
+                                # Screenshot final mostrando o estado do formulário
+                                await page.screenshot(path=f"{screenshots_dir}/direct_09_ready_to_include.png")
+                                screenshots.append("direct_09_ready_to_include.png")
+                                print("📸 Screenshot: direct_09_ready_to_include.png")
+                                
+                                # Mostrar resumo final
+                                print("📋 ADICIONAR OS - RESUMO FINAL:")
+                                print(f"   - INEP preenchido: {inep_example}")
+                                print(f"   - Sugestão selecionada: {'Sim' if suggestion_selected.get('success') else 'Não'}")
+                                print(f"   - Botão 'Incluir' ativo: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
+                                print(f"   - Formulário pronto: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
+                                print("🚫 ADICIONAR OS - NÃO clicando em 'Incluir' conforme solicitado")
                                 
                             else:
                                 print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
