@@ -9183,23 +9183,80 @@ async def direct_os_access():
                     # Aguardar elemento estar visível e clicável
                     await page.wait_for_selector(selector, timeout=5000)
                     
-                    await page.locator(selector).click()
-                    await page.wait_for_timeout(3000)
+                    # Capturar URL antes do clique
+                    url_before = page.url
+                    print(f"📍 ADICIONAR OS - URL antes do clique: {url_before}")
                     
-                    await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
-                    screenshots.append("direct_05_adicionar_clicked.png")
-                    print("📸 Screenshot: direct_05_adicionar_clicked.png")
+                    await page.locator(selector).click()
+                    print("🎯 ADICIONAR OS - Clique executado! Aguardando resposta...")
+                    await page.wait_for_timeout(1000)
+                    
+                    # Screenshot imediatamente após o clique
+                    await page.screenshot(path=f"{screenshots_dir}/direct_04_immediate_after_click.png")
+                    screenshots.append("direct_04_immediate_after_click.png")
+                    print("📸 Screenshot: direct_04_immediate_after_click.png")
+                    
+                    await page.wait_for_timeout(2000)
+                    
+                    # Capturar URL após o clique
+                    url_after = page.url
+                    print(f"📍 ADICIONAR OS - URL após o clique: {url_after}")
+                    
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
+                    screenshots.append("direct_05_after_wait.png")
+                    print("📸 Screenshot: direct_05_after_wait.png")
+                    
+                    # Verificar se modal ou nova página foi aberta
+                    modal_opened = await page.evaluate("""
+                        () => {
+                            // Verificar se há modal aberto
+                            const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                            if (modals.length > 0) {
+                                return { type: 'modal', count: modals.length };
+                            }
+                            
+                            // Verificar se há novos elementos de formulário
+                            const forms = document.querySelectorAll('form');
+                            const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                            
+                            return { 
+                                type: 'form_elements', 
+                                forms: forms.length, 
+                                inputs: inputs.length 
+                            };
+                        }
+                    """)
+                    
+                    print(f"📍 ADICIONAR OS - Verificação de modal/formulário: {modal_opened}")
                     
                     # Aguardar modal/página carregar
-                    await page.wait_for_timeout(3000)
+                    await page.wait_for_timeout(5000)
                     
                     # Screenshot final
                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
                     screenshots.append("direct_06_final.png")
                     print("📸 Screenshot: direct_06_final.png")
                     
-                    adicionar_clicked = True
-                    print("✅ ADICIONAR OS - Botão clicado com sucesso!")
+                    # Verificar se realmente houve mudança na página
+                    url_changed = url_before != url_after
+                    modal_detected = modal_opened.get('type') == 'modal' and modal_opened.get('count', 0) > 0
+                    forms_detected = modal_opened.get('inputs', 0) > 5  # Assumindo que um formulário de OS teria vários campos
+                    
+                    click_success = url_changed or modal_detected or forms_detected
+                    
+                    if click_success:
+                        adicionar_clicked = True
+                        print("✅ ADICIONAR OS - Botão clicado com sucesso! Modal/página aberta detectada!")
+                        if url_changed:
+                            print(f"✅ ADICIONAR OS - URL mudou: {url_before} → {url_after}")
+                        if modal_detected:
+                            print(f"✅ ADICIONAR OS - Modal detectado: {modal_opened['count']} modais")
+                        if forms_detected:
+                            print(f"✅ ADICIONAR OS - Formulário detectado: {modal_opened['inputs']} campos de input")
+                    else:
+                        print("⚠️ ADICIONAR OS - Clique executado mas nenhuma mudança detectada")
+                        print("⚠️ ADICIONAR OS - Pode ser que o botão não tenha funcionado ou a página não tenha carregado")
+                    
                     break
                     
             except Exception as e:
@@ -9252,15 +9309,30 @@ async def direct_os_access():
                         print("📸 Screenshot: direct_05_adicionar_clicked.png")
                         
                         # Aguardar modal/página carregar
-                        await page.wait_for_timeout(3000)
+                        await page.wait_for_timeout(5000)
                         
                         # Screenshot final
                         await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
                         screenshots.append("direct_06_final.png")
                         print("📸 Screenshot: direct_06_final.png")
                         
-                        adicionar_clicked = True
-                        print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
+                        # Verificar se realmente funcionou
+                        modal_check = await page.evaluate("""
+                            () => {
+                                const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                                const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                                return { modals: modals.length, inputs: inputs.length };
+                            }
+                        """)
+                        
+                        print(f"📍 ADICIONAR OS - Verificação JS: {modal_check}")
+                        
+                        if modal_check['modals'] > 0 or modal_check['inputs'] > 5:
+                            adicionar_clicked = True
+                            print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
+                        else:
+                            print("⚠️ ADICIONAR OS - Clique JS executado mas sem mudança detectada")
+                        
                         break
                     else:
                         print(f"❌ ADICIONAR OS - JavaScript click falhou para: {el['text']}")
@@ -9308,19 +9380,34 @@ async def direct_os_access():
                     
                     await page.wait_for_timeout(3000)
                     
-                    await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
-                    screenshots.append("direct_05_adicionar_clicked.png")
-                    print("📸 Screenshot: direct_05_adicionar_clicked.png")
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
+                    screenshots.append("direct_05_after_wait.png")
+                    print("📸 Screenshot: direct_05_after_wait.png")
                     
                     # Aguardar modal/página carregar
-                    await page.wait_for_timeout(3000)
+                    await page.wait_for_timeout(5000)
                     
                     # Screenshot final
                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
                     screenshots.append("direct_06_final.png")
                     print("📸 Screenshot: direct_06_final.png")
                     
-                    adicionar_clicked = True
+                    # Verificar se realmente funcionou
+                    final_check = await page.evaluate("""
+                        () => {
+                            const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                            const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                            return { modals: modals.length, inputs: inputs.length };
+                        }
+                    """)
+                    
+                    print(f"📍 ADICIONAR OS - Verificação final: {final_check}")
+                    
+                    if final_check['modals'] > 0 or final_check['inputs'] > 5:
+                        adicionar_clicked = True
+                        print("✅ ADICIONAR OS - Busca universal bem-sucedida!")
+                    else:
+                        print("⚠️ ADICIONAR OS - Busca universal executada mas sem mudança detectada")
                     
             except Exception as e:
                 print(f"❌ ADICIONAR OS - Erro na busca universal: {e}")
