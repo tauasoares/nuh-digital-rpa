@@ -9331,13 +9331,15 @@ async def direct_os_access():
             for el in adicionar_elements:
                 print(f"   - {el['tagName']}: '{el['text']}' - Classes: {el['classes']}")
         
-        return {
+        result = {
             "success": True,
             "screenshots": screenshots,
             "adicionar_clicked": adicionar_clicked,
             "total_elements": len(all_elements),
             "adicionar_elements": len(adicionar_elements)
         }
+        
+        return result
         
     except Exception as e:
         print(f"❌ ERRO: {e}")
