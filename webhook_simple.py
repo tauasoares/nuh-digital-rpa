@@ -9100,11 +9100,36 @@ async def direct_os_access():
                             'nova' in el['text'].lower() or 
                             'novo' in el['text'].lower() or
                             'add' in el['text'].lower() or
-                            'create' in el['text'].lower()]
+                            'create' in el['text'].lower() or
+                            'criar' in el['text'].lower()]
+        
+        # Procurar também por elementos com ícones ou palavras-chave relacionadas
+        os_elements = [el for el in all_elements if 
+                      'os' in el['text'].lower() or 
+                      'order' in el['text'].lower() or
+                      'chamado' in el['text'].lower()]
         
         print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': {len(adicionar_elements)}")
         for el in adicionar_elements:
             print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            
+        print(f"🔍 OS ELEMENTS - Elementos com 'OS/Order/Chamado': {len(os_elements)}")
+        for el in os_elements:
+            print(f"🔍 OS ELEMENTS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            
+        # Salvar análise completa para debug
+        debug_data = {
+            'total_elements': len(all_elements),
+            'adicionar_elements': len(adicionar_elements),
+            'os_elements': len(os_elements),
+            'all_elements_sample': all_elements[:20],  # Primeiros 20 elementos
+            'adicionar_elements_full': adicionar_elements,
+            'os_elements_full': os_elements
+        }
+        
+        with open(f"{screenshots_dir}/debug_elements.json", "w") as f:
+            json.dump(debug_data, f, indent=2)
+        print(f"📄 DEBUG - Análise completa salva em debug_elements.json")
         
         adicionar_clicked = False
         
@@ -9184,23 +9209,102 @@ async def direct_os_access():
         # Segunda tentativa: força bruta em elementos que contêm palavras-chave
         if not adicionar_clicked:
             print("🔍 ADICIONAR OS - Tentativa 2: Força bruta em elementos identificados")
-            for el in adicionar_elements:
+            
+            # Combinar todos os elementos relevantes
+            all_relevant_elements = adicionar_elements + os_elements
+            
+            for el in all_relevant_elements:
                 try:
                     print(f"🎯 ADICIONAR OS - Tentando clicar: {el['tagName']} - '{el['text']}'")
                     
-                    # Tentar clicar usando JavaScript
-                    await page.evaluate(f"""
+                    # Tentar clicar usando JavaScript com busca mais robusta
+                    clicked = await page.evaluate(f"""
                         () => {{
-                            const elements = document.querySelectorAll('{el['tagName'].lower()}');
+                            const text = '{el['text']}';
+                            const tagName = '{el['tagName'].lower()}';
+                            
+                            // Buscar por texto exato
+                            const elements = document.querySelectorAll(tagName);
                             for (let elem of elements) {{
-                                if (elem.textContent?.includes('{el['text']}')) {{
+                                if (elem.textContent?.trim() === text) {{
                                     elem.click();
                                     return true;
                                 }}
                             }}
+                            
+                            // Buscar por texto parcial
+                            for (let elem of elements) {{
+                                if (elem.textContent?.includes(text)) {{
+                                    elem.click();
+                                    return true;
+                                }}
+                            }}
+                            
                             return false;
                         }}
                     """)
+                    
+                    if clicked:
+                        await page.wait_for_timeout(3000)
+                        
+                        await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
+                        screenshots.append("direct_05_adicionar_clicked.png")
+                        print("📸 Screenshot: direct_05_adicionar_clicked.png")
+                        
+                        # Aguardar modal/página carregar
+                        await page.wait_for_timeout(3000)
+                        
+                        # Screenshot final
+                        await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                        screenshots.append("direct_06_final.png")
+                        print("📸 Screenshot: direct_06_final.png")
+                        
+                        adicionar_clicked = True
+                        print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
+                        break
+                    else:
+                        print(f"❌ ADICIONAR OS - JavaScript click falhou para: {el['text']}")
+                        
+                except Exception as e:
+                    print(f"❌ ADICIONAR OS - Erro com força bruta: {e}")
+                    continue
+        
+        # Terceira tentativa: buscar qualquer elemento clicável que contenha palavras-chave
+        if not adicionar_clicked:
+            print("🔍 ADICIONAR OS - Tentativa 3: Busca universal por qualquer elemento clicável")
+            try:
+                clicked = await page.evaluate("""
+                    () => {
+                        const keywords = ['adicionar', 'nova', 'novo', 'add', 'create', 'criar', '+'];
+                        const clickableElements = document.querySelectorAll('button, a, div[onclick], span[onclick], *[role="button"]');
+                        
+                        for (let elem of clickableElements) {
+                            const text = elem.textContent?.toLowerCase() || '';
+                            const hasKeyword = keywords.some(keyword => text.includes(keyword));
+                            
+                            if (hasKeyword && text.includes('os')) {
+                                elem.click();
+                                return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
+                            }
+                        }
+                        
+                        // Se não encontrou com 'os', tentar só com keywords
+                        for (let elem of clickableElements) {
+                            const text = elem.textContent?.toLowerCase() || '';
+                            const hasKeyword = keywords.some(keyword => text.includes(keyword));
+                            
+                            if (hasKeyword) {
+                                elem.click();
+                                return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
+                            }
+                        }
+                        
+                        return { success: false };
+                    }
+                """)
+                
+                if clicked and clicked.get('success'):
+                    print(f"✅ ADICIONAR OS - Encontrado e clicado: {clicked['tagName']} - '{clicked['text']}'")
                     
                     await page.wait_for_timeout(3000)
                     
@@ -9217,12 +9321,9 @@ async def direct_os_access():
                     print("📸 Screenshot: direct_06_final.png")
                     
                     adicionar_clicked = True
-                    print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
-                    break
                     
-                except Exception as e:
-                    print(f"❌ ADICIONAR OS - Erro com força bruta: {e}")
-                    continue
+            except Exception as e:
+                print(f"❌ ADICIONAR OS - Erro na busca universal: {e}")
         
         if not adicionar_clicked:
             print("❌ ADICIONAR OS - Nenhum botão encontrado após todas as tentativas")
@@ -9260,16 +9361,26 @@ if __name__ == "__main__":
                     try:
                         # Separar prints do JSON - o JSON sempre vem na última linha
                         output_lines = result.stdout.strip().split('\n')
-                        json_line = output_lines[-1]
                         
                         # Log dos prints para debug
-                        print_lines = output_lines[:-1]
-                        for line in print_lines:
-                            logger.info(f"Python print: {line}")
+                        for line in output_lines:
+                            logger.info(f"Python output: {line}")
                         
-                        # Parse do JSON
-                        output = json.loads(json_line)
-                        return output
+                        # Procurar pela linha JSON (começa com { e termina com })
+                        json_line = None
+                        for line in reversed(output_lines):
+                            line = line.strip()
+                            if line.startswith('{') and line.endswith('}'):
+                                json_line = line
+                                break
+                        
+                        if json_line:
+                            output = json.loads(json_line)
+                            return output
+                        else:
+                            logger.error("Nenhuma linha JSON encontrada no stdout")
+                            return {"error": "Nenhuma linha JSON encontrada", "stdout": result.stdout}
+                            
                     except json.JSONDecodeError as e:
                         logger.error(f"Erro JSON decode: {e}")
                         logger.error(f"Stdout completo: {result.stdout}")
