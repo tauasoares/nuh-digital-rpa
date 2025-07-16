@@ -9331,35 +9331,74 @@ async def direct_os_access():
                             # Usar INEP de exemplo dos logs (33099553)
                             inep_example = "33099553"
                             
-                            # Tentar preencher o campo escola
+                            # Tentar preencher o campo escola com lógica melhorada
                             filled = await page.evaluate(f"""
                                 () => {{
-                                    const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                                    const inepValue = '{inep_example}';
+                                    const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
                                     
-                                    for (let input of allInputs) {{
+                                    console.log('Procurando por campos de entrada:', allInputs.length);
+                                    
+                                    for (let i = 0; i < allInputs.length; i++) {{
+                                        const input = allInputs[i];
                                         const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
                                         const placeholder = input.placeholder || '';
                                         const labelText = label ? label.textContent : '';
+                                        const name = input.name || '';
+                                        const id = input.id || '';
                                         
-                                        if (labelText.toLowerCase().includes('escola') || 
-                                            placeholder.toLowerCase().includes('escola') ||
-                                            labelText.toLowerCase().includes('inep') ||
-                                            placeholder.toLowerCase().includes('inep')) {{
+                                        console.log(`Campo ${{i+1}}:`, {{
+                                            placeholder: placeholder,
+                                            labelText: labelText,
+                                            name: name,
+                                            id: id,
+                                            tagName: input.tagName
+                                        }});
+                                        
+                                        const isSchoolField = labelText.toLowerCase().includes('escola') || 
+                                                             placeholder.toLowerCase().includes('escola') ||
+                                                             labelText.toLowerCase().includes('inep') ||
+                                                             placeholder.toLowerCase().includes('inep') ||
+                                                             name.toLowerCase().includes('escola') ||
+                                                             name.toLowerCase().includes('inep') ||
+                                                             id.toLowerCase().includes('escola') ||
+                                                             id.toLowerCase().includes('inep');
+                                        
+                                        if (isSchoolField) {{
+                                            console.log('Campo de escola encontrado, preenchendo...');
                                             
-                                            input.value = '{inep_example}';
+                                            // Focar no campo primeiro
+                                            input.focus();
+                                            
+                                            // Limpar campo existente
+                                            input.value = '';
+                                            
+                                            // Preencher com INEP
+                                            input.value = inepValue;
+                                            
+                                            // Disparar múltiplos eventos para garantir detecção
+                                            input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
                                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                            
+                                            // Verificar se o valor foi mantido
+                                            const finalValue = input.value;
                                             
                                             return {{
                                                 success: true,
-                                                value: input.value,
+                                                value: finalValue,
                                                 label: labelText,
-                                                placeholder: placeholder
+                                                placeholder: placeholder,
+                                                name: name,
+                                                id: id,
+                                                index: i
                                             }};
                                         }}
                                     }}
                                     
-                                    return {{ success: false }};
+                                    return {{ success: false, message: 'Campo de escola não encontrado' }};
                                 }}
                             """)
                             
@@ -9368,6 +9407,66 @@ async def direct_os_access():
                                 print(f"   - Valor: {filled['value']}")
                                 print(f"   - Label: {filled['label']}")
                                 print(f"   - Placeholder: {filled['placeholder']}")
+                                print(f"   - Name: {filled.get('name', 'N/A')}")
+                                print(f"   - ID: {filled.get('id', 'N/A')}")
+                                print(f"   - Índice: {filled.get('index', 'N/A')}")
+                                
+                                # Aguardar um pouco e verificar se o campo manteve o valor
+                                await page.wait_for_timeout(1000)
+                                
+                                # Verificar se o campo ainda contém o valor
+                                value_check = await page.evaluate(f"""
+                                    () => {{
+                                        const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                        const targetInput = allInputs[{filled.get('index', 0)}];
+                                        
+                                        if (targetInput) {{
+                                            return {{
+                                                hasValue: !!targetInput.value,
+                                                currentValue: targetInput.value,
+                                                isEmpty: targetInput.value === ''
+                                            }};
+                                        }}
+                                        return {{ hasValue: false, currentValue: '', isEmpty: true }};
+                                    }}
+                                """)
+                                
+                                print(f"🔍 ADICIONAR OS - Verificação do campo após 1 segundo:")
+                                print(f"   - Tem valor: {value_check['hasValue']}")
+                                print(f"   - Valor atual: '{value_check['currentValue']}'")
+                                print(f"   - Está vazio: {value_check['isEmpty']}")
+                                
+                                # Se o campo foi limpo, tentar preencher novamente
+                                if value_check['isEmpty']:
+                                    print("⚠️ ADICIONAR OS - Campo foi limpo, tentando preencher novamente...")
+                                    
+                                    refill_result = await page.evaluate(f"""
+                                        () => {{
+                                            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                            const targetInput = allInputs[{filled.get('index', 0)}];
+                                            
+                                            if (targetInput) {{
+                                                // Forçar preenchimento novamente
+                                                targetInput.focus();
+                                                targetInput.value = '{inep_example}';
+                                                
+                                                // Disparar eventos
+                                                targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                                targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                
+                                                return {{
+                                                    success: true,
+                                                    value: targetInput.value
+                                                }};
+                                            }}
+                                            return {{ success: false }};
+                                        }}
+                                    """)
+                                    
+                                    if refill_result['success']:
+                                        print(f"✅ ADICIONAR OS - Campo preenchido novamente: {refill_result['value']}")
+                                    else:
+                                        print("❌ ADICIONAR OS - Falha ao preencher novamente")
                                 
                                 # Screenshot após preencher - aguardar mais tempo para visualizar
                                 await page.wait_for_timeout(4000)
@@ -9472,11 +9571,31 @@ async def direct_os_access():
                                 
                                 # Aguardar validação do INEP e procurar sugestão para selecionar
                                 print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
-                                await page.wait_for_timeout(5000)
+                                await page.wait_for_timeout(3000)
                                 
-                                # Verificação intermediária após 2 segundos
-                                print("🔍 ADICIONAR OS - Verificando se sugestões já apareceram...")
-                                await page.wait_for_timeout(2000)
+                                # Verificação final se o campo ainda contém o valor antes de procurar sugestões
+                                final_check = await page.evaluate(f"""
+                                    () => {{
+                                        const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                        const targetInput = allInputs[{filled.get('index', 0)}];
+                                        
+                                        if (targetInput) {{
+                                            return {{
+                                                hasValue: !!targetInput.value,
+                                                currentValue: targetInput.value
+                                            }};
+                                        }}
+                                        return {{ hasValue: false, currentValue: '' }};
+                                    }}
+                                """)
+                                
+                                print(f"🔍 ADICIONAR OS - Verificação final do campo:")
+                                print(f"   - Tem valor: {final_check['hasValue']}")
+                                print(f"   - Valor atual: '{final_check['currentValue']}'")
+                                
+                                if not final_check['hasValue']:
+                                    print("❌ ADICIONAR OS - ERRO: Campo foi limpo antes de procurar sugestões")
+                                    return {"error": "Campo INEP foi limpo antes de procurar sugestões"}
                                 
                                 # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
                                 suggestions_found = await page.evaluate(f"""
