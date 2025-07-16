@@ -9211,26 +9211,49 @@ async def direct_os_access():
                         () => {
                             // Verificar se há modal aberto
                             const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
-                            if (modals.length > 0) {
-                                return { type: 'modal', count: modals.length };
-                            }
                             
-                            // Verificar se há novos elementos de formulário
+                            // Verificar se há campo "Escola" específico
+                            const escolaInputs = [];
+                            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                            
+                            allInputs.forEach(input => {
+                                const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                const placeholder = input.placeholder || '';
+                                const labelText = label ? label.textContent : '';
+                                
+                                if (labelText.toLowerCase().includes('escola') || 
+                                    placeholder.toLowerCase().includes('escola') ||
+                                    labelText.toLowerCase().includes('inep') ||
+                                    placeholder.toLowerCase().includes('inep')) {
+                                    escolaInputs.push({
+                                        placeholder: placeholder,
+                                        label: labelText,
+                                        id: input.id,
+                                        classes: input.className
+                                    });
+                                }
+                            });
+                            
+                            // Verificar elementos de formulário geral
                             const forms = document.querySelectorAll('form');
                             const inputs = document.querySelectorAll('input[type="text"], textarea, select');
                             
                             return { 
-                                type: 'form_elements', 
+                                type: modals.length > 0 ? 'modal' : 'form_elements',
+                                modals: modals.length,
                                 forms: forms.length, 
-                                inputs: inputs.length 
+                                inputs: inputs.length,
+                                escolaFields: escolaInputs.length,
+                                escolaDetails: escolaInputs
                             };
                         }
                     """)
                     
                     print(f"📍 ADICIONAR OS - Verificação de modal/formulário: {modal_opened}")
                     
-                    # Aguardar modal/página carregar
-                    await page.wait_for_timeout(5000)
+                    # Aguardar modal/página carregar (pode demorar 10-15 segundos)
+                    print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
+                    await page.wait_for_timeout(15000)
                     
                     # Screenshot final
                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
@@ -9239,10 +9262,11 @@ async def direct_os_access():
                     
                     # Verificar se realmente houve mudança na página
                     url_changed = url_before != url_after
-                    modal_detected = modal_opened.get('type') == 'modal' and modal_opened.get('count', 0) > 0
-                    forms_detected = modal_opened.get('inputs', 0) > 5  # Assumindo que um formulário de OS teria vários campos
+                    modal_detected = modal_opened.get('modals', 0) > 0
+                    escola_field_detected = modal_opened.get('escolaFields', 0) > 0
+                    general_forms_detected = modal_opened.get('inputs', 0) > 0
                     
-                    click_success = url_changed or modal_detected or forms_detected
+                    click_success = url_changed or modal_detected or escola_field_detected or general_forms_detected
                     
                     if click_success:
                         adicionar_clicked = True
@@ -9250,12 +9274,112 @@ async def direct_os_access():
                         if url_changed:
                             print(f"✅ ADICIONAR OS - URL mudou: {url_before} → {url_after}")
                         if modal_detected:
-                            print(f"✅ ADICIONAR OS - Modal detectado: {modal_opened['count']} modais")
-                        if forms_detected:
+                            print(f"✅ ADICIONAR OS - Modal detectado: {modal_opened['modals']} modais")
+                        if escola_field_detected:
+                            print(f"✅ ADICIONAR OS - Campo 'Escola' detectado! {modal_opened['escolaFields']} campos encontrados")
+                            for field in modal_opened['escolaDetails']:
+                                print(f"   - Campo: '{field['label']}' | Placeholder: '{field['placeholder']}' | ID: {field['id']}")
+                        if general_forms_detected:
                             print(f"✅ ADICIONAR OS - Formulário detectado: {modal_opened['inputs']} campos de input")
                     else:
                         print("⚠️ ADICIONAR OS - Clique executado mas nenhuma mudança detectada")
-                        print("⚠️ ADICIONAR OS - Pode ser que o botão não tenha funcionado ou a página não tenha carregado")
+                        print("⚠️ ADICIONAR OS - Aguardando mais tempo... modal pode estar carregando")
+                        
+                        # Aguardar mais um pouco e verificar novamente
+                        await page.wait_for_timeout(5000)
+                        
+                        # Verificação final
+                        final_check = await page.evaluate("""
+                            () => {
+                                const escolaInputs = [];
+                                const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                                
+                                allInputs.forEach(input => {
+                                    const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                    const placeholder = input.placeholder || '';
+                                    const labelText = label ? label.textContent : '';
+                                    
+                                    if (labelText.toLowerCase().includes('escola') || 
+                                        placeholder.toLowerCase().includes('escola') ||
+                                        labelText.toLowerCase().includes('inep') ||
+                                        placeholder.toLowerCase().includes('inep')) {
+                                        escolaInputs.push({
+                                            placeholder: placeholder,
+                                            label: labelText,
+                                            id: input.id
+                                        });
+                                    }
+                                });
+                                
+                                return { escolaFields: escolaInputs.length, escolaDetails: escolaInputs };
+                            }
+                        """)
+                        
+                        if final_check['escolaFields'] > 0:
+                            adicionar_clicked = True
+                            print("✅ ADICIONAR OS - Campo 'Escola' detectado após aguardar!")
+                            for field in final_check['escolaDetails']:
+                                print(f"   - Campo: '{field['label']}' | Placeholder: '{field['placeholder']}' | ID: {field['id']}")
+                        else:
+                            print("❌ ADICIONAR OS - Nenhum campo 'Escola' detectado mesmo após aguardar")
+                    
+                    # Se encontrou o campo escola, testar preenchimento com INEP de exemplo
+                    if adicionar_clicked and (escola_field_detected or (final_check and final_check['escolaFields'] > 0)):
+                        try:
+                            print("🔍 ADICIONAR OS - Tentando preencher campo INEP com código de exemplo...")
+                            
+                            # Usar INEP de exemplo dos logs (33099553)
+                            inep_example = "33099553"
+                            
+                            # Tentar preencher o campo escola
+                            filled = await page.evaluate(f"""
+                                () => {{
+                                    const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                                    
+                                    for (let input of allInputs) {{
+                                        const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                        const placeholder = input.placeholder || '';
+                                        const labelText = label ? label.textContent : '';
+                                        
+                                        if (labelText.toLowerCase().includes('escola') || 
+                                            placeholder.toLowerCase().includes('escola') ||
+                                            labelText.toLowerCase().includes('inep') ||
+                                            placeholder.toLowerCase().includes('inep')) {{
+                                            
+                                            input.value = '{inep_example}';
+                                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            
+                                            return {{
+                                                success: true,
+                                                value: input.value,
+                                                label: labelText,
+                                                placeholder: placeholder
+                                            }};
+                                        }}
+                                    }}
+                                    
+                                    return {{ success: false }};
+                                }}
+                            """)
+                            
+                            if filled['success']:
+                                print(f"✅ ADICIONAR OS - Campo preenchido com sucesso!")
+                                print(f"   - Valor: {filled['value']}")
+                                print(f"   - Label: {filled['label']}")
+                                print(f"   - Placeholder: {filled['placeholder']}")
+                                
+                                # Screenshot após preencher
+                                await page.wait_for_timeout(2000)
+                                await page.screenshot(path=f"{screenshots_dir}/direct_07_field_filled.png")
+                                screenshots.append("direct_07_field_filled.png")
+                                print("📸 Screenshot: direct_07_field_filled.png")
+                                
+                            else:
+                                print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
+                                
+                        except Exception as e:
+                            print(f"❌ ADICIONAR OS - Erro ao preencher campo: {e}")
                     
                     break
                     
@@ -9384,8 +9508,9 @@ async def direct_os_access():
                     screenshots.append("direct_05_after_wait.png")
                     print("📸 Screenshot: direct_05_after_wait.png")
                     
-                    # Aguardar modal/página carregar
-                    await page.wait_for_timeout(5000)
+                    # Aguardar modal/página carregar (pode demorar 10-15 segundos)
+                    print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
+                    await page.wait_for_timeout(15000)
                     
                     # Screenshot final
                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
