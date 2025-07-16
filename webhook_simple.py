@@ -8780,17 +8780,93 @@ def test_direct_os_access():
                 .then(response => response.json())
                 .then(data => {
                     const container = document.getElementById('screenshotsContainer');
-                    container.innerHTML = '';
+                    container.innerHTML = '<h2>📸 Screenshots</h2>';
                     
                     const directScreenshots = data.screenshots.filter(s => 
                         s.filename.includes('direct_') || s.filename.includes('realtest_')
                     ).sort((a, b) => a.filename.localeCompare(b.filename));
                     
-                    directScreenshots.forEach(screenshot => {
-                        addScreenshot(screenshot.filename, screenshot.description || screenshot.filename);
+                    if (directScreenshots.length === 0) {
+                        container.innerHTML += '<p style="color: #666; text-align: center; padding: 20px;">Nenhum screenshot disponível ainda...</p>';
+                        return;
+                    }
+                    
+                    directScreenshots.forEach((screenshot, index) => {
+                        const screenshotDiv = document.createElement('div');
+                        screenshotDiv.className = 'screenshot-item';
+                        screenshotDiv.style.marginBottom = '20px';
+                        screenshotDiv.style.padding = '10px';
+                        screenshotDiv.style.backgroundColor = '#2a2a2a';
+                        screenshotDiv.style.borderRadius = '8px';
+                        screenshotDiv.style.border = '1px solid #444';
+                        
+                        const stepNumber = index + 1;
+                        const stepName = getStepName(screenshot.filename);
+                        
+                        screenshotDiv.innerHTML = `
+                            <div style="color: #ffff00; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
+                                📸 Passo ${stepNumber}: ${stepName}
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/screenshots/${screenshot.filename}" 
+                                     alt="${stepName}" 
+                                     style="max-width: 100%; height: auto; border: 2px solid #00ff00; border-radius: 5px; cursor: pointer;"
+                                     onclick="openImageModal('${screenshot.filename}', '${stepName}')"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none; color: #ff6b6b; padding: 10px; font-size: 12px;">
+                                    ❌ Erro ao carregar imagem: ${screenshot.filename}
+                                </div>
+                            </div>
+                            <div style="color: #888; font-size: 11px; margin-top: 5px; text-align: center;">
+                                ${screenshot.filename}
+                            </div>
+                        `;
+                        
+                        container.appendChild(screenshotDiv);
                     });
                 })
-                .catch(error => console.error('Erro ao carregar screenshots:', error));
+                .catch(error => {
+                    console.error('Erro ao carregar screenshots:', error);
+                    const container = document.getElementById('screenshotsContainer');
+                    container.innerHTML = '<h2>📸 Screenshots</h2><p style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Erro ao carregar screenshots</p>';
+                });
+        }
+        
+        function getStepName(filename) {
+            const stepMap = {
+                'direct_01_login.png': 'Login realizado',
+                'direct_02_dashboard.png': 'Dashboard carregado',
+                'direct_03_os_page.png': 'Página OS acessada',
+                'direct_04_adicionar_clicked.png': 'Botão "Adicionar" clicado',
+                'direct_05_final.png': 'Resultado final'
+            };
+            return stepMap[filename] || filename;
+        }
+        
+        function openImageModal(filename, stepName) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.9); z-index: 1000; 
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer;
+            `;
+            
+            modal.innerHTML = `
+                <div style="max-width: 90%; max-height: 90%; text-align: center;">
+                    <div style="color: #ffff00; font-weight: bold; margin-bottom: 10px; font-size: 18px;">
+                        ${stepName}
+                    </div>
+                    <img src="/screenshots/${filename}" 
+                         style="max-width: 100%; max-height: 80vh; border: 2px solid #00ff00; border-radius: 5px;">
+                    <div style="color: #888; margin-top: 10px; font-size: 14px;">
+                        ${filename} - Clique para fechar
+                    </div>
+                </div>
+            `;
+            
+            modal.onclick = () => document.body.removeChild(modal);
+            document.body.appendChild(modal);
         }
         
         function startDirectTest() {
@@ -8803,6 +8879,11 @@ def test_direct_os_access():
             
             addLog('🚀 Iniciando acesso direto à página OS...', 'info');
             
+            // Monitorar logs em tempo real
+            const logMonitor = setInterval(() => {
+                refreshImages();
+            }, 2000);
+            
             fetch('/execute-direct-os-access', {
                 method: 'POST',
                 headers: {
@@ -8811,18 +8892,28 @@ def test_direct_os_access():
             })
             .then(response => response.json())
             .then(data => {
+                clearInterval(logMonitor);
+                
                 if (data.success) {
                     updateStatus('success', 'Teste concluído');
                     addLog('✅ Acesso direto concluído com sucesso!', 'success');
                     
                     if (data.result && data.result.screenshots) {
-                        data.result.screenshots.forEach(screenshot => {
-                            addLog(`📸 Screenshot: ${screenshot}`, 'info');
+                        addLog(`📸 Total de screenshots gerados: ${data.result.screenshots.length}`, 'info');
+                        data.result.screenshots.forEach((screenshot, index) => {
+                            addLog(`📸 Screenshot ${index + 1}: ${screenshot}`, 'info');
                         });
                     }
                     
                     if (data.result && data.result.adicionar_clicked) {
                         addLog('🎯 Botão "Adicionar nova OS" clicado com sucesso!', 'success');
+                        addLog('🎉 Página de criação de OS deve ter sido aberta!', 'success');
+                    } else {
+                        addLog('⚠️ Botão "Adicionar nova OS" não foi encontrado/clicado', 'error');
+                    }
+                    
+                    if (data.result && data.result.error) {
+                        addLog('❌ Erro durante execução: ' + data.result.error, 'error');
                     }
                     
                 } else {
@@ -8835,6 +8926,7 @@ def test_direct_os_access():
                 refreshImages();
             })
             .catch(error => {
+                clearInterval(logMonitor);
                 updateStatus('error', 'Erro de conexão');
                 addLog('❌ Erro de conexão: ' + error.message, 'error');
                 testRunning = false;
@@ -8899,44 +8991,67 @@ async def direct_os_access():
         page = await browser.new_page()
         
         print("🚀 ACESSO DIRETO - Iniciando automação simplificada")
+        print("🔧 CONFIGURAÇÃO - Ambiente configurado: headless=True, screenshots em /tmp/screenshots")
         
         # PASSO 1: Login
-        print("🔐 LOGIN - Navegando para página")
+        print("🔐 LOGIN - Navegando para página: https://eace.org.br/login?login=login")
         await page.goto("https://eace.org.br/login?login=login")
         await page.wait_for_timeout(3000)
+        print("✅ LOGIN - Página carregada com sucesso")
         
-        print("🔐 LOGIN - Preenchendo credenciais")
+        print("🔐 LOGIN - Preenchendo campo email: raiseupbt@gmail.com")
         await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        print("✅ LOGIN - Email preenchido")
+        
+        print("🔐 LOGIN - Preenchendo campo senha: ****** (oculta)")
         await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        print("✅ LOGIN - Senha preenchida")
+        
+        print("🔐 LOGIN - Clicando botão 'Log In'")
         await page.click('//button[contains(text(), "Log In")]')
         await page.wait_for_timeout(5000)
+        print("✅ LOGIN - Botão clicado, aguardando resposta do servidor")
         
         await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
         screenshots.append("direct_01_login.png")
         print("📸 Screenshot: direct_01_login.png")
         
         # PASSO 2: Selecionar perfil
-        print("👤 PERFIL - Selecionando Fornecedor")
+        print("👤 PERFIL - Verificando se precisa selecionar perfil")
         fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
+        print(f"👤 PERFIL - Elementos 'Fornecedor' encontrados: {fornecedor_count}")
+        
         if fornecedor_count > 0:
+            print("👤 PERFIL - Clicando em 'Fornecedor'")
             await page.click('//*[contains(text(), "Fornecedor")]')
             await page.wait_for_timeout(5000)
-            print("✅ PERFIL - Fornecedor selecionado")
+            print("✅ PERFIL - Perfil 'Fornecedor' selecionado com sucesso")
+        else:
+            print("ℹ️ PERFIL - Elemento 'Fornecedor' não encontrado ou já selecionado")
         
+        print("📱 DASHBOARD - Redirecionando para dashboard do fornecedor")
         await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
         screenshots.append("direct_02_dashboard.png")
-        print("📸 Screenshot: direct_02_dashboard.png")
+        print("📸 Screenshot: direct_02_dashboard.png gerado")
         
         # PASSO 3: Ação que funciona - clicar em "portable_wifi_off"
-        print("🎯 ACESSO OS - Clicando em portable_wifi_off (ação que funciona)")
+        print("🎯 ACESSO OS - Executando ação que sabemos que funciona")
+        print("🎯 ACESSO OS - Clicando em elemento com texto 'portable_wifi_off'")
         await page.click('text="portable_wifi_off"')
         await page.wait_for_timeout(3000)
+        print("✅ ACESSO OS - Elemento clicado com sucesso")
+        print("📱 PÁGINA OS - Navegando para página de controle de OS")
         
         await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
         screenshots.append("direct_03_os_page.png")
-        print("📸 Screenshot: direct_03_os_page.png")
+        print("📸 Screenshot: direct_03_os_page.png gerado")
         
-        # PASSO 4: Procurar e clicar em "Adicionar nova OS"
+        # PASSO 4: Aguardar página carregar completamente
+        print("⏳ AGUARDO - Aguardando página de OS carregar completamente")
+        await page.wait_for_timeout(5000)  # Aguardar 5 segundos para o botão ficar disponível
+        print("✅ AGUARDO - Aguardo concluído, página deve estar carregada")
+        
+        # PASSO 5: Procurar e clicar em "Adicionar nova OS"
         print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
         
         adicionar_clicked = False
