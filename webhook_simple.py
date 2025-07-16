@@ -9470,6 +9470,145 @@ async def direct_os_access():
                                     json.dump(screen_analysis, f, indent=2)
                                 print("📄 ADICIONAR OS - Análise completa salva em screen_analysis.json")
                                 
+                                # Aguardar validação do INEP e procurar próximo passo
+                                print("⏳ ADICIONAR OS - Aguardando validação do INEP...")
+                                await page.wait_for_timeout(3000)
+                                
+                                # Procurar por botões de confirmação/próximo passo
+                                next_step = await page.evaluate("""
+                                    () => {
+                                        const nextButtons = [];
+                                        const allButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
+                                        
+                                        allButtons.forEach(btn => {
+                                            const text = (btn.textContent || btn.value || '').toLowerCase().trim();
+                                            const rect = btn.getBoundingClientRect();
+                                            
+                                            if (rect.width > 0 && rect.height > 0) {
+                                                // Procurar por botões de próximo passo
+                                                if (text.includes('confirmar') || 
+                                                    text.includes('próximo') || 
+                                                    text.includes('proximo') ||
+                                                    text.includes('continuar') ||
+                                                    text.includes('avançar') ||
+                                                    text.includes('avancar') ||
+                                                    text.includes('salvar') ||
+                                                    text.includes('criar') ||
+                                                    text.includes('adicionar') ||
+                                                    text.includes('ok') ||
+                                                    btn.type === 'submit') {
+                                                    
+                                                    nextButtons.push({
+                                                        text: btn.textContent || btn.value || '',
+                                                        type: btn.type || 'button',
+                                                        classes: btn.className,
+                                                        id: btn.id,
+                                                        disabled: btn.disabled
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Verificar se há novos campos que apareceram
+                                        const newFields = [];
+                                        const allInputs = document.querySelectorAll('input[type="text"], textarea, select');
+                                        
+                                        allInputs.forEach(input => {
+                                            const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                            const placeholder = input.placeholder || '';
+                                            const labelText = label ? label.textContent : '';
+                                            
+                                            // Pular o campo escola que já preenchemos
+                                            if (!labelText.toLowerCase().includes('escola') && 
+                                                !placeholder.toLowerCase().includes('escola') &&
+                                                !labelText.toLowerCase().includes('inep') &&
+                                                !placeholder.toLowerCase().includes('inep')) {
+                                                
+                                                const rect = input.getBoundingClientRect();
+                                                if (rect.width > 0 && rect.height > 0) {
+                                                    newFields.push({
+                                                        label: labelText,
+                                                        placeholder: placeholder,
+                                                        type: input.type,
+                                                        required: input.required,
+                                                        id: input.id
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        return {
+                                            nextButtons: nextButtons,
+                                            newFields: newFields
+                                        };
+                                    }
+                                """)
+                                
+                                print("🔍 ADICIONAR OS - Análise do próximo passo:")
+                                print(f"   - Botões de próximo passo: {len(next_step['nextButtons'])}")
+                                for button in next_step['nextButtons']:
+                                    status = "DESABILITADO" if button['disabled'] else "HABILITADO"
+                                    print(f"     * '{button['text']}' ({button['type']}) - {status}")
+                                
+                                print(f"   - Novos campos encontrados: {len(next_step['newFields'])}")
+                                for field in next_step['newFields']:
+                                    required = "OBRIGATÓRIO" if field['required'] else "OPCIONAL"
+                                    print(f"     * '{field['label']}' | Placeholder: '{field['placeholder']}' | {required}")
+                                
+                                # Se há botões habilitados, tentar clicar no mais provável
+                                enabled_buttons = [btn for btn in next_step['nextButtons'] if not btn['disabled']]
+                                if enabled_buttons:
+                                    # Priorizar botões por texto
+                                    priority_order = ['confirmar', 'próximo', 'proximo', 'continuar', 'avançar', 'avancar', 'salvar', 'criar']
+                                    best_button = None
+                                    
+                                    for priority in priority_order:
+                                        for btn in enabled_buttons:
+                                            if priority in btn['text'].lower():
+                                                best_button = btn
+                                                break
+                                        if best_button:
+                                            break
+                                    
+                                    if not best_button and enabled_buttons:
+                                        best_button = enabled_buttons[0]  # Pegar o primeiro se não encontrar prioridade
+                                    
+                                    if best_button:
+                                        try:
+                                            print(f"🎯 ADICIONAR OS - Tentando clicar em '{best_button['text']}'...")
+                                            
+                                            # Tentar clicar no botão
+                                            button_clicked = await page.evaluate(f"""
+                                                () => {{
+                                                    const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
+                                                    for (let btn of buttons) {{
+                                                        if ((btn.textContent || btn.value || '').includes('{best_button['text']}')) {{
+                                                            btn.click();
+                                                            return true;
+                                                        }}
+                                                    }}
+                                                    return false;
+                                                }}
+                                            """)
+                                            
+                                            if button_clicked:
+                                                print(f"✅ ADICIONAR OS - Botão '{best_button['text']}' clicado com sucesso!")
+                                                
+                                                # Aguardar resposta e fazer screenshot final
+                                                await page.wait_for_timeout(3000)
+                                                await page.screenshot(path=f"{screenshots_dir}/direct_08_next_step.png")
+                                                screenshots.append("direct_08_next_step.png")
+                                                print("📸 Screenshot: direct_08_next_step.png")
+                                                
+                                            else:
+                                                print(f"❌ ADICIONAR OS - Falha ao clicar no botão '{best_button['text']}'")
+                                                
+                                        except Exception as e:
+                                            print(f"❌ ADICIONAR OS - Erro ao clicar no botão: {e}")
+                                
+                                else:
+                                    print("ℹ️ ADICIONAR OS - Nenhum botão habilitado encontrado, formulário pode estar aguardando mais dados")
+                                
                             else:
                                 print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
                                 
