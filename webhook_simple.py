@@ -8403,6 +8403,7 @@ def execute_os_detection_test():
                 # Código Python para testar detecção
                 test_code = '''
 import asyncio
+import json
 from playwright.async_api import async_playwright
 
 async def test_os_detection():
@@ -8534,6 +8535,513 @@ if __name__ == "__main__":
         return jsonify({
             'success': False,
             'message': f'Erro no teste de detecção OS: {e}'
+        }), 500
+
+
+@app.route('/test-direct-os-access', methods=['GET'])
+def test_direct_os_access():
+    """Endpoint simplificado - vai direto para página OS e clica em Adicionar nova OS"""
+    try:
+        html_content = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Direto OS</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+        }
+        
+        .header h1 {
+            color: #00ff00;
+            font-size: 1.8em;
+            margin: 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #00cc00;
+        }
+        
+        .btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 70vh;
+        }
+        
+        .panel {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel h2 {
+            color: #00ff00;
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border-left: 4px solid #00ff00;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        .log-success {
+            border-left-color: #00ff00;
+            background: #0a2a0a;
+        }
+        
+        .log-error {
+            border-left-color: #ff0000;
+            background: #2a0a0a;
+        }
+        
+        .log-info {
+            border-left-color: #00ffff;
+            background: #0a1a2a;
+        }
+        
+        .screenshot-item {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .screenshot-item img {
+            max-width: 100%;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        
+        .screenshot-caption {
+            color: #ffff00;
+            font-weight: bold;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .status-bar {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .status-running {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+        
+        .status-success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .status-error {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Acesso Direto OS - Versão Simplificada</h1>
+            <p>Login → Perfil → Clique direto em "portable_wifi_off" → Página OS → Adicionar nova OS</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startDirectTest()">
+                ⚡ Executar Acesso Direto
+            </button>
+            <button class="btn" onclick="clearAll()">
+                🗑️ Limpar
+            </button>
+            <button class="btn" onclick="refreshImages()">
+                🔄 Atualizar Imagens
+            </button>
+        </div>
+        
+        <div class="status-bar" id="statusBar">
+            Aguardando...
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>📋 Logs Simplificados</h2>
+                <div id="logsContainer"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>📸 Screenshots</h2>
+                <div id="screenshotsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testRunning = false;
+        
+        function updateStatus(status, message) {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar status-' + status;
+        }
+        
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('logsContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addScreenshot(filename, caption) {
+            const container = document.getElementById('screenshotsContainer');
+            const screenshotDiv = document.createElement('div');
+            screenshotDiv.className = 'screenshot-item';
+            
+            screenshotDiv.innerHTML = `
+                <img src="/screenshots/${filename}" alt="${caption}" onerror="this.style.display='none'">
+                <div class="screenshot-caption">${caption}</div>
+            `;
+            
+            container.appendChild(screenshotDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearAll() {
+            document.getElementById('logsContainer').innerHTML = '';
+            document.getElementById('screenshotsContainer').innerHTML = '';
+            updateStatus('idle', 'Aguardando...');
+        }
+        
+        function refreshImages() {
+            fetch('/screenshots')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('screenshotsContainer');
+                    container.innerHTML = '';
+                    
+                    const directScreenshots = data.screenshots.filter(s => 
+                        s.filename.includes('direct_') || s.filename.includes('realtest_')
+                    ).sort((a, b) => a.filename.localeCompare(b.filename));
+                    
+                    directScreenshots.forEach(screenshot => {
+                        addScreenshot(screenshot.filename, screenshot.description || screenshot.filename);
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar screenshots:', error));
+        }
+        
+        function startDirectTest() {
+            if (testRunning) return;
+            
+            testRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            updateStatus('running', 'Executando acesso direto...');
+            clearAll();
+            
+            addLog('🚀 Iniciando acesso direto à página OS...', 'info');
+            
+            fetch('/execute-direct-os-access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStatus('success', 'Teste concluído');
+                    addLog('✅ Acesso direto concluído com sucesso!', 'success');
+                    
+                    if (data.result && data.result.screenshots) {
+                        data.result.screenshots.forEach(screenshot => {
+                            addLog(`📸 Screenshot: ${screenshot}`, 'info');
+                        });
+                    }
+                    
+                    if (data.result && data.result.adicionar_clicked) {
+                        addLog('🎯 Botão "Adicionar nova OS" clicado com sucesso!', 'success');
+                    }
+                    
+                } else {
+                    updateStatus('error', 'Erro');
+                    addLog('❌ Erro: ' + data.message, 'error');
+                }
+                
+                testRunning = false;
+                document.getElementById('startBtn').disabled = false;
+                refreshImages();
+            })
+            .catch(error => {
+                updateStatus('error', 'Erro de conexão');
+                addLog('❌ Erro de conexão: ' + error.message, 'error');
+                testRunning = false;
+                document.getElementById('startBtn').disabled = false;
+            });
+        }
+        
+        // Atualizar imagens a cada 8 segundos
+        setInterval(refreshImages, 8000);
+        
+        // Carregar imagens iniciais
+        refreshImages();
+    </script>
+</body>
+</html>
+        '''
+        
+        return html_content
+        
+    except Exception as e:
+        logger.error(f"Erro no endpoint test-direct-os-access: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro no endpoint test-direct-os-access: {e}'
+        }), 500
+
+
+@app.route('/execute-direct-os-access', methods=['POST'])
+def execute_direct_os_access():
+    """Executa acesso direto simplificado à página OS"""
+    try:
+        def run_direct_access():
+            try:
+                # Código Python simplificado
+                direct_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+
+async def direct_os_access():
+    """Acesso direto simplificado à página OS"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("direct_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    screenshots = []
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 ACESSO DIRETO - Iniciando automação simplificada")
+        
+        # PASSO 1: Login
+        print("🔐 LOGIN - Navegando para página")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        
+        print("🔐 LOGIN - Preenchendo credenciais")
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
+        screenshots.append("direct_01_login.png")
+        print("📸 Screenshot: direct_01_login.png")
+        
+        # PASSO 2: Selecionar perfil
+        print("👤 PERFIL - Selecionando Fornecedor")
+        fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
+        if fornecedor_count > 0:
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+            print("✅ PERFIL - Fornecedor selecionado")
+        
+        await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+        screenshots.append("direct_02_dashboard.png")
+        print("📸 Screenshot: direct_02_dashboard.png")
+        
+        # PASSO 3: Ação que funciona - clicar em "portable_wifi_off"
+        print("🎯 ACESSO OS - Clicando em portable_wifi_off (ação que funciona)")
+        await page.click('text="portable_wifi_off"')
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
+        screenshots.append("direct_03_os_page.png")
+        print("📸 Screenshot: direct_03_os_page.png")
+        
+        # PASSO 4: Procurar e clicar em "Adicionar nova OS"
+        print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
+        
+        adicionar_clicked = False
+        adicionar_selectors = [
+            "//button[contains(text(), 'Adicionar nova OS')]",
+            "//button[contains(text(), 'Adicionar OS')]",
+            "//button[contains(text(), 'Adicionar')]",
+            "//a[contains(text(), 'Adicionar nova OS')]",
+            "//a[contains(text(), 'Adicionar OS')]",
+            "//*[contains(text(), 'Adicionar nova OS')]",
+            "//*[contains(text(), 'Adicionar OS')]"
+        ]
+        
+        for selector in adicionar_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                print(f"🔍 ADICIONAR OS - Testando: {selector} - {elements} elementos")
+                
+                if elements > 0:
+                    print(f"📍 ADICIONAR OS - Clicando: {selector}")
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    
+                    await page.screenshot(path=f"{screenshots_dir}/direct_04_adicionar_clicked.png")
+                    screenshots.append("direct_04_adicionar_clicked.png")
+                    print("📸 Screenshot: direct_04_adicionar_clicked.png")
+                    
+                    # Screenshot final
+                    await page.wait_for_timeout(2000)
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_final.png")
+                    screenshots.append("direct_05_final.png")
+                    print("📸 Screenshot: direct_05_final.png")
+                    
+                    adicionar_clicked = True
+                    print("✅ ADICIONAR OS - Botão clicado com sucesso!")
+                    break
+                    
+            except Exception as e:
+                print(f"❌ ADICIONAR OS - Erro com {selector}: {e}")
+                continue
+        
+        if not adicionar_clicked:
+            print("❌ ADICIONAR OS - Nenhum botão encontrado")
+        
+        return {
+            "success": True,
+            "screenshots": screenshots,
+            "adicionar_clicked": adicionar_clicked
+        }
+        
+    except Exception as e:
+        print(f"❌ ERRO: {e}")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(direct_os_access())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', direct_code
+                ], capture_output=True, text=True, timeout=120)
+                
+                if result.returncode == 0:
+                    output = json.loads(result.stdout)
+                    return output
+                else:
+                    return {"error": result.stderr}
+                    
+            except Exception as e:
+                return {"error": str(e)}
+        
+        # Executar em thread separada
+        import threading
+        result = {"status": "running"}
+        
+        def run_test():
+            nonlocal result
+            result = run_direct_access()
+        
+        thread = threading.Thread(target=run_test)
+        thread.start()
+        thread.join(timeout=120)
+        
+        if thread.is_alive():
+            return jsonify({
+                'success': False,
+                'message': 'Timeout na execução do teste'
+            })
+        
+        return jsonify({
+            'success': True,
+            'result': result
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro no acesso direto OS: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro no acesso direto OS: {e}'
         }), 500
 
 
