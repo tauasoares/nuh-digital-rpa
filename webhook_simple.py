@@ -9375,6 +9375,101 @@ async def direct_os_access():
                                 screenshots.append("direct_07_field_filled.png")
                                 print("📸 Screenshot: direct_07_field_filled.png")
                                 
+                                # Analisar o que aparece na tela após preencher
+                                screen_analysis = await page.evaluate("""
+                                    () => {
+                                        const result = {
+                                            dropdowns: [],
+                                            suggestions: [],
+                                            buttons: [],
+                                            visible_text: []
+                                        };
+                                        
+                                        // Procurar por dropdowns ou listas
+                                        const dropdowns = document.querySelectorAll('select, ul.dropdown, .dropdown-menu, .suggestions, .autocomplete');
+                                        dropdowns.forEach(dropdown => {
+                                            const rect = dropdown.getBoundingClientRect();
+                                            if (rect.width > 0 && rect.height > 0) {
+                                                const options = dropdown.querySelectorAll('option, li, .option-item');
+                                                const optionTexts = Array.from(options).map(opt => opt.textContent?.trim()).filter(text => text);
+                                                
+                                                result.dropdowns.push({
+                                                    tagName: dropdown.tagName,
+                                                    classes: dropdown.className,
+                                                    options: optionTexts.slice(0, 5), // Primeiras 5 opções
+                                                    totalOptions: optionTexts.length
+                                                });
+                                            }
+                                        });
+                                        
+                                        // Procurar por elementos com números (possíveis sugestões)
+                                        const allElements = document.querySelectorAll('*');
+                                        allElements.forEach(el => {
+                                            const text = el.textContent?.trim();
+                                            if (text && /^\d{8}$/.test(text)) { // Números de 8 dígitos (INEP)
+                                                const rect = el.getBoundingClientRect();
+                                                if (rect.width > 0 && rect.height > 0) {
+                                                    result.suggestions.push({
+                                                        text: text,
+                                                        tagName: el.tagName,
+                                                        classes: el.className,
+                                                        clickable: el.tagName === 'BUTTON' || el.onclick !== null || el.style.cursor === 'pointer'
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Procurar por botões próximos
+                                        const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
+                                        buttons.forEach(btn => {
+                                            const rect = btn.getBoundingClientRect();
+                                            if (rect.width > 0 && rect.height > 0) {
+                                                const text = btn.textContent?.trim() || btn.value;
+                                                if (text) {
+                                                    result.buttons.push({
+                                                        text: text,
+                                                        type: btn.type || 'button',
+                                                        classes: btn.className
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Capturar texto visível relevante
+                                        const textElements = document.querySelectorAll('span, div, p, label');
+                                        textElements.forEach(el => {
+                                            const text = el.textContent?.trim();
+                                            if (text && text.length > 0 && text.length < 100) {
+                                                const rect = el.getBoundingClientRect();
+                                                if (rect.width > 0 && rect.height > 0) {
+                                                    result.visible_text.push(text);
+                                                }
+                                            }
+                                        });
+                                        
+                                        return result;
+                                    }
+                                """)
+                                
+                                print("🔍 ADICIONAR OS - Análise da tela após preenchimento:")
+                                print(f"   - Dropdowns encontrados: {len(screen_analysis['dropdowns'])}")
+                                for dropdown in screen_analysis['dropdowns']:
+                                    print(f"     * {dropdown['tagName']}: {dropdown['totalOptions']} opções")
+                                    print(f"       Opções: {dropdown['options']}")
+                                
+                                print(f"   - Números/sugestões encontrados: {len(screen_analysis['suggestions'])}")
+                                for suggestion in screen_analysis['suggestions']:
+                                    print(f"     * {suggestion['text']} ({suggestion['tagName']}) - Clicável: {suggestion['clickable']}")
+                                
+                                print(f"   - Botões encontrados: {len(screen_analysis['buttons'])}")
+                                for button in screen_analysis['buttons'][:5]:  # Primeiros 5 botões
+                                    print(f"     * '{button['text']}' ({button['type']})")
+                                
+                                # Salvar análise completa
+                                with open(f"{screenshots_dir}/screen_analysis.json", "w") as f:
+                                    json.dump(screen_analysis, f, indent=2)
+                                print("📄 ADICIONAR OS - Análise completa salva em screen_analysis.json")
+                                
                             else:
                                 print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
                                 
