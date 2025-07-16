@@ -9054,7 +9054,16 @@ async def direct_os_access():
         # PASSO 5: Procurar e clicar em "Adicionar nova OS"
         print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
         
-        # Primeiro, vamos mapear todos os elementos visíveis para debug
+        # Aguardar mais tempo para página carregar completamente
+        print("⏳ AGUARDO - Aguardando página carregar completamente (10 segundos)")
+        await page.wait_for_timeout(10000)
+        
+        # Screenshot antes da busca por botão
+        await page.screenshot(path=f"{screenshots_dir}/direct_04_before_button_search.png")
+        screenshots.append("direct_04_before_button_search.png")
+        print("📸 Screenshot: direct_04_before_button_search.png")
+        
+        # Mapear todos os elementos visíveis para debug
         all_elements = await page.evaluate("""
             () => {
                 const elements = [];
@@ -9063,14 +9072,18 @@ async def direct_os_access():
                 allElements.forEach((el, index) => {
                     const rect = el.getBoundingClientRect();
                     const text = el.textContent?.trim() || '';
+                    const style = window.getComputedStyle(el);
                     
-                    if (rect.width > 0 && rect.height > 0 && text.length > 0) {
+                    if (rect.width > 0 && rect.height > 0 && text.length > 0 && 
+                        style.display !== 'none' && style.visibility !== 'hidden') {
                         elements.push({
                             tagName: el.tagName,
                             text: text,
                             classes: el.className,
                             id: el.id,
-                            index: index
+                            index: index,
+                            visible: true,
+                            clickable: !el.disabled
                         });
                     }
                 });
@@ -9085,33 +9098,55 @@ async def direct_os_access():
         adicionar_elements = [el for el in all_elements if 
                             'adicionar' in el['text'].lower() or 
                             'nova' in el['text'].lower() or 
-                            'novo' in el['text'].lower()]
+                            'novo' in el['text'].lower() or
+                            'add' in el['text'].lower() or
+                            'create' in el['text'].lower()]
         
-        print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo': {len(adicionar_elements)}")
+        print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': {len(adicionar_elements)}")
         for el in adicionar_elements:
-            print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']}")
+            print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
         
         adicionar_clicked = False
         
-        # Seletores mais específicos e variados
+        # Seletores mais específicos e variados com diferentes estratégias
         adicionar_selectors = [
+            # Seletores específicos para "Adicionar nova OS"
             "//button[contains(text(), 'Adicionar nova OS')]",
-            "//button[contains(text(), 'Adicionar OS')]",
-            "//button[contains(text(), 'Nova OS')]",
-            "//button[contains(text(), 'Adicionar')]",
             "//a[contains(text(), 'Adicionar nova OS')]",
-            "//a[contains(text(), 'Adicionar OS')]",
-            "//a[contains(text(), 'Nova OS')]",
-            "//a[contains(text(), 'Adicionar')]",
             "//*[contains(text(), 'Adicionar nova OS')]",
+            
+            # Seletores para "Adicionar OS" 
+            "//button[contains(text(), 'Adicionar OS')]",
+            "//a[contains(text(), 'Adicionar OS')]",
             "//*[contains(text(), 'Adicionar OS')]",
+            
+            # Seletores para "Nova OS"
+            "//button[contains(text(), 'Nova OS')]",
+            "//a[contains(text(), 'Nova OS')]",
             "//*[contains(text(), 'Nova OS')]",
+            
+            # Seletores genéricos para "Adicionar"
+            "//button[contains(text(), 'Adicionar')]",
+            "//a[contains(text(), 'Adicionar')]",
             "//*[contains(text(), 'Adicionar')]",
+            
+            # Seletores com classes comuns
             "//button[contains(@class, 'btn') and contains(text(), 'Adicionar')]",
             "//button[contains(@class, 'button') and contains(text(), 'Adicionar')]",
-            "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]"
+            "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]",
+            
+            # Seletores em inglês
+            "//button[contains(text(), 'Add')]",
+            "//button[contains(text(), 'Create')]",
+            "//button[contains(text(), 'New')]",
+            
+            # Seletores por ícones ou símbolos
+            "//button[contains(text(), '+')]",
+            "//*[contains(text(), '+') and contains(text(), 'OS')]",
+            "//*[contains(text(), '+') and contains(text(), 'Nova')]"
         ]
         
+        # Primeira tentativa: seletores específicos
         for selector in adicionar_selectors:
             try:
                 elements = await page.locator(selector).count()
@@ -9120,23 +9155,23 @@ async def direct_os_access():
                 if elements > 0:
                     print(f"📍 ADICIONAR OS - Clicando: {selector}")
                     
-                    # Aguardar um pouco mais antes de clicar
-                    await page.wait_for_timeout(1000)
+                    # Aguardar elemento estar visível e clicável
+                    await page.wait_for_selector(selector, timeout=5000)
                     
                     await page.locator(selector).click()
                     await page.wait_for_timeout(3000)
                     
-                    await page.screenshot(path=f"{screenshots_dir}/direct_04_adicionar_clicked.png")
-                    screenshots.append("direct_04_adicionar_clicked.png")
-                    print("📸 Screenshot: direct_04_adicionar_clicked.png")
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
+                    screenshots.append("direct_05_adicionar_clicked.png")
+                    print("📸 Screenshot: direct_05_adicionar_clicked.png")
                     
                     # Aguardar modal/página carregar
                     await page.wait_for_timeout(3000)
                     
                     # Screenshot final
-                    await page.screenshot(path=f"{screenshots_dir}/direct_05_final.png")
-                    screenshots.append("direct_05_final.png")
-                    print("📸 Screenshot: direct_05_final.png")
+                    await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                    screenshots.append("direct_06_final.png")
+                    print("📸 Screenshot: direct_06_final.png")
                     
                     adicionar_clicked = True
                     print("✅ ADICIONAR OS - Botão clicado com sucesso!")
@@ -9146,16 +9181,61 @@ async def direct_os_access():
                 print(f"❌ ADICIONAR OS - Erro com {selector}: {e}")
                 continue
         
+        # Segunda tentativa: força bruta em elementos que contêm palavras-chave
         if not adicionar_clicked:
-            print("❌ ADICIONAR OS - Nenhum botão encontrado")
+            print("🔍 ADICIONAR OS - Tentativa 2: Força bruta em elementos identificados")
+            for el in adicionar_elements:
+                try:
+                    print(f"🎯 ADICIONAR OS - Tentando clicar: {el['tagName']} - '{el['text']}'")
+                    
+                    # Tentar clicar usando JavaScript
+                    await page.evaluate(f"""
+                        () => {{
+                            const elements = document.querySelectorAll('{el['tagName'].lower()}');
+                            for (let elem of elements) {{
+                                if (elem.textContent?.includes('{el['text']}')) {{
+                                    elem.click();
+                                    return true;
+                                }}
+                            }}
+                            return false;
+                        }}
+                    """)
+                    
+                    await page.wait_for_timeout(3000)
+                    
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
+                    screenshots.append("direct_05_adicionar_clicked.png")
+                    print("📸 Screenshot: direct_05_adicionar_clicked.png")
+                    
+                    # Aguardar modal/página carregar
+                    await page.wait_for_timeout(3000)
+                    
+                    # Screenshot final
+                    await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                    screenshots.append("direct_06_final.png")
+                    print("📸 Screenshot: direct_06_final.png")
+                    
+                    adicionar_clicked = True
+                    print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
+                    break
+                    
+                except Exception as e:
+                    print(f"❌ ADICIONAR OS - Erro com força bruta: {e}")
+                    continue
+        
+        if not adicionar_clicked:
+            print("❌ ADICIONAR OS - Nenhum botão encontrado após todas as tentativas")
             print("🔍 ADICIONAR OS - Elementos disponíveis para debug:")
             for el in adicionar_elements:
-                print(f"   - {el['tagName']}: '{el['text']}'")
+                print(f"   - {el['tagName']}: '{el['text']}' - Classes: {el['classes']}")
         
         return {
             "success": True,
             "screenshots": screenshots,
-            "adicionar_clicked": adicionar_clicked
+            "adicionar_clicked": adicionar_clicked,
+            "total_elements": len(all_elements),
+            "adicionar_elements": len(adicionar_elements)
         }
         
     except Exception as e:
