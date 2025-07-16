@@ -9474,106 +9474,131 @@ async def direct_os_access():
                                 print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
                                 await page.wait_for_timeout(3000)
                                 
-                                # Procurar e clicar na sugestão do INEP para ativar o botão "Incluir"
-                                suggestion_selected = await page.evaluate(f"""
+                                # Mapear todas as sugestões que aparecem após preencher o INEP
+                                suggestions_found = await page.evaluate(f"""
                                     () => {{
                                         const inepValue = '{inep_example}';
+                                        const suggestions = [];
                                         
-                                        // Procurar por elementos clicáveis que contenham o INEP
-                                        const clickableElements = document.querySelectorAll('div, span, li, button, a, .suggestion, .option');
-                                        
-                                        for (let element of clickableElements) {{
+                                        // Procurar por todos os elementos que contenham o INEP
+                                        const allElements = document.querySelectorAll('*');
+                                        allElements.forEach((element, index) => {{
                                             const text = element.textContent?.trim();
                                             const rect = element.getBoundingClientRect();
                                             
-                                            // Verificar se o elemento está visível e contém o INEP
-                                            if (rect.width > 0 && rect.height > 0 && 
-                                                text && text.includes(inepValue)) {{
-                                                
-                                                // Verificar se é clicável (cursor pointer, onclick, etc.)
+                                            // Verificar se contém o INEP e está visível
+                                            if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
                                                 const style = window.getComputedStyle(element);
-                                                const isClickable = style.cursor === 'pointer' || 
-                                                                  element.onclick || 
-                                                                  element.getAttribute('onclick') ||
-                                                                  element.tagName === 'BUTTON' ||
-                                                                  element.tagName === 'A' ||
-                                                                  element.classList.contains('clickable') ||
-                                                                  element.classList.contains('suggestion');
                                                 
-                                                if (isClickable) {{
-                                                    element.click();
-                                                    return {{
-                                                        success: true,
-                                                        text: text,
-                                                        tagName: element.tagName,
-                                                        classes: element.className
-                                                    }};
-                                                }}
+                                                suggestions.push({{
+                                                    index: index,
+                                                    text: text,
+                                                    tagName: element.tagName,
+                                                    classes: element.className,
+                                                    id: element.id,
+                                                    cursor: style.cursor,
+                                                    hasOnclick: !!element.onclick,
+                                                    rect: {{
+                                                        x: rect.x,
+                                                        y: rect.y,
+                                                        width: rect.width,
+                                                        height: rect.height
+                                                    }},
+                                                    parent: element.parentElement?.tagName || 'none'
+                                                }});
                                             }}
-                                        }}
+                                        }});
                                         
-                                        return {{ success: false }};
+                                        return suggestions;
                                     }}
                                 """)
                                 
-                                if suggestion_selected['success']:
-                                    print(f"✅ ADICIONAR OS - Sugestão selecionada com sucesso!")
-                                    print(f"   - Texto: {suggestion_selected['text']}")
-                                    print(f"   - Elemento: {suggestion_selected['tagName']}")
-                                    print(f"   - Classes: {suggestion_selected['classes']}")
-                                    
-                                    # Aguardar um pouco para o botão "Incluir" ser ativado
-                                    await page.wait_for_timeout(2000)
-                                    
-                                    # Screenshot após selecionar a sugestão
-                                    await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
-                                    screenshots.append("direct_08_suggestion_selected.png")
-                                    print("📸 Screenshot: direct_08_suggestion_selected.png")
-                                    
-                                else:
-                                    print("⚠️ ADICIONAR OS - Nenhuma sugestão clicável encontrada")
-                                    print("🔍 ADICIONAR OS - Procurando por sugestões alternativas...")
-                                    
-                                    # Estratégia alternativa: procurar por qualquer elemento com o INEP
-                                    alternative_selection = await page.evaluate(f"""
-                                        () => {{
-                                            const inepValue = '{inep_example}';
-                                            const allElements = document.querySelectorAll('*');
-                                            
-                                            for (let element of allElements) {{
-                                                const text = element.textContent?.trim();
-                                                const rect = element.getBoundingClientRect();
+                                print(f"🔍 ADICIONAR OS - Sugestões encontradas: {len(suggestions_found)}")
+                                for i, suggestion in enumerate(suggestions_found):
+                                    print(f"   {i+1}. {suggestion['tagName']} - '{suggestion['text'][:50]}...'")
+                                    print(f"      Classes: {suggestion['classes']}")
+                                    print(f"      Cursor: {suggestion['cursor']}")
+                                    print(f"      Parent: {suggestion['parent']}")
+                                    print(f"      OnClick: {suggestion['hasOnclick']}")
+                                    print("")
+                                
+                                # Tentar clicar em cada sugestão até encontrar a que funciona
+                                suggestion_selected = {'success': False}
+                                
+                                for i, suggestion in enumerate(suggestions_found):
+                                    try:
+                                        print(f"🎯 ADICIONAR OS - Tentando clicar na sugestão {i+1}: {suggestion['tagName']} - '{suggestion['text'][:30]}...'")
+                                        
+                                        # Tentar clicar usando coordenadas
+                                        clicked = await page.evaluate(f"""
+                                            () => {{
+                                                const allElements = document.querySelectorAll('*');
+                                                const targetElement = allElements[{suggestion['index']}];
                                                 
-                                                if (rect.width > 0 && rect.height > 0 && 
-                                                    text && text === inepValue) {{
+                                                if (targetElement) {{
+                                                    // Tentar diferentes métodos de clique
+                                                    targetElement.click();
                                                     
-                                                    // Tentar clicar mesmo sem indicação visual de clicável
-                                                    element.click();
-                                                    return {{
-                                                        success: true,
-                                                        text: text,
-                                                        tagName: element.tagName,
-                                                        classes: element.className
-                                                    }};
+                                                    // Também tentar disparar eventos de mouse
+                                                    targetElement.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                                    targetElement.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
+                                                    
+                                                    return true;
                                                 }}
+                                                return false;
                                             }}
+                                        """)
+                                        
+                                        if clicked:
+                                            print(f"✅ ADICIONAR OS - Clique executado na sugestão {i+1}")
                                             
-                                            return {{ success: false }};
-                                        }}
-                                    """)
-                                    
-                                    if alternative_selection['success']:
-                                        print(f"✅ ADICIONAR OS - Elemento alternativo selecionado!")
-                                        print(f"   - Texto: {alternative_selection['text']}")
-                                        print(f"   - Elemento: {alternative_selection['tagName']}")
-                                        
-                                        await page.wait_for_timeout(2000)
-                                        await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
-                                        screenshots.append("direct_08_suggestion_selected.png")
-                                        print("📸 Screenshot: direct_08_suggestion_selected.png")
-                                        
-                                    else:
-                                        print("❌ ADICIONAR OS - Falha ao selecionar sugestão do INEP")
+                                            # Aguardar um pouco para ver se houve mudança
+                                            await page.wait_for_timeout(1000)
+                                            
+                                            # Verificar se o botão "Incluir" foi ativado
+                                            button_check = await page.evaluate("""
+                                                () => {
+                                                    const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+                                                    for (let btn of buttons) {
+                                                        if (btn.textContent?.toLowerCase().includes('incluir')) {
+                                                            return {
+                                                                found: true,
+                                                                disabled: btn.disabled,
+                                                                text: btn.textContent
+                                                            };
+                                                        }
+                                                    }
+                                                    return { found: false };
+                                                }
+                                            """)
+                                            
+                                            if button_check['found'] and not button_check['disabled']:
+                                                print(f"🎉 ADICIONAR OS - SUCESSO! Botão 'Incluir' ativado após clicar na sugestão {i+1}")
+                                                suggestion_selected = {
+                                                    'success': True,
+                                                    'text': suggestion['text'],
+                                                    'tagName': suggestion['tagName'],
+                                                    'classes': suggestion['classes'],
+                                                    'attempt': i+1
+                                                }
+                                                
+                                                # Screenshot após sucesso
+                                                await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
+                                                screenshots.append("direct_08_suggestion_selected.png")
+                                                print("📸 Screenshot: direct_08_suggestion_selected.png")
+                                                break
+                                            else:
+                                                print(f"⚠️ ADICIONAR OS - Clique na sugestão {i+1} não ativou o botão 'Incluir'")
+                                        else:
+                                            print(f"❌ ADICIONAR OS - Falha ao clicar na sugestão {i+1}")
+                                            
+                                    except Exception as e:
+                                        print(f"❌ ADICIONAR OS - Erro ao clicar na sugestão {i+1}: {e}")
+                                        continue
+                                
+                                if not suggestion_selected['success']:
+                                    print("❌ ADICIONAR OS - Nenhuma sugestão funcionou para ativar o botão 'Incluir'")
+                                    print("💡 ADICIONAR OS - Pode ser necessário ajustar a estratégia de seleção")
                                 
                                 # Verificar estado dos botões (especialmente "Incluir" e "Fechar")
                                 button_status = await page.evaluate("""
