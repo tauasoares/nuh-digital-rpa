@@ -9369,8 +9369,8 @@ async def direct_os_access():
                                 print(f"   - Label: {filled['label']}")
                                 print(f"   - Placeholder: {filled['placeholder']}")
                                 
-                                # Screenshot após preencher
-                                await page.wait_for_timeout(2000)
+                                # Screenshot após preencher - aguardar mais tempo para visualizar
+                                await page.wait_for_timeout(4000)
                                 await page.screenshot(path=f"{screenshots_dir}/direct_07_field_filled.png")
                                 screenshots.append("direct_07_field_filled.png")
                                 print("📸 Screenshot: direct_07_field_filled.png")
@@ -9472,42 +9472,106 @@ async def direct_os_access():
                                 
                                 # Aguardar validação do INEP e procurar sugestão para selecionar
                                 print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
-                                await page.wait_for_timeout(3000)
+                                await page.wait_for_timeout(5000)
                                 
-                                # Mapear todas as sugestões que aparecem após preencher o INEP
+                                # Verificação intermediária após 2 segundos
+                                print("🔍 ADICIONAR OS - Verificando se sugestões já apareceram...")
+                                await page.wait_for_timeout(2000)
+                                
+                                # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
                                 suggestions_found = await page.evaluate(f"""
                                     () => {{
                                         const inepValue = '{inep_example}';
                                         const suggestions = [];
                                         
-                                        // Procurar por todos os elementos que contenham o INEP
-                                        const allElements = document.querySelectorAll('*');
-                                        allElements.forEach((element, index) => {{
-                                            const text = element.textContent?.trim();
-                                            const rect = element.getBoundingClientRect();
-                                            
-                                            // Verificar se contém o INEP e está visível
-                                            if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
-                                                const style = window.getComputedStyle(element);
+                                        // Procurar especificamente por elementos de sugestão
+                                        const suggestionSelectors = [
+                                            'div[role="option"]',
+                                            'li[role="option"]', 
+                                            'div.suggestion',
+                                            'li.suggestion',
+                                            'div.dropdown-item',
+                                            'li.dropdown-item',
+                                            'div[data-value]',
+                                            'li[data-value]',
+                                            'div.autocomplete-item',
+                                            'li.autocomplete-item'
+                                        ];
+                                        
+                                        // Primeiro, procurar por elementos específicos de sugestão
+                                        suggestionSelectors.forEach(selector => {{
+                                            const elements = document.querySelectorAll(selector);
+                                            elements.forEach((element, index) => {{
+                                                const text = element.textContent?.trim();
+                                                const rect = element.getBoundingClientRect();
                                                 
-                                                suggestions.push({{
-                                                    index: index,
-                                                    text: text,
-                                                    tagName: element.tagName,
-                                                    classes: element.className,
-                                                    id: element.id,
-                                                    cursor: style.cursor,
-                                                    hasOnclick: !!element.onclick,
-                                                    rect: {{
-                                                        x: rect.x,
-                                                        y: rect.y,
-                                                        width: rect.width,
-                                                        height: rect.height
-                                                    }},
-                                                    parent: element.parentElement?.tagName || 'none'
-                                                }});
-                                            }}
+                                                if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
+                                                    const style = window.getComputedStyle(element);
+                                                    
+                                                    suggestions.push({{
+                                                        index: Array.from(document.querySelectorAll('*')).indexOf(element),
+                                                        text: text,
+                                                        tagName: element.tagName,
+                                                        classes: element.className,
+                                                        id: element.id,
+                                                        cursor: style.cursor,
+                                                        hasOnclick: !!element.onclick,
+                                                        selector: selector,
+                                                        priority: 'high',
+                                                        rect: {{
+                                                            x: rect.x,
+                                                            y: rect.y,
+                                                            width: rect.width,
+                                                            height: rect.height
+                                                        }},
+                                                        parent: element.parentElement?.tagName || 'none'
+                                                    }});
+                                                }}
+                                            }});
                                         }});
+                                        
+                                        // Se não encontrou sugestões específicas, procurar por todos os elementos
+                                        if (suggestions.length === 0) {{
+                                            const allElements = document.querySelectorAll('*');
+                                            allElements.forEach((element, index) => {{
+                                                const text = element.textContent?.trim();
+                                                const rect = element.getBoundingClientRect();
+                                                
+                                                // Verificar se contém o INEP, é visível e tem indicadores de clicabilidade
+                                                if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
+                                                    const style = window.getComputedStyle(element);
+                                                    const isClickable = style.cursor === 'pointer' || 
+                                                                       element.onclick || 
+                                                                       element.tagName === 'BUTTON' ||
+                                                                       element.tagName === 'A' ||
+                                                                       element.getAttribute('role') === 'button' ||
+                                                                       element.getAttribute('role') === 'option';
+                                                    
+                                                    if (isClickable) {{
+                                                        suggestions.push({{
+                                                            index: index,
+                                                            text: text,
+                                                            tagName: element.tagName,
+                                                            classes: element.className,
+                                                            id: element.id,
+                                                            cursor: style.cursor,
+                                                            hasOnclick: !!element.onclick,
+                                                            priority: 'low',
+                                                            rect: {{
+                                                                x: rect.x,
+                                                                y: rect.y,
+                                                                width: rect.width,
+                                                                height: rect.height
+                                                            }},
+                                                            parent: element.parentElement?.tagName || 'none'
+                                                        }});
+                                                    }}
+                                                }}
+                                            }});
+                                        }}
+                                        
+                                        // Ordenar por prioridade (high primeiro)
+                                        suggestions.sort((a, b) => a.priority === 'high' ? -1 : 1);
                                         
                                         return suggestions;
                                     }}
@@ -9515,11 +9579,15 @@ async def direct_os_access():
                                 
                                 print(f"🔍 ADICIONAR OS - Sugestões encontradas: {len(suggestions_found)}")
                                 for i, suggestion in enumerate(suggestions_found):
-                                    print(f"   {i+1}. {suggestion['tagName']} - '{suggestion['text'][:50]}...'")
+                                    priority_icon = "🔥" if suggestion.get('priority') == 'high' else "📍"
+                                    print(f"   {priority_icon} {i+1}. {suggestion['tagName']} - '{suggestion['text'][:50]}...'")
                                     print(f"      Classes: {suggestion['classes']}")
                                     print(f"      Cursor: {suggestion['cursor']}")
                                     print(f"      Parent: {suggestion['parent']}")
                                     print(f"      OnClick: {suggestion['hasOnclick']}")
+                                    print(f"      Prioridade: {suggestion.get('priority', 'normal')}")
+                                    if suggestion.get('selector'):
+                                        print(f"      Seletor: {suggestion['selector']}")
                                     print("")
                                 
                                 # Tentar clicar em cada sugestão até encontrar a que funciona
@@ -9529,19 +9597,33 @@ async def direct_os_access():
                                     try:
                                         print(f"🎯 ADICIONAR OS - Tentando clicar na sugestão {i+1}: {suggestion['tagName']} - '{suggestion['text'][:30]}...'")
                                         
-                                        # Tentar clicar usando coordenadas
+                                        # Tentar clicar usando múltiplos métodos
                                         clicked = await page.evaluate(f"""
                                             () => {{
                                                 const allElements = document.querySelectorAll('*');
                                                 const targetElement = allElements[{suggestion['index']}];
                                                 
                                                 if (targetElement) {{
-                                                    // Tentar diferentes métodos de clique
+                                                    console.log('Clicando no elemento:', targetElement);
+                                                    
+                                                    // Método 1: Click direto
                                                     targetElement.click();
                                                     
-                                                    // Também tentar disparar eventos de mouse
+                                                    // Método 2: Eventos de mouse
                                                     targetElement.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
                                                     targetElement.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
+                                                    targetElement.dispatchEvent(new MouseEvent('click', {{bubbles: true}}));
+                                                    
+                                                    // Método 3: Focus e trigger
+                                                    if (targetElement.focus) {{
+                                                        targetElement.focus();
+                                                    }}
+                                                    
+                                                    // Método 4: Tentar clicar no parent se for um elemento complexo
+                                                    const parent = targetElement.parentElement;
+                                                    if (parent && parent.tagName !== 'BODY') {{
+                                                        parent.click();
+                                                    }}
                                                     
                                                     return true;
                                                 }}
@@ -9552,8 +9634,37 @@ async def direct_os_access():
                                         if clicked:
                                             print(f"✅ ADICIONAR OS - Clique executado na sugestão {i+1}")
                                             
-                                            # Aguardar um pouco para ver se houve mudança
-                                            await page.wait_for_timeout(1000)
+                                            # Aguardar mais tempo para ver se houve mudança e verificar se nome da escola apareceu
+                                            await page.wait_for_timeout(3000)
+                                            
+                                            # Verificar se o nome da escola apareceu
+                                            school_name_check = await page.evaluate("""
+                                                () => {
+                                                    // Procurar por texto que possa ser nome de escola
+                                                    const allText = document.body.innerText;
+                                                    const schoolWords = ['escola', 'colégio', 'instituto', 'centro', 'educacional', 'ensino'];
+                                                    
+                                                    for (let word of schoolWords) {
+                                                        if (allText.toLowerCase().includes(word)) {
+                                                            const lines = allText.split('\n');
+                                                            for (let line of lines) {
+                                                                if (line.toLowerCase().includes(word) && line.length > 10) {
+                                                                    return {
+                                                                        found: true,
+                                                                        schoolName: line.trim()
+                                                                    };
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    return { found: false };
+                                                }
+                                            """)
+                                            
+                                            if school_name_check['found']:
+                                                print(f"🏫 ADICIONAR OS - Nome da escola detectado: {school_name_check['schoolName']}")
+                                            else:
+                                                print("⚠️ ADICIONAR OS - Nome da escola não detectado ainda")
                                             
                                             # Verificar se o botão "Incluir" foi ativado
                                             button_check = await page.evaluate("""
@@ -9574,18 +9685,32 @@ async def direct_os_access():
                                             
                                             if button_check['found'] and not button_check['disabled']:
                                                 print(f"🎉 ADICIONAR OS - SUCESSO! Botão 'Incluir' ativado após clicar na sugestão {i+1}")
+                                                
+                                                # Dados da sugestão selecionada
                                                 suggestion_selected = {
                                                     'success': True,
                                                     'text': suggestion['text'],
                                                     'tagName': suggestion['tagName'],
                                                     'classes': suggestion['classes'],
-                                                    'attempt': i+1
+                                                    'attempt': i+1,
+                                                    'priority': suggestion.get('priority', 'normal'),
+                                                    'school_name': school_name_check.get('schoolName', 'Não detectado')
                                                 }
                                                 
-                                                # Screenshot após sucesso
+                                                # Screenshot imediato após sucesso
                                                 await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
                                                 screenshots.append("direct_08_suggestion_selected.png")
                                                 print("📸 Screenshot: direct_08_suggestion_selected.png")
+                                                
+                                                # Aguardar mais tempo para capturar o nome da escola que aparece
+                                                print("⏳ ADICIONAR OS - Aguardando nome da escola aparecer completamente...")
+                                                await page.wait_for_timeout(4000)
+                                                
+                                                # Screenshot adicional para confirmar nome da escola
+                                                await page.screenshot(path=f"{screenshots_dir}/direct_08b_school_name_visible.png")
+                                                screenshots.append("direct_08b_school_name_visible.png")
+                                                print("📸 Screenshot: direct_08b_school_name_visible.png - Nome da escola visível")
+                                                
                                                 break
                                             else:
                                                 print(f"⚠️ ADICIONAR OS - Clique na sugestão {i+1} não ativou o botão 'Incluir'")
