@@ -9015,32 +9015,42 @@ async def direct_os_access():
         os.makedirs(screenshots_dir, exist_ok=True)
         
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(
+                headless=True,
+                args=['--no-sandbox', '--disable-dev-shm-usage']
+            )
             page = await browser.new_page()
+            
+            # Configurar timeouts globais mais baixos
+            page.set_default_timeout(10000)  # 10 segundos por padrão
             
             print("🚀 Iniciando acesso direto à página OS com INEP: ''' + inep_code + '''")
             
             # PASSO 1: Login
             print("🔐 Fazendo login...")
-            await page.goto("https://eace.org.br/login?login=login")
-            await page.wait_for_timeout(3000)
+            await page.goto("https://eace.org.br/login?login=login", timeout=30000)
+            await page.wait_for_timeout(2000)
             
             # Preencher credenciais
             await page.fill('input[placeholder="seuemail@email.com"]', 'raiseupbt@gmail.com')
             await page.fill('input[type="password"]', '@Uujpgi8u')
             await page.click('button:has-text("Log In")')
             
-            # Screenshot após login
-            await page.wait_for_timeout(3000)
+            # Aguardar redirecionamento
+            await page.wait_for_timeout(5000)
             await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
+            print("✅ Login realizado")
             
             # PASSO 2: Selecionar perfil Fornecedor
             print("👤 Selecionando perfil Fornecedor...")
-            await page.click('text=Fornecedor')
-            await page.wait_for_timeout(3000)
-            
-            # Screenshot após seleção de perfil
-            await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+            try:
+                await page.click('text=Fornecedor', timeout=10000)
+                await page.wait_for_timeout(5000)
+                await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+                print("✅ Perfil Fornecedor selecionado")
+            except Exception as e:
+                print(f"⚠️ Erro ao selecionar perfil: {e}")
+                await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
             
             # PASSO 3: Navegar para página OS
             print("🗂️ Navegando para página OS...")
@@ -9050,15 +9060,18 @@ async def direct_os_access():
                 'button:has-text("menu")',
                 'button[aria-label="menu"]',
                 'div:has-text("portable_wifi_off")',
-                'span:has-text("portable_wifi_off")'
+                'span:has-text("portable_wifi_off")',
+                '[class*="menu"]',
+                '[class*="hamburger"]'
             ]
             
             menu_clicked = False
             for selector in menu_selectors:
                 try:
-                    await page.click(selector, timeout=2000)
-                    await page.wait_for_timeout(1000)
+                    await page.click(selector, timeout=3000)
+                    await page.wait_for_timeout(2000)
                     menu_clicked = True
+                    print(f"✅ Menu aberto com seletor: {selector}")
                     break
                 except:
                     continue
@@ -9068,13 +9081,15 @@ async def direct_os_access():
             
             # Procurar por "Gerenciar chamados"
             try:
-                await page.click('text=Gerenciar chamados', timeout=5000)
-                await page.wait_for_timeout(3000)
-            except:
-                print("⚠️ Link 'Gerenciar chamados' não encontrado")
+                await page.click('text=Gerenciar chamados', timeout=8000)
+                await page.wait_for_timeout(5000)
+                print("✅ Link 'Gerenciar chamados' clicado")
+            except Exception as e:
+                print(f"⚠️ Link 'Gerenciar chamados' não encontrado: {e}")
             
             # Screenshot da página OS
             await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
+            print("✅ Página OS carregada")
             
             # PASSO 4: Procurar campo INEP e botão "Adicionar nova OS"
             print("🔍 Procurando campo INEP e botão 'Adicionar nova OS'...")
@@ -9188,11 +9203,11 @@ result = asyncio.run(direct_os_access())
 print(json.dumps(result))
 '''
                 
-                # Executar código Python
+                # Executar código Python com timeout aumentado
                 import subprocess
                 result = subprocess.run([
                     'python3', '-c', python_code
-                ], capture_output=True, text=True, timeout=120)
+                ], capture_output=True, text=True, timeout=300)
                 
                 if result.returncode == 0:
                     # Procurar pelo JSON na saída
@@ -9221,7 +9236,7 @@ print(json.dumps(result))
             except subprocess.TimeoutExpired:
                 return {
                     "success": False,
-                    "error": "Timeout na execução da automação",
+                    "error": "Timeout na execução da automação (5 minutos)",
                     "inep_used": inep_value
                 }
             except Exception as e:
@@ -9241,7 +9256,7 @@ print(json.dumps(result))
         
         thread = threading.Thread(target=run_automation)
         thread.start()
-        thread.join(timeout=120)
+        thread.join(timeout=300)
         
         if thread.is_alive():
             return jsonify({
