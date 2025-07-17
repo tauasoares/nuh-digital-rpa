@@ -9300,30 +9300,73 @@ async def direct_os_access():
                     # Procurar por campo de entrada no modal
                     modal_filled = False
                     try:
-                        # Procurar especificamente pelo campo INEP no modal
-                        await page.wait_for_selector('input[placeholder*="Digite o código INEP"]', timeout=5000)
-                        await page.fill('input[placeholder*="Digite o código INEP"]', inep_example)
+                        # Procurar especificamente pelo campo INEP no modal usando seletor da estrutura real
+                        await page.wait_for_selector('input[placeholder="Digite o código INEP da escola"]', timeout=5000)
+                        
+                        # Focar no campo e preencher
+                        await page.focus('input[placeholder="Digite o código INEP da escola"]')
+                        await page.fill('input[placeholder="Digite o código INEP da escola"]', inep_example)
+                        
+                        # Disparar eventos para garantir que o campo seja reconhecido
+                        await page.evaluate(f"""
+                            () => {{
+                                const input = document.querySelector('input[placeholder="Digite o código INEP da escola"]');
+                                if (input) {{
+                                    input.value = '{inep_example}';
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                }}
+                            }}
+                        """)
+                        
                         modal_filled = True
                         print("✅ MODAL - Campo INEP preenchido com sucesso")
                     except Exception as e:
                         print(f"⚠️ MODAL - Erro ao preencher campo INEP: {e}")
                         
-                        # Tentar método alternativo
+                        # Tentar método alternativo com seletor da classe twitter-typeahead
                         try:
-                            # Buscar por qualquer input visível no modal
-                            inputs = await page.query_selector_all('input[type="text"], input:not([type])')
-                            for input_field in inputs:
-                                try:
-                                    is_visible = await input_field.is_visible()
-                                    if is_visible:
-                                        await input_field.fill(inep_example)
-                                        modal_filled = True
-                                        print("✅ MODAL - Campo INEP preenchido (método alternativo)")
-                                        break
-                                except:
-                                    continue
+                            # Buscar pelo input dentro do AutocompleteDropdown
+                            await page.wait_for_selector('.twitter-typeahead input.tt-input', timeout=5000)
+                            await page.focus('.twitter-typeahead input.tt-input')
+                            await page.fill('.twitter-typeahead input.tt-input', inep_example)
+                            
+                            # Disparar eventos
+                            await page.evaluate(f"""
+                                () => {{
+                                    const input = document.querySelector('.twitter-typeahead input.tt-input');
+                                    if (input) {{
+                                        input.value = '{inep_example}';
+                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                    }}
+                                }}
+                            """)
+                            
+                            modal_filled = True
+                            print("✅ MODAL - Campo INEP preenchido (método alternativo - twitter-typeahead)")
                         except Exception as e2:
-                            print(f"❌ MODAL - Falha ao preencher campo: {e2}")
+                            print(f"❌ MODAL - Falha ao preencher campo com método alternativo: {e2}")
+                            
+                            # Terceiro método - buscar por qualquer input visível
+                            try:
+                                inputs = await page.query_selector_all('input[type="text"], input:not([type])')
+                                for input_field in inputs:
+                                    try:
+                                        is_visible = await input_field.is_visible()
+                                        placeholder = await input_field.get_attribute('placeholder')
+                                        if is_visible and placeholder and 'inep' in placeholder.lower():
+                                            await input_field.focus()
+                                            await input_field.fill(inep_example)
+                                            modal_filled = True
+                                            print(f"✅ MODAL - Campo INEP preenchido (método genérico) - placeholder: {placeholder}")
+                                            break
+                                    except:
+                                        continue
+                            except Exception as e3:
+                                print(f"❌ MODAL - Falha final ao preencher campo: {e3}")
                     
                     # Screenshot após preenchimento
                     await page.screenshot(path=f"{screenshots_dir}/direct_07_inep_filled.png")
@@ -9338,11 +9381,28 @@ async def direct_os_access():
                     
                     # Clicar em área neutra do modal (evitar botões)
                     try:
-                        await page.click('body', position={'x': 400, 'y': 300})
+                        # Clicar no texto "Escola" ou em área neutra do modal
+                        await page.click('text=Escola')
                         await page.wait_for_timeout(2000)
-                        print("✅ MODAL - Clique em área neutra realizado")
+                        print("✅ MODAL - Clique em área neutra realizado (texto 'Escola')")
                     except Exception as e:
-                        print(f"⚠️ MODAL - Erro ao clicar em área neutra: {e}")
+                        print(f"⚠️ MODAL - Erro ao clicar em 'Escola': {e}")
+                        
+                        # Método alternativo - clicar em área neutra
+                        try:
+                            await page.click('body', position={'x': 400, 'y': 300})
+                            await page.wait_for_timeout(2000)
+                            print("✅ MODAL - Clique em área neutra realizado (posição)")
+                        except Exception as e2:
+                            print(f"⚠️ MODAL - Erro ao clicar em área neutra: {e2}")
+                            
+                            # Método alternativo - pressionar Tab
+                            try:
+                                await page.keyboard.press('Tab')
+                                await page.wait_for_timeout(1000)
+                                print("✅ MODAL - Tab pressionado para ativar campo")
+                            except Exception as e3:
+                                print(f"⚠️ MODAL - Erro ao pressionar Tab: {e3}")
                     
                     # PASSO 9: Verificar se botão "Incluir" foi ativado
                     print("🔍 MODAL - Verificando se botão 'Incluir' foi ativado...")
@@ -9363,6 +9423,15 @@ async def direct_os_access():
                                         const style = window.getComputedStyle(btn);
                                         const backgroundColor = style.backgroundColor;
                                         const color = style.color;
+                                        const cursor = style.cursor;
+                                        const opacity = style.opacity;
+                                        
+                                        // Verificar se o botão está ativado baseado em múltiplos critérios
+                                        const isActive = !disabled && 
+                                                        cursor === 'pointer' && 
+                                                        opacity !== '0.5' &&
+                                                        !backgroundColor.includes('rgb(245, 248, 250)') && // cor cinza desativado
+                                                        !backgroundColor.includes('rgba(0, 0, 0, 0)'); // transparente
                                         
                                         return {
                                             found: true,
@@ -9370,7 +9439,10 @@ async def direct_os_access():
                                             text: btn.textContent,
                                             backgroundColor: backgroundColor,
                                             color: color,
-                                            classes: btn.className
+                                            cursor: cursor,
+                                            opacity: opacity,
+                                            classes: btn.className,
+                                            isActive: isActive
                                         };
                                     }
                                 }
@@ -9379,11 +9451,19 @@ async def direct_os_access():
                         """)
                         
                         if button_check['found']:
-                            if not button_check['disabled']:
-                                button_active = True
-                                print(f"🎉 MODAL - Botão 'Incluir' ATIVADO! Cor: {button_check['backgroundColor']}")
+                            button_active = button_check['isActive']
+                            if button_active:
+                                print(f"🎉 MODAL - Botão 'Incluir' ATIVADO!")
+                                print(f"   - Cor de fundo: {button_check['backgroundColor']}")
+                                print(f"   - Cor do texto: {button_check['color']}")
+                                print(f"   - Cursor: {button_check['cursor']}")
+                                print(f"   - Opacidade: {button_check['opacity']}")
                             else:
                                 print(f"⚠️ MODAL - Botão 'Incluir' ainda está desativado")
+                                print(f"   - Disabled: {button_check['disabled']}")
+                                print(f"   - Cor de fundo: {button_check['backgroundColor']}")
+                                print(f"   - Cursor: {button_check['cursor']}")
+                                print(f"   - Opacidade: {button_check['opacity']}")
                         else:
                             print("❌ MODAL - Botão 'Incluir' não encontrado")
                             
