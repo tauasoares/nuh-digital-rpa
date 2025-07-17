@@ -8996,11 +8996,261 @@ def execute_direct_os_access():
         
         logger.info(f"Executando acesso direto com INEP: {inep_value}")
         
-        # Função temporariamente desabilitada para corrigir problemas de sintaxe
-        return jsonify({
-            'success': False,
-            'message': 'Função temporariamente desabilitada para corrigir erro de sintaxe'
-        }), 500
+        # Executar automação usando subprocess
+        def run_direct_access():
+            try:
+                # Criar código Python limpo sem f-strings problemáticas
+                inep_code = inep_value  # Usar variável local
+                
+                python_code = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+
+async def direct_os_access():
+    """Versão simplificada da automação"""
+    try:
+        screenshots_dir = "/tmp/screenshots"
+        os.makedirs(screenshots_dir, exist_ok=True)
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            
+            print("🚀 Iniciando acesso direto à página OS com INEP: ''' + inep_code + '''")
+            
+            # PASSO 1: Login
+            print("🔐 Fazendo login...")
+            await page.goto("https://eace.org.br/login?login=login")
+            await page.wait_for_timeout(3000)
+            
+            # Preencher credenciais
+            await page.fill('input[placeholder="seuemail@email.com"]', 'raiseupbt@gmail.com')
+            await page.fill('input[type="password"]', '@Uujpgi8u')
+            await page.click('button:has-text("Log In")')
+            
+            # Screenshot após login
+            await page.wait_for_timeout(3000)
+            await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
+            
+            # PASSO 2: Selecionar perfil Fornecedor
+            print("👤 Selecionando perfil Fornecedor...")
+            await page.click('text=Fornecedor')
+            await page.wait_for_timeout(3000)
+            
+            # Screenshot após seleção de perfil
+            await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+            
+            # PASSO 3: Navegar para página OS
+            print("🗂️ Navegando para página OS...")
+            
+            # Tentar clicar no menu hambúrguer
+            menu_selectors = [
+                'button:has-text("menu")',
+                'button[aria-label="menu"]',
+                'div:has-text("portable_wifi_off")',
+                'span:has-text("portable_wifi_off")'
+            ]
+            
+            menu_clicked = False
+            for selector in menu_selectors:
+                try:
+                    await page.click(selector, timeout=2000)
+                    await page.wait_for_timeout(1000)
+                    menu_clicked = True
+                    break
+                except:
+                    continue
+            
+            if not menu_clicked:
+                print("⚠️ Menu hambúrguer não encontrado, tentando navegação direta")
+            
+            # Procurar por "Gerenciar chamados"
+            try:
+                await page.click('text=Gerenciar chamados', timeout=5000)
+                await page.wait_for_timeout(3000)
+            except:
+                print("⚠️ Link 'Gerenciar chamados' não encontrado")
+            
+            # Screenshot da página OS
+            await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
+            
+            # PASSO 4: Procurar campo INEP e botão "Adicionar nova OS"
+            print("🔍 Procurando campo INEP e botão 'Adicionar nova OS'...")
+            
+            # Procurar por botão "Adicionar nova OS"
+            add_buttons = await page.query_selector_all('button, a, div')
+            for button in add_buttons:
+                try:
+                    text = await button.inner_text()
+                    if text and ('adicionar' in text.lower() or 'nova' in text.lower()):
+                        print(f"✅ Encontrado botão: {text}")
+                        await button.click()
+                        await page.wait_for_timeout(3000)
+                        break
+                except:
+                    continue
+            
+            # Screenshot após clicar em adicionar
+            await page.screenshot(path=f"{screenshots_dir}/direct_04_add_clicked.png")
+            
+            # PASSO 5: Preencher campo INEP
+            print("📝 Preenchendo campo INEP...")
+            
+            # Procurar por campos de entrada
+            inputs = await page.query_selector_all('input[type="text"], input[type="search"], input:not([type])')
+            inep_filled = False
+            
+            for input_field in inputs:
+                try:
+                    placeholder = await input_field.get_attribute('placeholder') or ''
+                    if 'escola' in placeholder.lower() or 'inep' in placeholder.lower():
+                        await input_field.fill("''' + inep_code + '''")
+                        await page.wait_for_timeout(2000)
+                        inep_filled = True
+                        print("✅ Campo INEP preenchido com sucesso")
+                        break
+                except:
+                    continue
+            
+            if not inep_filled:
+                print("⚠️ Campo INEP não encontrado, tentando primeiro campo disponível")
+                if inputs:
+                    await inputs[0].fill("''' + inep_code + '''")
+                    await page.wait_for_timeout(2000)
+            
+            # Screenshot após preenchimento
+            await page.screenshot(path=f"{screenshots_dir}/direct_05_inep_filled.png")
+            
+            # PASSO 6: Aguardar sugestões e tentar selecionar
+            print("🎯 Aguardando sugestões...")
+            await page.wait_for_timeout(3000)
+            
+            # Procurar por sugestões que contenham o INEP
+            suggestions = await page.query_selector_all('div, span, li')
+            suggestion_found = False
+            
+            for suggestion in suggestions:
+                try:
+                    text = await suggestion.inner_text()
+                    if text and "''' + inep_code + '''" in text:
+                        await suggestion.click()
+                        await page.wait_for_timeout(2000)
+                        suggestion_found = True
+                        print("✅ Sugestão selecionada")
+                        break
+                except:
+                    continue
+            
+            # Screenshot final
+            await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+            
+            # Verificar se botão "Incluir" foi ativado
+            include_buttons = await page.query_selector_all('button')
+            include_active = False
+            
+            for button in include_buttons:
+                try:
+                    text = await button.inner_text()
+                    if text and 'incluir' in text.lower():
+                        disabled = await button.get_attribute('disabled')
+                        if not disabled:
+                            include_active = True
+                            print("🎉 Botão 'Incluir' ativado!")
+                        break
+                except:
+                    continue
+            
+            await browser.close()
+            
+            return {
+                "success": True,
+                "inep_used": "''' + inep_code + '''",
+                "inep_filled": inep_filled,
+                "suggestion_found": suggestion_found,
+                "include_active": include_active,
+                "screenshots": [
+                    "direct_01_login.png",
+                    "direct_02_dashboard.png", 
+                    "direct_03_os_page.png",
+                    "direct_04_add_clicked.png",
+                    "direct_05_inep_filled.png",
+                    "direct_06_final.png"
+                ]
+            }
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# Executar automação
+result = asyncio.run(direct_os_access())
+print(json.dumps(result))
+'''
+                
+                # Executar código Python
+                import subprocess
+                result = subprocess.run([
+                    'python3', '-c', python_code
+                ], capture_output=True, text=True, timeout=120)
+                
+                if result.returncode == 0:
+                    # Procurar pelo JSON na saída
+                    output_lines = result.stdout.strip().split('\n')
+                    for line in reversed(output_lines):
+                        line = line.strip()
+                        if line.startswith('{') and line.endswith('}'):
+                            try:
+                                return json.loads(line)
+                            except:
+                                continue
+                    
+                    # Se não encontrou JSON, retornar saída como texto
+                    return {
+                        "success": True,
+                        "output": result.stdout,
+                        "inep_used": inep_value
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": result.stderr,
+                        "inep_used": inep_value
+                    }
+                    
+            except subprocess.TimeoutExpired:
+                return {
+                    "success": False,
+                    "error": "Timeout na execução da automação",
+                    "inep_used": inep_value
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "inep_used": inep_value
+                }
+        
+        # Executar em thread separada para não bloquear
+        import threading
+        result = {"status": "running"}
+        
+        def run_automation():
+            nonlocal result
+            result = run_direct_access()
+        
+        thread = threading.Thread(target=run_automation)
+        thread.start()
+        thread.join(timeout=120)
+        
+        if thread.is_alive():
+            return jsonify({
+                'success': False,
+                'message': 'Timeout na execução da automação',
+                'inep_used': inep_value
+            }), 500
+        
+        return jsonify(result)
         
         def run_direct_access():
             # Função temporariamente desabilitada
