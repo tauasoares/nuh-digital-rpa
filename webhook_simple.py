@@ -8992,13 +8992,13 @@ def execute_direct_os_access():
         def run_direct_access():
             try:
                 # Código Python simplificado
-                direct_code = '''
+                direct_code = f'''
 import asyncio
 import json
 from playwright.async_api import async_playwright
 import os
 
-async def direct_os_access():
+async def direct_os_access(inep_value="{inep_value}"):
     """Acesso direto simplificado à página OS"""
     
     # Configurar diretório de screenshots
@@ -9297,6 +9297,9 @@ async def direct_os_access():
                     # Aguardar o modal carregar completamente
                     await page.wait_for_timeout(3000)
                     
+                    # Valor do INEP já está disponível no parâmetro da função
+                    print(f"📝 MODAL - Usando INEP: {inep_value}")
+                    
                     # Procurar por campo de entrada no modal
                     modal_filled = False
                     
@@ -9393,7 +9396,7 @@ async def direct_os_access():
                                         editableInput.value = '';
                                         
                                         // Definir novo valor
-                                        editableInput.value = '{inep_example}';
+                                        editableInput.value = '{inep_value}';
                                         
                                         // Disparar eventos para trigger do autocomplete
                                         editableInput.dispatchEvent(new Event('focus', {{ bubbles: true }}));
@@ -9418,7 +9421,7 @@ async def direct_os_access():
                                 }}
                             """)
                             
-                            if filled_typeahead.get('success') and filled_typeahead.get('value') == inep_example:
+                            if filled_typeahead.get('success') and filled_typeahead.get('value') == inep_value:
                                 modal_filled = True
                                 print(f"✅ MODAL - Campo INEP preenchido via Twitter Typeahead: {filled_typeahead.get('value')}")
                             else:
@@ -9442,7 +9445,7 @@ async def direct_os_access():
                             await page.fill('.twitter-typeahead input.tt-input', '')
                             
                             # Simular digitação
-                            await page.type('.twitter-typeahead input.tt-input', inep_example, delay=150)
+                            await page.type('.twitter-typeahead input.tt-input', inep_value, delay=150)
                             
                             # Aguardar processamento
                             await page.wait_for_timeout(1000)
@@ -9455,11 +9458,11 @@ async def direct_os_access():
                                 }
                             """)
                             
-                            if current_value == inep_example:
+                            if current_value == inep_value:
                                 modal_filled = True
                                 print(f"✅ MODAL - Campo preenchido via Playwright: {current_value}")
                             else:
-                                print(f"⚠️ MODAL - Valor após digitação: '{current_value}' (esperado: '{inep_example}')")
+                                print(f"⚠️ MODAL - Valor após digitação: '{current_value}' (esperado: '{inep_value}')")
                                 
                         except Exception as e:
                             print(f"❌ MODAL - Erro na digitação com Playwright: {e}")
@@ -9477,7 +9480,7 @@ async def direct_os_access():
                                     for (let input of inputs) {{
                                         if (input.placeholder && input.placeholder.toLowerCase().includes('inep')) {{
                                             input.focus();
-                                            input.value = '{inep_example}';
+                                            input.value = '{inep_value}';
                                             
                                             // Disparar eventos
                                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
@@ -9693,12 +9696,12 @@ async def direct_os_access():
                             print("🔍 ADICIONAR OS - Tentando preencher campo INEP com código de exemplo...")
                             
                             # Usar INEP de exemplo dos logs (33099553)
-                            inep_example = "''' + inep_value + '''"
+                            # inep_value já está disponível no parâmetro da função
                             
                             # Tentar preencher o campo escola com lógica melhorada
-                            filled = await page.evaluate("""
-                                () => {
-                                    const inepValue = '''' + inep_example + '''';
+                            filled = await page.evaluate(f"""
+                                () => {{
+                                    const inepValue = '{inep_value}';
                                     const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
                                     
                                     console.log('Procurando por campos de entrada:', allInputs.length);
@@ -9812,7 +9815,7 @@ async def direct_os_access():
                                             if (targetInput) {{
                                                 // Forçar preenchimento novamente
                                                 targetInput.focus();
-                                                targetInput.value = '{inep_example}';
+                                                targetInput.value = '{inep_value}';
                                                 
                                                 // Disparar eventos
                                                 targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
@@ -9964,7 +9967,7 @@ async def direct_os_access():
                                 # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
                                 suggestions_found = await page.evaluate(f"""
                                     () => {{
-                                        const inepValue = '{inep_example}';
+                                        const inepValue = '{inep_value}';
                                         const suggestions = [];
                                         
                                         // Procurar especificamente por elementos de sugestão
@@ -10271,7 +10274,7 @@ async def direct_os_access():
                                 
                                 # Mostrar resumo final
                                 print("📋 ADICIONAR OS - RESUMO FINAL:")
-                                print(f"   - INEP preenchido: {inep_example}")
+                                print(f"   - INEP preenchido: {inep_value}")
                                 print(f"   - Sugestão selecionada: {'Sim' if suggestion_selected.get('success') else 'Não'}")
                                 print(f"   - Botão 'Incluir' ativo: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
                                 print(f"   - Formulário pronto: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
