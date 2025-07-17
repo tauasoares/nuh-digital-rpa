@@ -6709,7 +6709,7 @@ def test_expandable_fixed_logs():
                     env['DISPLAY'] = ':99'
                     
                     # Código para executar o teste real
-                    test_code = '''
+                    test_code = f'''
 import asyncio
 import json
 import sys
@@ -7090,7 +7090,7 @@ if __name__ == "__main__":
                     screenshots.append(file)
         
         # Gerar HTML
-        html_content = """
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -7098,30 +7098,30 @@ if __name__ == "__main__":
             <meta charset="UTF-8">
             <meta http-equiv="refresh" content="2">
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
-                .container { max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                .header { text-align: center; margin-bottom: 30px; }
-                .status { padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
-                .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-                .terminal { background: #000; color: #00ff00; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; height: 400px; overflow-y: auto; border: 2px solid #333; }
-                .log-entry { margin: 3px 0; padding: 2px; white-space: pre-wrap; }
-                .log-success { color: #00ff00; }
-                .log-error { color: #ff0000; }
-                .log-info { color: #ffff00; }
-                .screenshots { margin: 30px 0; }
-                .screenshot { margin: 15px; display: inline-block; vertical-align: top; }
-                .screenshot img { max-width: 280px; border: 2px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-                .screenshot h4 { text-align: center; margin: 10px 0; color: #333; }
-                .refresh-btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }
-                .refresh-btn:hover { background: #0056b3; }
-                .clear-btn { background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }
-                .clear-btn:hover { background: #c82333; }
+                body {{ font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }}
+                .container {{ max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ text-align: center; margin-bottom: 30px; }}
+                .status {{ padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }}
+                .status-success {{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }}
+                .terminal {{ background: #000; color: #00ff00; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; height: 400px; overflow-y: auto; border: 2px solid #333; }}
+                .log-entry {{ margin: 3px 0; padding: 2px; white-space: pre-wrap; }}
+                .log-success {{ color: #00ff00; }}
+                .log-error {{ color: #ff0000; }}
+                .log-info {{ color: #ffff00; }}
+                .screenshots {{ margin: 30px 0; }}
+                .screenshot {{ margin: 15px; display: inline-block; vertical-align: top; }}
+                .screenshot img {{ max-width: 280px; border: 2px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+                .screenshot h4 {{ text-align: center; margin: 10px 0; color: #333; }}
+                .refresh-btn {{ background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }}
+                .refresh-btn:hover {{ background: #0056b3; }}
+                .clear-btn {{ background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }}
+                .clear-btn:hover {{ background: #c82333; }}
             </style>
             <script>
-                function clearLogs() {
-                    fetch('/clear-logs', {method: 'POST'})
+                function clearLogs() {{
+                    fetch('/clear-logs', {{method: 'POST'}})
                         .then(() => location.reload());
-                }
+                }}
             </script>
         </head>
         <body>
@@ -7591,7 +7591,7 @@ if __name__ == "__main__":
     time.sleep(2)
     
     # Gerar HTML com logs reais
-    html_content = """
+    html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -7599,22 +7599,22 @@ if __name__ == "__main__":
         <meta charset="UTF-8">
         <meta http-equiv="refresh" content="3">
         <style>
-            body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
-            .container { max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .header { text-align: center; margin-bottom: 30px; }
-            .status { padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
-            .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-            .terminal { background: #000; color: #00ff00; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; height: 500px; overflow-y: auto; border: 2px solid #333; }
-            .log-entry { margin: 3px 0; padding: 2px; }
-            .log-success { color: #00ff00; }
-            .log-error { color: #ff0000; }
-            .log-info { color: #ffff00; }
-            .screenshots { margin: 30px 0; }
-            .screenshot { margin: 15px; display: inline-block; vertical-align: top; }
-            .screenshot img { max-width: 280px; border: 2px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            .screenshot h4 { text-align: center; margin: 10px 0; color: #333; }
-            .refresh-btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }
-            .refresh-btn:hover { background: #0056b3; }
+            body {{ font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }}
+            .container {{ max-width: 1400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+            .header {{ text-align: center; margin-bottom: 30px; }}
+            .status {{ padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }}
+            .status-success {{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }}
+            .terminal {{ background: #000; color: #00ff00; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; height: 500px; overflow-y: auto; border: 2px solid #333; }}
+            .log-entry {{ margin: 3px 0; padding: 2px; }}
+            .log-success {{ color: #00ff00; }}
+            .log-error {{ color: #ff0000; }}
+            .log-info {{ color: #ffff00; }}
+            .screenshots {{ margin: 30px 0; }}
+            .screenshot {{ margin: 15px; display: inline-block; vertical-align: top; }}
+            .screenshot img {{ max-width: 280px; border: 2px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+            .screenshot h4 {{ text-align: center; margin: 10px 0; color: #333; }}
+            .refresh-btn {{ background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }}
+            .refresh-btn:hover {{ background: #0056b3; }}
         </style>
     </head>
     <body>
@@ -7640,7 +7640,7 @@ if __name__ == "__main__":
         level_class = f"log-{log_entry['level']}"
         html_content += f'<div class="log-entry {level_class}">[{log_entry["timestamp"]}] {log_entry["message"]}</div>\n'
     
-    html_content += """
+    html_content += f"""
             </div>
             
             <div class="screenshots">
@@ -8542,7 +8542,7 @@ if __name__ == "__main__":
 def test_direct_os_access():
     """Endpoint simplificado - vai direto para página OS e clica em Adicionar nova OS"""
     try:
-        html_content = r'''
+        html_content = '''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8708,7 +8708,7 @@ def test_direct_os_access():
         <div class="controls">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                 <label style="color: #00ff00; font-weight: bold;">INEP:</label>
-                <input type="text" id="inepInput" placeholder="Digite o código INEP (ex: 33099553)" 
+                <input type="text" id="inepInput" placeholder="Digite o código INEP (ex: 33099553)" value="33099553"
                        style="padding: 8px 12px; background: #2a2a2a; border: 2px solid #00ff00; 
                               border-radius: 5px; color: #00ff00; font-family: 'Courier New', monospace;
                               width: 200px;" maxlength="8" />
@@ -8879,18 +8879,11 @@ def test_direct_os_access():
         function startDirectTest() {
             if (testRunning) return;
             
-            // Capturar o valor do campo INEP
             const inepValue = document.getElementById('inepInput').value.trim();
             
-            // Validar se o INEP foi preenchido
-            if (!inepValue) {
-                addLog('❌ Erro: Campo INEP deve ser preenchido', 'error');
-                return;
-            }
-            
-            // Validar formato do INEP (8 dígitos)
-            if (!/^\d{8}$/.test(inepValue)) {
-                addLog('❌ Erro: INEP deve conter exatamente 8 dígitos', 'error');
+            // Validar INEP
+            if (!inepValue || !/^\d{8}$/.test(inepValue)) {
+                addLog('❌ INEP inválido! Deve conter exatamente 8 dígitos numéricos.', 'error');
                 return;
             }
             
@@ -8985,7 +8978,7 @@ def execute_direct_os_access():
     try:
         # Capturar o valor do INEP da requisição
         request_data = request.get_json() or {}
-        inep_value = request_data.get('inep', '33099553')  # Valor padrão caso não seja fornecido
+        inep_value = request_data.get('inep', '33099553')  # Valor padrão
         
         # Validar formato do INEP
         if not inep_value or not isinstance(inep_value, str) or len(inep_value) != 8 or not inep_value.isdigit():
@@ -8996,289 +8989,10 @@ def execute_direct_os_access():
         
         logger.info(f"Executando acesso direto com INEP: {inep_value}")
         
-        # Executar automação usando subprocess
         def run_direct_access():
-            try:
-                # Criar código Python limpo sem f-strings problemáticas
-                inep_code = inep_value  # Usar variável local
-                
-                python_code = '''
-import asyncio
-import json
-from playwright.async_api import async_playwright
-import os
-
-async def direct_os_access():
-    """Versão simplificada da automação"""
-    try:
-        screenshots_dir = "/tmp/screenshots"
-        os.makedirs(screenshots_dir, exist_ok=True)
-        
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=True,
-                args=['--no-sandbox', '--disable-dev-shm-usage']
-            )
-            page = await browser.new_page()
-            
-            # Configurar timeouts globais mais baixos
-            page.set_default_timeout(10000)  # 10 segundos por padrão
-            
-            print("🚀 Iniciando acesso direto à página OS com INEP: ''' + inep_code + '''")
-            
-            # PASSO 1: Login
-            print("🔐 Fazendo login...")
-            await page.goto("https://eace.org.br/login?login=login", timeout=30000)
-            await page.wait_for_timeout(2000)
-            
-            # Preencher credenciais
-            await page.fill('input[placeholder="seuemail@email.com"]', 'raiseupbt@gmail.com')
-            await page.fill('input[type="password"]', '@Uujpgi8u')
-            await page.click('button:has-text("Log In")')
-            
-            # Aguardar redirecionamento
-            await page.wait_for_timeout(5000)
-            await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
-            print("✅ Login realizado")
-            
-            # PASSO 2: Selecionar perfil Fornecedor
-            print("👤 Selecionando perfil Fornecedor...")
-            try:
-                await page.click('text=Fornecedor', timeout=10000)
-                await page.wait_for_timeout(5000)
-                await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
-                print("✅ Perfil Fornecedor selecionado")
-            except Exception as e:
-                print(f"⚠️ Erro ao selecionar perfil: {e}")
-                await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
-            
-            # PASSO 3: Navegar para página OS
-            print("🗂️ Navegando para página OS...")
-            
-            # Tentar clicar no menu hambúrguer
-            menu_selectors = [
-                'button:has-text("menu")',
-                'button[aria-label="menu"]',
-                'div:has-text("portable_wifi_off")',
-                'span:has-text("portable_wifi_off")',
-                '[class*="menu"]',
-                '[class*="hamburger"]'
-            ]
-            
-            menu_clicked = False
-            for selector in menu_selectors:
-                try:
-                    await page.click(selector, timeout=3000)
-                    await page.wait_for_timeout(2000)
-                    menu_clicked = True
-                    print(f"✅ Menu aberto com seletor: {selector}")
-                    break
-                except:
-                    continue
-            
-            if not menu_clicked:
-                print("⚠️ Menu hambúrguer não encontrado, tentando navegação direta")
-            
-            # Procurar por "Gerenciar chamados"
-            try:
-                await page.click('text=Gerenciar chamados', timeout=8000)
-                await page.wait_for_timeout(5000)
-                print("✅ Link 'Gerenciar chamados' clicado")
-            except Exception as e:
-                print(f"⚠️ Link 'Gerenciar chamados' não encontrado: {e}")
-            
-            # Screenshot da página OS
-            await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
-            print("✅ Página OS carregada")
-            
-            # PASSO 4: Procurar campo INEP e botão "Adicionar nova OS"
-            print("🔍 Procurando campo INEP e botão 'Adicionar nova OS'...")
-            
-            # Procurar por botão "Adicionar nova OS"
-            add_buttons = await page.query_selector_all('button, a, div')
-            for button in add_buttons:
-                try:
-                    text = await button.inner_text()
-                    if text and ('adicionar' in text.lower() or 'nova' in text.lower()):
-                        print(f"✅ Encontrado botão: {text}")
-                        await button.click()
-                        await page.wait_for_timeout(3000)
-                        break
-                except:
-                    continue
-            
-            # Screenshot após clicar em adicionar
-            await page.screenshot(path=f"{screenshots_dir}/direct_04_add_clicked.png")
-            
-            # PASSO 5: Preencher campo INEP
-            print("📝 Preenchendo campo INEP...")
-            
-            # Procurar por campos de entrada
-            inputs = await page.query_selector_all('input[type="text"], input[type="search"], input:not([type])')
-            inep_filled = False
-            
-            for input_field in inputs:
-                try:
-                    placeholder = await input_field.get_attribute('placeholder') or ''
-                    if 'escola' in placeholder.lower() or 'inep' in placeholder.lower():
-                        await input_field.fill("''' + inep_code + '''")
-                        await page.wait_for_timeout(2000)
-                        inep_filled = True
-                        print("✅ Campo INEP preenchido com sucesso")
-                        break
-                except:
-                    continue
-            
-            if not inep_filled:
-                print("⚠️ Campo INEP não encontrado, tentando primeiro campo disponível")
-                if inputs:
-                    await inputs[0].fill("''' + inep_code + '''")
-                    await page.wait_for_timeout(2000)
-            
-            # Screenshot após preenchimento
-            await page.screenshot(path=f"{screenshots_dir}/direct_05_inep_filled.png")
-            
-            # PASSO 6: Aguardar sugestões e tentar selecionar
-            print("🎯 Aguardando sugestões...")
-            await page.wait_for_timeout(3000)
-            
-            # Procurar por sugestões que contenham o INEP
-            suggestions = await page.query_selector_all('div, span, li')
-            suggestion_found = False
-            
-            for suggestion in suggestions:
-                try:
-                    text = await suggestion.inner_text()
-                    if text and "''' + inep_code + '''" in text:
-                        await suggestion.click()
-                        await page.wait_for_timeout(2000)
-                        suggestion_found = True
-                        print("✅ Sugestão selecionada")
-                        break
-                except:
-                    continue
-            
-            # Screenshot final
-            await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
-            
-            # Verificar se botão "Incluir" foi ativado
-            include_buttons = await page.query_selector_all('button')
-            include_active = False
-            
-            for button in include_buttons:
-                try:
-                    text = await button.inner_text()
-                    if text and 'incluir' in text.lower():
-                        disabled = await button.get_attribute('disabled')
-                        if not disabled:
-                            include_active = True
-                            print("🎉 Botão 'Incluir' ativado!")
-                        break
-                except:
-                    continue
-            
-            await browser.close()
-            
-            return {
-                "success": True,
-                "inep_used": "''' + inep_code + '''",
-                "inep_filled": inep_filled,
-                "suggestion_found": suggestion_found,
-                "include_active": include_active,
-                "screenshots": [
-                    "direct_01_login.png",
-                    "direct_02_dashboard.png", 
-                    "direct_03_os_page.png",
-                    "direct_04_add_clicked.png",
-                    "direct_05_inep_filled.png",
-                    "direct_06_final.png"
-                ]
-            }
-            
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-# Executar automação
-result = asyncio.run(direct_os_access())
-print(json.dumps(result))
-'''
-                
-                # Executar código Python com timeout aumentado
-                import subprocess
-                result = subprocess.run([
-                    'python3', '-c', python_code
-                ], capture_output=True, text=True, timeout=300)
-                
-                if result.returncode == 0:
-                    # Procurar pelo JSON na saída
-                    output_lines = result.stdout.strip().split('\n')
-                    for line in reversed(output_lines):
-                        line = line.strip()
-                        if line.startswith('{') and line.endswith('}'):
-                            try:
-                                return json.loads(line)
-                            except:
-                                continue
-                    
-                    # Se não encontrou JSON, retornar saída como texto
-                    return {
-                        "success": True,
-                        "output": result.stdout,
-                        "inep_used": inep_value
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": result.stderr,
-                        "inep_used": inep_value
-                    }
-                    
-            except subprocess.TimeoutExpired:
-                return {
-                    "success": False,
-                    "error": "Timeout na execução da automação (5 minutos)",
-                    "inep_used": inep_value
-                }
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": str(e),
-                    "inep_used": inep_value
-                }
-        
-        # Executar em thread separada para não bloquear
-        import threading
-        result = {"status": "running"}
-        
-        def run_automation():
-            nonlocal result
-            result = run_direct_access()
-        
-        thread = threading.Thread(target=run_automation)
-        thread.start()
-        thread.join(timeout=300)
-        
-        if thread.is_alive():
-            return jsonify({
-                'success': False,
-                'message': 'Timeout na execução da automação',
-                'inep_used': inep_value
-            }), 500
-        
-        return jsonify(result)
-        
-        def run_direct_access():
-            # Função temporariamente desabilitada
-            return {"success": False, "message": "Função temporariamente desabilitada para corrigir erro de sintaxe"}
-            
             try:
                 # Código Python simplificado
-                pass  # Temporariamente desabilitado
-            except Exception as e:
-                return {"error": str(e)}
-                
-            if False:  # Código comentado
-                direct_code = r'''
+                direct_code = '''
 import asyncio
 import json
 from playwright.async_api import async_playwright
@@ -9286,1305 +9000,1206 @@ import os
 
 async def direct_os_access():
     """Acesso direto simplificado à página OS"""
-    return {"success": True, "message": "Função temporariamente desabilitada para corrigir erro de sintaxe"}
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "/tmp/screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("direct_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    screenshots = []
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        
+        page = await browser.new_page()
+        
+        print("🚀 ACESSO DIRETO - Iniciando automação simplificada")
+        print("🔧 CONFIGURAÇÃO - Ambiente configurado: headless=True, screenshots em /tmp/screenshots")
+        
+        # PASSO 1: Login
+        print("🔐 LOGIN - Navegando para página: https://eace.org.br/login?login=login")
+        await page.goto("https://eace.org.br/login?login=login")
+        await page.wait_for_timeout(3000)
+        print("✅ LOGIN - Página carregada com sucesso")
+        
+        print("🔐 LOGIN - Preenchendo campo email: raiseupbt@gmail.com")
+        await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
+        print("✅ LOGIN - Email preenchido")
+        
+        print("🔐 LOGIN - Preenchendo campo senha: ****** (oculta)")
+        await page.fill('//input[@type="password"]', "@Uujpgi8u")
+        print("✅ LOGIN - Senha preenchida")
+        
+        print("🔐 LOGIN - Clicando botão 'Log In'")
+        await page.click('//button[contains(text(), "Log In")]')
+        await page.wait_for_timeout(5000)
+        print("✅ LOGIN - Botão clicado, aguardando resposta do servidor")
+        
+        await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
+        screenshots.append("direct_01_login.png")
+        print("📸 Screenshot: direct_01_login.png")
+        
+        # PASSO 2: Selecionar perfil
+        print("👤 PERFIL - Verificando se precisa selecionar perfil")
+        fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
+        print(f"👤 PERFIL - Elementos 'Fornecedor' encontrados: {fornecedor_count}")
+        
+        if fornecedor_count > 0:
+            print("👤 PERFIL - Clicando em 'Fornecedor'")
+            await page.click('//*[contains(text(), "Fornecedor")]')
+            await page.wait_for_timeout(5000)
+            print("✅ PERFIL - Perfil 'Fornecedor' selecionado com sucesso")
+        else:
+            print("ℹ️ PERFIL - Elemento 'Fornecedor' não encontrado ou já selecionado")
+        
+        print("📱 DASHBOARD - Redirecionando para dashboard do fornecedor")
+        await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+        screenshots.append("direct_02_dashboard.png")
+        print("📸 Screenshot: direct_02_dashboard.png gerado")
+        
+        # PASSO 3: Ação que funciona - clicar em "portable_wifi_off"
+        print("🎯 ACESSO OS - Executando ação que sabemos que funciona")
+        print("🎯 ACESSO OS - Clicando em elemento com texto 'portable_wifi_off'")
+        await page.click('text="portable_wifi_off"')
+        await page.wait_for_timeout(3000)
+        print("✅ ACESSO OS - Elemento clicado com sucesso")
+        print("📱 PÁGINA OS - Navegando para página de controle de OS")
+        
+        await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
+        screenshots.append("direct_03_os_page.png")
+        print("📸 Screenshot: direct_03_os_page.png gerado")
+        
+        # PASSO 4: Aguardar página carregar completamente
+        print("⏳ AGUARDO - Aguardando página de OS carregar completamente")
+        await page.wait_for_timeout(5000)  # Aguardar 5 segundos para o botão ficar disponível
+        print("✅ AGUARDO - Aguardo concluído, página deve estar carregada")
+        
+        # PASSO 5: Procurar e clicar em "Adicionar nova OS"
+        print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
+        
+        # Aguardar mais tempo para página carregar completamente
+        print("⏳ AGUARDO - Aguardando página carregar completamente (10 segundos)")
+        await page.wait_for_timeout(10000)
+        
+        # Screenshot antes da busca por botão
+        await page.screenshot(path=f"{screenshots_dir}/direct_04_before_button_search.png")
+        screenshots.append("direct_04_before_button_search.png")
+        print("📸 Screenshot: direct_04_before_button_search.png")
+        
+        # Mapear todos os elementos visíveis para debug
+        all_elements = await page.evaluate("""
+            () => {
+                const elements = [];
+                const allElements = document.querySelectorAll('button, a, div, span');
+                
+                allElements.forEach((el, index) => {
+                    const rect = el.getBoundingClientRect();
+                    const text = el.textContent?.trim() || '';
+                    const style = window.getComputedStyle(el);
+                    
+                    if (rect.width > 0 && rect.height > 0 && text.length > 0 && 
+                        style.display !== 'none' && style.visibility !== 'hidden') {
+                        elements.push({
+                            tagName: el.tagName,
+                            text: text,
+                            classes: el.className,
+                            id: el.id,
+                            index: index,
+                            visible: true,
+                            clickable: !el.disabled
+                        });
+                    }
+                });
+                
+                return elements;
+            }
+        """)
+        
+        print(f"🔍 ADICIONAR OS - Total de elementos visíveis: {len(all_elements)}")
+        
+        # Procurar elementos que contenham "Adicionar" ou "Nova"
+        adicionar_elements = [el for el in all_elements if 
+                            'adicionar' in el['text'].lower() or 
+                            'nova' in el['text'].lower() or 
+                            'novo' in el['text'].lower() or
+                            'add' in el['text'].lower() or
+                            'create' in el['text'].lower() or
+                            'criar' in el['text'].lower()]
+        
+        # Procurar também por elementos com ícones ou palavras-chave relacionadas
+        os_elements = [el for el in all_elements if 
+                      'os' in el['text'].lower() or 
+                      'order' in el['text'].lower() or
+                      'chamado' in el['text'].lower()]
+        
+        print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': {len(adicionar_elements)}")
+        for el in adicionar_elements:
+            print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            
+        print(f"🔍 OS ELEMENTS - Elementos com 'OS/Order/Chamado': {len(os_elements)}")
+        for el in os_elements:
+            print(f"🔍 OS ELEMENTS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            
+        # Salvar análise completa para debug
+        debug_data = {
+            'total_elements': len(all_elements),
+            'adicionar_elements': len(adicionar_elements),
+            'os_elements': len(os_elements),
+            'all_elements_sample': all_elements[:20],  # Primeiros 20 elementos
+            'adicionar_elements_full': adicionar_elements,
+            'os_elements_full': os_elements
+        }
+        
+        with open(f"{screenshots_dir}/debug_elements.json", "w") as f:
+            json.dump(debug_data, f, indent=2)
+        print(f"📄 DEBUG - Análise completa salva em debug_elements.json")
+        
+        adicionar_clicked = False
+        
+        # Seletores mais específicos e variados com diferentes estratégias
+        adicionar_selectors = [
+            # Seletores específicos para "Adicionar nova OS"
+            "//button[contains(text(), 'Adicionar nova OS')]",
+            "//a[contains(text(), 'Adicionar nova OS')]",
+            "//*[contains(text(), 'Adicionar nova OS')]",
+            
+            # Seletores para "Adicionar OS" 
+            "//button[contains(text(), 'Adicionar OS')]",
+            "//a[contains(text(), 'Adicionar OS')]",
+            "//*[contains(text(), 'Adicionar OS')]",
+            
+            # Seletores para "Nova OS"
+            "//button[contains(text(), 'Nova OS')]",
+            "//a[contains(text(), 'Nova OS')]",
+            "//*[contains(text(), 'Nova OS')]",
+            
+            # Seletores genéricos para "Adicionar"
+            "//button[contains(text(), 'Adicionar')]",
+            "//a[contains(text(), 'Adicionar')]",
+            "//*[contains(text(), 'Adicionar')]",
+            
+            # Seletores com classes comuns
+            "//button[contains(@class, 'btn') and contains(text(), 'Adicionar')]",
+            "//button[contains(@class, 'button') and contains(text(), 'Adicionar')]",
+            "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]",
+            
+            # Seletores em inglês
+            "//button[contains(text(), 'Add')]",
+            "//button[contains(text(), 'Create')]",
+            "//button[contains(text(), 'New')]",
+            
+            # Seletores por ícones ou símbolos
+            "//button[contains(text(), '+')]",
+            "//*[contains(text(), '+') and contains(text(), 'OS')]",
+            "//*[contains(text(), '+') and contains(text(), 'Nova')]"
+        ]
+        
+        # Primeira tentativa: seletores específicos
+        for selector in adicionar_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                print(f"🔍 ADICIONAR OS - Testando: {selector} - {elements} elementos")
+                
+                if elements > 0:
+                    print(f"📍 ADICIONAR OS - Clicando: {selector}")
+                    
+                    # Aguardar elemento estar visível e clicável
+                    await page.wait_for_selector(selector, timeout=5000)
+                    
+                    # Capturar URL antes do clique
+                    url_before = page.url
+                    print(f"📍 ADICIONAR OS - URL antes do clique: {url_before}")
+                    
+                    await page.locator(selector).click()
+                    print("🎯 ADICIONAR OS - Clique executado! Aguardando resposta...")
+                    await page.wait_for_timeout(1000)
+                    
+                    # Screenshot imediatamente após o clique
+                    await page.screenshot(path=f"{screenshots_dir}/direct_04_immediate_after_click.png")
+                    screenshots.append("direct_04_immediate_after_click.png")
+                    print("📸 Screenshot: direct_04_immediate_after_click.png")
+                    
+                    await page.wait_for_timeout(2000)
+                    
+                    # Capturar URL após o clique
+                    url_after = page.url
+                    print(f"📍 ADICIONAR OS - URL após o clique: {url_after}")
+                    
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
+                    screenshots.append("direct_05_after_wait.png")
+                    print("📸 Screenshot: direct_05_after_wait.png")
+                    
+                    # Verificar se modal ou nova página foi aberta
+                    modal_opened = await page.evaluate("""
+                        () => {
+                            // Verificar se há modal aberto
+                            const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                            
+                            // Verificar se há campo "Escola" específico
+                            const escolaInputs = [];
+                            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                            
+                            allInputs.forEach(input => {
+                                const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                const placeholder = input.placeholder || '';
+                                const labelText = label ? label.textContent : '';
+                                
+                                if (labelText.toLowerCase().includes('escola') || 
+                                    placeholder.toLowerCase().includes('escola') ||
+                                    labelText.toLowerCase().includes('inep') ||
+                                    placeholder.toLowerCase().includes('inep')) {
+                                    escolaInputs.push({
+                                        placeholder: placeholder,
+                                        label: labelText,
+                                        id: input.id,
+                                        classes: input.className
+                                    });
+                                }
+                            });
+                            
+                            // Verificar elementos de formulário geral
+                            const forms = document.querySelectorAll('form');
+                            const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                            
+                            return { 
+                                type: modals.length > 0 ? 'modal' : 'form_elements',
+                                modals: modals.length,
+                                forms: forms.length, 
+                                inputs: inputs.length,
+                                escolaFields: escolaInputs.length,
+                                escolaDetails: escolaInputs
+                            };
+                        }
+                    """)
+                    
+                    print(f"📍 ADICIONAR OS - Verificação de modal/formulário: {modal_opened}")
+                    
+                    # Aguardar modal/página carregar (pode demorar 10-15 segundos)
+                    print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
+                    await page.wait_for_timeout(15000)
+                    
+                    # Screenshot final
+                    await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                    screenshots.append("direct_06_final.png")
+                    print("📸 Screenshot: direct_06_final.png")
+                    
+                    # Verificar se realmente houve mudança na página
+                    url_changed = url_before != url_after
+                    modal_detected = modal_opened.get('modals', 0) > 0
+                    escola_field_detected = modal_opened.get('escolaFields', 0) > 0
+                    general_forms_detected = modal_opened.get('inputs', 0) > 0
+                    
+                    click_success = url_changed or modal_detected or escola_field_detected or general_forms_detected
+                    
+                    if click_success:
+                        adicionar_clicked = True
+                        print("✅ ADICIONAR OS - Botão clicado com sucesso! Modal/página aberta detectada!")
+                        if url_changed:
+                            print(f"✅ ADICIONAR OS - URL mudou: {url_before} → {url_after}")
+                        if modal_detected:
+                            print(f"✅ ADICIONAR OS - Modal detectado: {modal_opened['modals']} modais")
+                        if escola_field_detected:
+                            print(f"✅ ADICIONAR OS - Campo 'Escola' detectado! {modal_opened['escolaFields']} campos encontrados")
+                            for field in modal_opened['escolaDetails']:
+                                print(f"   - Campo: '{field['label']}' | Placeholder: '{field['placeholder']}' | ID: {field['id']}")
+                        if general_forms_detected:
+                            print(f"✅ ADICIONAR OS - Formulário detectado: {modal_opened['inputs']} campos de input")
+                    else:
+                        print("⚠️ ADICIONAR OS - Clique executado mas nenhuma mudança detectada")
+                        print("⚠️ ADICIONAR OS - Aguardando mais tempo... modal pode estar carregando")
+                        
+                        # Aguardar mais um pouco e verificar novamente
+                        await page.wait_for_timeout(5000)
+                        
+                        # Verificação final
+                        final_check = await page.evaluate("""
+                            () => {
+                                const escolaInputs = [];
+                                const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
+                                
+                                allInputs.forEach(input => {
+                                    const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                    const placeholder = input.placeholder || '';
+                                    const labelText = label ? label.textContent : '';
+                                    
+                                    if (labelText.toLowerCase().includes('escola') || 
+                                        placeholder.toLowerCase().includes('escola') ||
+                                        labelText.toLowerCase().includes('inep') ||
+                                        placeholder.toLowerCase().includes('inep')) {
+                                        escolaInputs.push({
+                                            placeholder: placeholder,
+                                            label: labelText,
+                                            id: input.id
+                                        });
+                                    }
+                                });
+                                
+                                return { escolaFields: escolaInputs.length, escolaDetails: escolaInputs };
+                            }
+                        """)
+                        
+                        if final_check['escolaFields'] > 0:
+                            adicionar_clicked = True
+                            print("✅ ADICIONAR OS - Campo 'Escola' detectado após aguardar!")
+                            for field in final_check['escolaDetails']:
+                                print(f"   - Campo: '{field['label']}' | Placeholder: '{field['placeholder']}' | ID: {field['id']}")
+                        else:
+                            print("❌ ADICIONAR OS - Nenhum campo 'Escola' detectado mesmo após aguardar")
+                    
+                    # Se encontrou o campo escola, testar preenchimento com INEP de exemplo
+                    if adicionar_clicked and (escola_field_detected or (final_check and final_check['escolaFields'] > 0)):
+                        try:
+                            print("🔍 ADICIONAR OS - Tentando preencher campo INEP com código de exemplo...")
+                            
+                            # Usar INEP de exemplo dos logs (33099553)
+                            inep_example = "''' + inep_value + '''"
+                            
+                            # Tentar preencher o campo escola com lógica melhorada
+                            filled = await page.evaluate("""
+                                () => {
+                                    const inepValue = '''' + inep_example + '''';
+                                    const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                    
+                                    console.log('Procurando por campos de entrada:', allInputs.length);
+                                    
+                                    for (let i = 0; i < allInputs.length; i++) {{
+                                        const input = allInputs[i];
+                                        const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                        const placeholder = input.placeholder || '';
+                                        const labelText = label ? label.textContent : '';
+                                        const name = input.name || '';
+                                        const id = input.id || '';
+                                        
+                                        console.log(`Campo ${{i+1}}:`, {{
+                                            placeholder: placeholder,
+                                            labelText: labelText,
+                                            name: name,
+                                            id: id,
+                                            tagName: input.tagName
+                                        }});
+                                        
+                                        const isSchoolField = labelText.toLowerCase().includes('escola') || 
+                                                             placeholder.toLowerCase().includes('escola') ||
+                                                             labelText.toLowerCase().includes('inep') ||
+                                                             placeholder.toLowerCase().includes('inep') ||
+                                                             name.toLowerCase().includes('escola') ||
+                                                             name.toLowerCase().includes('inep') ||
+                                                             id.toLowerCase().includes('escola') ||
+                                                             id.toLowerCase().includes('inep');
+                                        
+                                        if (isSchoolField) {{
+                                            console.log('Campo de escola encontrado, preenchendo...');
+                                            
+                                            // Focar no campo primeiro
+                                            input.focus();
+                                            
+                                            // Limpar campo existente
+                                            input.value = '';
+                                            
+                                            // Preencher com INEP
+                                            input.value = inepValue;
+                                            
+                                            // Disparar múltiplos eventos para garantir detecção
+                                            input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                            
+                                            // Verificar se o valor foi mantido
+                                            const finalValue = input.value;
+                                            
+                                            return {{
+                                                success: true,
+                                                value: finalValue,
+                                                label: labelText,
+                                                placeholder: placeholder,
+                                                name: name,
+                                                id: id,
+                                                index: i
+                                            }};
+                                        }}
+                                    }}
+                                    
+                                    return {{ success: false, message: 'Campo de escola não encontrado' }};
+                                }}
+                            """)
+                            
+                            if filled['success']:
+                                print(f"✅ ADICIONAR OS - Campo preenchido com sucesso!")
+                                print(f"   - Valor: {filled['value']}")
+                                print(f"   - Label: {filled['label']}")
+                                print(f"   - Placeholder: {filled['placeholder']}")
+                                print(f"   - Name: {filled.get('name', 'N/A')}")
+                                print(f"   - ID: {filled.get('id', 'N/A')}")
+                                print(f"   - Índice: {filled.get('index', 'N/A')}")
+                                
+                                # Aguardar um pouco e verificar se o campo manteve o valor
+                                await page.wait_for_timeout(1000)
+                                
+                                # Verificar se o campo ainda contém o valor
+                                value_check = await page.evaluate(f"""
+                                    () => {{
+                                        const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                        const targetInput = allInputs[{filled.get('index', 0)}];
+                                        
+                                        if (targetInput) {{
+                                            return {{
+                                                hasValue: !!targetInput.value,
+                                                currentValue: targetInput.value,
+                                                isEmpty: targetInput.value === ''
+                                            }};
+                                        }}
+                                        return {{ hasValue: false, currentValue: '', isEmpty: true }};
+                                    }}
+                                """)
+                                
+                                print(f"🔍 ADICIONAR OS - Verificação do campo após 1 segundo:")
+                                print(f"   - Tem valor: {value_check['hasValue']}")
+                                print(f"   - Valor atual: '{value_check['currentValue']}'")
+                                print(f"   - Está vazio: {value_check['isEmpty']}")
+                                
+                                # Se o campo foi limpo, tentar preencher novamente
+                                if value_check['isEmpty']:
+                                    print("⚠️ ADICIONAR OS - Campo foi limpo, tentando preencher novamente...")
+                                    
+                                    refill_result = await page.evaluate(f"""
+                                        () => {{
+                                            const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                            const targetInput = allInputs[{filled.get('index', 0)}];
+                                            
+                                            if (targetInput) {{
+                                                // Forçar preenchimento novamente
+                                                targetInput.focus();
+                                                targetInput.value = '{inep_example}';
+                                                
+                                                // Disparar eventos
+                                                targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                                targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                                
+                                                return {{
+                                                    success: true,
+                                                    value: targetInput.value
+                                                }};
+                                            }}
+                                            return {{ success: false }};
+                                        }}
+                                    """)
+                                    
+                                    if refill_result['success']:
+                                        print(f"✅ ADICIONAR OS - Campo preenchido novamente: {refill_result['value']}")
+                                    else:
+                                        print("❌ ADICIONAR OS - Falha ao preencher novamente")
+                                
+                                # Screenshot após preencher - aguardar mais tempo para visualizar
+                                await page.wait_for_timeout(4000)
+                                await page.screenshot(path=f"{screenshots_dir}/direct_07_field_filled.png")
+                                screenshots.append("direct_07_field_filled.png")
+                                print("📸 Screenshot: direct_07_field_filled.png")
+                                
+                                # Analisar o que aparece na tela após preencher
+                                screen_analysis = await page.evaluate("""
+                                    () => {
+                                        const result = {
+                                            dropdowns: [],
+                                            suggestions: [],
+                                            buttons: [],
+                                            visible_text: []
+                                        };
+                                        
+                                        // Procurar por dropdowns ou listas
+                                        const dropdowns = document.querySelectorAll('select, ul.dropdown, .dropdown-menu, .suggestions, .autocomplete');
+                                        dropdowns.forEach(dropdown => {
+                                            const rect = dropdown.getBoundingClientRect();
+                                            if (rect.width > 0 && rect.height > 0) {
+                                                const options = dropdown.querySelectorAll('option, li, .option-item');
+                                                const optionTexts = Array.from(options).map(opt => opt.textContent?.trim()).filter(text => text);
+                                                
+                                                result.dropdowns.push({
+                                                    tagName: dropdown.tagName,
+                                                    classes: dropdown.className,
+                                                    options: optionTexts.slice(0, 5), // Primeiras 5 opções
+                                                    totalOptions: optionTexts.length
+                                                });
+                                            }
+                                        });
+                                        
+                                        // Procurar por elementos com números (possíveis sugestões)
+                                        const allElements = document.querySelectorAll('*');
+                                        allElements.forEach(el => {
+                                            const text = el.textContent?.trim();
+                                            if (text && /^\d{8}$/.test(text)) { // Números de 8 dígitos (INEP)
+                                                const rect = el.getBoundingClientRect();
+                                                if (rect.width > 0 && rect.height > 0) {
+                                                    result.suggestions.push({
+                                                        text: text,
+                                                        tagName: el.tagName,
+                                                        classes: el.className,
+                                                        clickable: el.tagName === 'BUTTON' || el.onclick !== null || el.style.cursor === 'pointer'
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Procurar por botões próximos
+                                        const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
+                                        buttons.forEach(btn => {
+                                            const rect = btn.getBoundingClientRect();
+                                            if (rect.width > 0 && rect.height > 0) {
+                                                const text = btn.textContent?.trim() || btn.value;
+                                                if (text) {
+                                                    result.buttons.push({
+                                                        text: text,
+                                                        type: btn.type || 'button',
+                                                        classes: btn.className
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Capturar texto visível relevante
+                                        const textElements = document.querySelectorAll('span, div, p, label');
+                                        textElements.forEach(el => {
+                                            const text = el.textContent?.trim();
+                                            if (text && text.length > 0 && text.length < 100) {
+                                                const rect = el.getBoundingClientRect();
+                                                if (rect.width > 0 && rect.height > 0) {
+                                                    result.visible_text.push(text);
+                                                }
+                                            }
+                                        });
+                                        
+                                        return result;
+                                    }
+                                """)
+                                
+                                print("🔍 ADICIONAR OS - Análise da tela após preenchimento:")
+                                print(f"   - Dropdowns encontrados: {len(screen_analysis['dropdowns'])}")
+                                for dropdown in screen_analysis['dropdowns']:
+                                    print(f"     * {dropdown['tagName']}: {dropdown['totalOptions']} opções")
+                                    print(f"       Opções: {dropdown['options']}")
+                                
+                                print(f"   - Números/sugestões encontrados: {len(screen_analysis['suggestions'])}")
+                                for suggestion in screen_analysis['suggestions']:
+                                    print(f"     * {suggestion['text']} ({suggestion['tagName']}) - Clicável: {suggestion['clickable']}")
+                                
+                                print(f"   - Botões encontrados: {len(screen_analysis['buttons'])}")
+                                for button in screen_analysis['buttons'][:5]:  # Primeiros 5 botões
+                                    print(f"     * '{button['text']}' ({button['type']})")
+                                
+                                # Salvar análise completa
+                                with open(f"{screenshots_dir}/screen_analysis.json", "w") as f:
+                                    json.dump(screen_analysis, f, indent=2)
+                                print("📄 ADICIONAR OS - Análise completa salva em screen_analysis.json")
+                                
+                                # Aguardar validação do INEP e procurar sugestão para selecionar
+                                print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
+                                await page.wait_for_timeout(3000)
+                                
+                                # Verificação final se o campo ainda contém o valor antes de procurar sugestões
+                                final_check = await page.evaluate(f"""
+                                    () => {{
+                                        const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                        const targetInput = allInputs[{filled.get('index', 0)}];
+                                        
+                                        if (targetInput) {{
+                                            return {{
+                                                hasValue: !!targetInput.value,
+                                                currentValue: targetInput.value
+                                            }};
+                                        }}
+                                        return {{ hasValue: false, currentValue: '' }};
+                                    }}
+                                """)
+                                
+                                print(f"🔍 ADICIONAR OS - Verificação final do campo:")
+                                print(f"   - Tem valor: {final_check['hasValue']}")
+                                print(f"   - Valor atual: '{final_check['currentValue']}'")
+                                
+                                if not final_check['hasValue']:
+                                    print("❌ ADICIONAR OS - ERRO: Campo foi limpo antes de procurar sugestões")
+                                    return {"error": "Campo INEP foi limpo antes de procurar sugestões"}
+                                
+                                # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
+                                suggestions_found = await page.evaluate(f"""
+                                    () => {{
+                                        const inepValue = '{inep_example}';
+                                        const suggestions = [];
+                                        
+                                        // Procurar especificamente por elementos de sugestão
+                                        const suggestionSelectors = [
+                                            'div[role="option"]',
+                                            'li[role="option"]', 
+                                            'div.suggestion',
+                                            'li.suggestion',
+                                            'div.dropdown-item',
+                                            'li.dropdown-item',
+                                            'div[data-value]',
+                                            'li[data-value]',
+                                            'div.autocomplete-item',
+                                            'li.autocomplete-item'
+                                        ];
+                                        
+                                        // Primeiro, procurar por elementos específicos de sugestão
+                                        suggestionSelectors.forEach(selector => {{
+                                            const elements = document.querySelectorAll(selector);
+                                            elements.forEach((element, index) => {{
+                                                const text = element.textContent?.trim();
+                                                const rect = element.getBoundingClientRect();
+                                                
+                                                if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
+                                                    const style = window.getComputedStyle(element);
+                                                    
+                                                    suggestions.push({{
+                                                        index: Array.from(document.querySelectorAll('*')).indexOf(element),
+                                                        text: text,
+                                                        tagName: element.tagName,
+                                                        classes: element.className,
+                                                        id: element.id,
+                                                        cursor: style.cursor,
+                                                        hasOnclick: !!element.onclick,
+                                                        selector: selector,
+                                                        priority: 'high',
+                                                        rect: {{
+                                                            x: rect.x,
+                                                            y: rect.y,
+                                                            width: rect.width,
+                                                            height: rect.height
+                                                        }},
+                                                        parent: element.parentElement?.tagName || 'none'
+                                                    }});
+                                                }}
+                                            }});
+                                        }});
+                                        
+                                        // Se não encontrou sugestões específicas, procurar por todos os elementos
+                                        if (suggestions.length === 0) {{
+                                            const allElements = document.querySelectorAll('*');
+                                            allElements.forEach((element, index) => {{
+                                                const text = element.textContent?.trim();
+                                                const rect = element.getBoundingClientRect();
+                                                
+                                                // Verificar se contém o INEP, é visível e tem indicadores de clicabilidade
+                                                if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
+                                                    const style = window.getComputedStyle(element);
+                                                    const isClickable = style.cursor === 'pointer' || 
+                                                                       element.onclick || 
+                                                                       element.tagName === 'BUTTON' ||
+                                                                       element.tagName === 'A' ||
+                                                                       element.getAttribute('role') === 'button' ||
+                                                                       element.getAttribute('role') === 'option';
+                                                    
+                                                    if (isClickable) {{
+                                                        suggestions.push({{
+                                                            index: index,
+                                                            text: text,
+                                                            tagName: element.tagName,
+                                                            classes: element.className,
+                                                            id: element.id,
+                                                            cursor: style.cursor,
+                                                            hasOnclick: !!element.onclick,
+                                                            priority: 'low',
+                                                            rect: {{
+                                                                x: rect.x,
+                                                                y: rect.y,
+                                                                width: rect.width,
+                                                                height: rect.height
+                                                            }},
+                                                            parent: element.parentElement?.tagName || 'none'
+                                                        }});
+                                                    }}
+                                                }}
+                                            }});
+                                        }}
+                                        
+                                        // Ordenar por prioridade (high primeiro)
+                                        suggestions.sort((a, b) => a.priority === 'high' ? -1 : 1);
+                                        
+                                        return suggestions;
+                                    }}
+                                """)
+                                
+                                print(f"🔍 ADICIONAR OS - Sugestões encontradas: {len(suggestions_found)}")
+                                for i, suggestion in enumerate(suggestions_found):
+                                    priority_icon = "🔥" if suggestion.get('priority') == 'high' else "📍"
+                                    print(f"   {priority_icon} {i+1}. {suggestion['tagName']} - '{suggestion['text'][:50]}...'")
+                                    print(f"      Classes: {suggestion['classes']}")
+                                    print(f"      Cursor: {suggestion['cursor']}")
+                                    print(f"      Parent: {suggestion['parent']}")
+                                    print(f"      OnClick: {suggestion['hasOnclick']}")
+                                    print(f"      Prioridade: {suggestion.get('priority', 'normal')}")
+                                    if suggestion.get('selector'):
+                                        print(f"      Seletor: {suggestion['selector']}")
+                                    print("")
+                                
+                                # Tentar clicar em cada sugestão até encontrar a que funciona
+                                suggestion_selected = {'success': False}
+                                
+                                for i, suggestion in enumerate(suggestions_found):
+                                    try:
+                                        print(f"🎯 ADICIONAR OS - Tentando clicar na sugestão {i+1}: {suggestion['tagName']} - '{suggestion['text'][:30]}...'")
+                                        
+                                        # Tentar clicar usando múltiplos métodos
+                                        clicked = await page.evaluate(f"""
+                                            () => {{
+                                                const allElements = document.querySelectorAll('*');
+                                                const targetElement = allElements[{suggestion['index']}];
+                                                
+                                                if (targetElement) {{
+                                                    console.log('Clicando no elemento:', targetElement);
+                                                    
+                                                    // Método 1: Click direto
+                                                    targetElement.click();
+                                                    
+                                                    // Método 2: Eventos de mouse
+                                                    targetElement.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                                    targetElement.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
+                                                    targetElement.dispatchEvent(new MouseEvent('click', {{bubbles: true}}));
+                                                    
+                                                    // Método 3: Focus e trigger
+                                                    if (targetElement.focus) {{
+                                                        targetElement.focus();
+                                                    }}
+                                                    
+                                                    // Método 4: Tentar clicar no parent se for um elemento complexo
+                                                    const parent = targetElement.parentElement;
+                                                    if (parent && parent.tagName !== 'BODY') {{
+                                                        parent.click();
+                                                    }}
+                                                    
+                                                    return true;
+                                                }}
+                                                return false;
+                                            }}
+                                        """)
+                                        
+                                        if clicked:
+                                            print(f"✅ ADICIONAR OS - Clique executado na sugestão {i+1}")
+                                            
+                                            # Aguardar mais tempo para ver se houve mudança e verificar se nome da escola apareceu
+                                            await page.wait_for_timeout(3000)
+                                            
+                                            # Verificar se o nome da escola apareceu
+                                            school_name_check = await page.evaluate("""
+                                                () => {
+                                                    // Procurar por texto que possa ser nome de escola
+                                                    const allText = document.body.innerText;
+                                                    const schoolWords = ['escola', 'colégio', 'instituto', 'centro', 'educacional', 'ensino'];
+                                                    
+                                                    for (let word of schoolWords) {
+                                                        if (allText.toLowerCase().includes(word)) {
+                                                            const lines = allText.split('\n');
+                                                            for (let line of lines) {
+                                                                if (line.toLowerCase().includes(word) && line.length > 10) {
+                                                                    return {
+                                                                        found: true,
+                                                                        schoolName: line.trim()
+                                                                    };
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    return { found: false };
+                                                }
+                                            """)
+                                            
+                                            if school_name_check['found']:
+                                                print(f"🏫 ADICIONAR OS - Nome da escola detectado: {school_name_check['schoolName']}")
+                                            else:
+                                                print("⚠️ ADICIONAR OS - Nome da escola não detectado ainda")
+                                            
+                                            # Verificar se o botão "Incluir" foi ativado
+                                            button_check = await page.evaluate("""
+                                                () => {
+                                                    const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+                                                    for (let btn of buttons) {
+                                                        if (btn.textContent?.toLowerCase().includes('incluir')) {
+                                                            return {
+                                                                found: true,
+                                                                disabled: btn.disabled,
+                                                                text: btn.textContent
+                                                            };
+                                                        }
+                                                    }
+                                                    return { found: false };
+                                                }
+                                            """)
+                                            
+                                            if button_check['found'] and not button_check['disabled']:
+                                                print(f"🎉 ADICIONAR OS - SUCESSO! Botão 'Incluir' ativado após clicar na sugestão {i+1}")
+                                                
+                                                # Dados da sugestão selecionada
+                                                suggestion_selected = {
+                                                    'success': True,
+                                                    'text': suggestion['text'],
+                                                    'tagName': suggestion['tagName'],
+                                                    'classes': suggestion['classes'],
+                                                    'attempt': i+1,
+                                                    'priority': suggestion.get('priority', 'normal'),
+                                                    'school_name': school_name_check.get('schoolName', 'Não detectado')
+                                                }
+                                                
+                                                # Screenshot imediato após sucesso
+                                                await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
+                                                screenshots.append("direct_08_suggestion_selected.png")
+                                                print("📸 Screenshot: direct_08_suggestion_selected.png")
+                                                
+                                                # Aguardar mais tempo para capturar o nome da escola que aparece
+                                                print("⏳ ADICIONAR OS - Aguardando nome da escola aparecer completamente...")
+                                                await page.wait_for_timeout(4000)
+                                                
+                                                # Screenshot adicional para confirmar nome da escola
+                                                await page.screenshot(path=f"{screenshots_dir}/direct_08b_school_name_visible.png")
+                                                screenshots.append("direct_08b_school_name_visible.png")
+                                                print("📸 Screenshot: direct_08b_school_name_visible.png - Nome da escola visível")
+                                                
+                                                break
+                                            else:
+                                                print(f"⚠️ ADICIONAR OS - Clique na sugestão {i+1} não ativou o botão 'Incluir'")
+                                        else:
+                                            print(f"❌ ADICIONAR OS - Falha ao clicar na sugestão {i+1}")
+                                            
+                                    except Exception as e:
+                                        print(f"❌ ADICIONAR OS - Erro ao clicar na sugestão {i+1}: {e}")
+                                        continue
+                                
+                                if not suggestion_selected['success']:
+                                    print("❌ ADICIONAR OS - Nenhuma sugestão funcionou para ativar o botão 'Incluir'")
+                                    print("💡 ADICIONAR OS - Pode ser necessário ajustar a estratégia de seleção")
+                                
+                                # Verificar estado dos botões (especialmente "Incluir" e "Fechar")
+                                button_status = await page.evaluate("""
+                                    () => {
+                                        const buttons = [];
+                                        const allButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
+                                        
+                                        allButtons.forEach(btn => {
+                                            const text = (btn.textContent || btn.value || '').trim();
+                                            const rect = btn.getBoundingClientRect();
+                                            
+                                            if (rect.width > 0 && rect.height > 0 && text) {
+                                                buttons.push({
+                                                    text: text,
+                                                    type: btn.type || 'button',
+                                                    classes: btn.className,
+                                                    id: btn.id,
+                                                    disabled: btn.disabled,
+                                                    visible: true
+                                                });
+                                            }
+                                        });
+                                        
+                                        return { buttons: buttons };
+                                    }
+                                """)
+                                
+                                print("🔍 ADICIONAR OS - Estado dos botões após seleção:")
+                                print(f"   - Total de botões encontrados: {len(button_status['buttons'])}")
+                                
+                                incluir_button = None
+                                fechar_button = None
+                                
+                                for button in button_status['buttons']:
+                                    status = "DESABILITADO" if button['disabled'] else "HABILITADO"
+                                    print(f"     * '{button['text']}' ({button['type']}) - {status}")
+                                    
+                                    # Identificar botões específicos
+                                    if 'incluir' in button['text'].lower():
+                                        incluir_button = button
+                                    elif 'fechar' in button['text'].lower():
+                                        fechar_button = button
+                                
+                                # Verificar se o botão "Incluir" foi ativado
+                                if incluir_button:
+                                    if not incluir_button['disabled']:
+                                        print("✅ ADICIONAR OS - Botão 'Incluir' está ATIVO!")
+                                        print("🎯 ADICIONAR OS - Objetivo alcançado: botão ativado, mas NÃO clicando para não incluir ainda")
+                                    else:
+                                        print("⚠️ ADICIONAR OS - Botão 'Incluir' ainda está DESABILITADO")
+                                        print("💡 ADICIONAR OS - Pode precisar selecionar novamente a sugestão do INEP")
+                                else:
+                                    print("❌ ADICIONAR OS - Botão 'Incluir' não encontrado")
+                                
+                                if fechar_button:
+                                    print(f"ℹ️ ADICIONAR OS - Botão 'Fechar' disponível: {fechar_button['text']}")
+                                
+                                # Screenshot final mostrando o estado do formulário
+                                await page.screenshot(path=f"{screenshots_dir}/direct_09_ready_to_include.png")
+                                screenshots.append("direct_09_ready_to_include.png")
+                                print("📸 Screenshot: direct_09_ready_to_include.png")
+                                
+                                # Mostrar resumo final
+                                print("📋 ADICIONAR OS - RESUMO FINAL:")
+                                print(f"   - INEP preenchido: {inep_example}")
+                                print(f"   - Sugestão selecionada: {'Sim' if suggestion_selected.get('success') else 'Não'}")
+                                print(f"   - Botão 'Incluir' ativo: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
+                                print(f"   - Formulário pronto: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
+                                print("🚫 ADICIONAR OS - NÃO clicando em 'Incluir' conforme solicitado")
+                                
+                            else:
+                                print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
+                                
+                        except Exception as e:
+                            print(f"❌ ADICIONAR OS - Erro ao preencher campo: {e}")
+                    
+                    break
+                    
+            except Exception as e:
+                print(f"❌ ADICIONAR OS - Erro com {selector}: {e}")
+                continue
+        
+        # Segunda tentativa: força bruta em elementos que contêm palavras-chave
+        if not adicionar_clicked:
+            print("🔍 ADICIONAR OS - Tentativa 2: Força bruta em elementos identificados")
+            
+            # Combinar todos os elementos relevantes
+            all_relevant_elements = adicionar_elements + os_elements
+            
+            for el in all_relevant_elements:
+                try:
+                    print(f"🎯 ADICIONAR OS - Tentando clicar: {el['tagName']} - '{el['text']}'")
+                    
+                    # Tentar clicar usando JavaScript com busca mais robusta
+                    clicked = await page.evaluate(f"""
+                        () => {{
+                            const text = '{el['text']}';
+                            const tagName = '{el['tagName'].lower()}';
+                            
+                            // Buscar por texto exato
+                            const elements = document.querySelectorAll(tagName);
+                            for (let elem of elements) {{
+                                if (elem.textContent?.trim() === text) {{
+                                    elem.click();
+                                    return true;
+                                }}
+                            }}
+                            
+                            // Buscar por texto parcial
+                            for (let elem of elements) {{
+                                if (elem.textContent?.includes(text)) {{
+                                    elem.click();
+                                    return true;
+                                }}
+                            }}
+                            
+                            return false;
+                        }}
+                    """)
+                    
+                    if clicked:
+                        await page.wait_for_timeout(3000)
+                        
+                        await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
+                        screenshots.append("direct_05_adicionar_clicked.png")
+                        print("📸 Screenshot: direct_05_adicionar_clicked.png")
+                        
+                        # Aguardar modal/página carregar
+                        await page.wait_for_timeout(5000)
+                        
+                        # Screenshot final
+                        await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                        screenshots.append("direct_06_final.png")
+                        print("📸 Screenshot: direct_06_final.png")
+                        
+                        # Verificar se realmente funcionou
+                        modal_check = await page.evaluate("""
+                            () => {
+                                const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                                const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                                return { modals: modals.length, inputs: inputs.length };
+                            }
+                        """)
+                        
+                        print(f"📍 ADICIONAR OS - Verificação JS: {modal_check}")
+                        
+                        if modal_check['modals'] > 0 or modal_check['inputs'] > 5:
+                            adicionar_clicked = True
+                            print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
+                        else:
+                            print("⚠️ ADICIONAR OS - Clique JS executado mas sem mudança detectada")
+                        
+                        break
+                    else:
+                        print(f"❌ ADICIONAR OS - JavaScript click falhou para: {el['text']}")
+                        
+                except Exception as e:
+                    print(f"❌ ADICIONAR OS - Erro com força bruta: {e}")
+                    continue
+        
+        # Terceira tentativa: buscar qualquer elemento clicável que contenha palavras-chave
+        if not adicionar_clicked:
+            print("🔍 ADICIONAR OS - Tentativa 3: Busca universal por qualquer elemento clicável")
+            try:
+                clicked = await page.evaluate("""
+                    () => {
+                        const keywords = ['adicionar', 'nova', 'novo', 'add', 'create', 'criar', '+'];
+                        const clickableElements = document.querySelectorAll('button, a, div[onclick], span[onclick], *[role="button"]');
+                        
+                        for (let elem of clickableElements) {
+                            const text = elem.textContent?.toLowerCase() || '';
+                            const hasKeyword = keywords.some(keyword => text.includes(keyword));
+                            
+                            if (hasKeyword && text.includes('os')) {
+                                elem.click();
+                                return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
+                            }
+                        }
+                        
+                        // Se não encontrou com 'os', tentar só com keywords
+                        for (let elem of clickableElements) {
+                            const text = elem.textContent?.toLowerCase() || '';
+                            const hasKeyword = keywords.some(keyword => text.includes(keyword));
+                            
+                            if (hasKeyword) {
+                                elem.click();
+                                return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
+                            }
+                        }
+                        
+                        return { success: false };
+                    }
+                """)
+                
+                if clicked and clicked.get('success'):
+                    print(f"✅ ADICIONAR OS - Encontrado e clicado: {clicked['tagName']} - '{clicked['text']}'")
+                    
+                    await page.wait_for_timeout(3000)
+                    
+                    await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
+                    screenshots.append("direct_05_after_wait.png")
+                    print("📸 Screenshot: direct_05_after_wait.png")
+                    
+                    # Aguardar modal/página carregar (pode demorar 10-15 segundos)
+                    print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
+                    await page.wait_for_timeout(15000)
+                    
+                    # Screenshot final
+                    await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                    screenshots.append("direct_06_final.png")
+                    print("📸 Screenshot: direct_06_final.png")
+                    
+                    # Verificar se realmente funcionou
+                    final_check = await page.evaluate("""
+                        () => {
+                            const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
+                            const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+                            return { modals: modals.length, inputs: inputs.length };
+                        }
+                    """)
+                    
+                    print(f"📍 ADICIONAR OS - Verificação final: {final_check}")
+                    
+                    if final_check['modals'] > 0 or final_check['inputs'] > 5:
+                        adicionar_clicked = True
+                        print("✅ ADICIONAR OS - Busca universal bem-sucedida!")
+                    else:
+                        print("⚠️ ADICIONAR OS - Busca universal executada mas sem mudança detectada")
+                    
+            except Exception as e:
+                print(f"❌ ADICIONAR OS - Erro na busca universal: {e}")
+        
+        if not adicionar_clicked:
+            print("❌ ADICIONAR OS - Nenhum botão encontrado após todas as tentativas")
+            print("🔍 ADICIONAR OS - Elementos disponíveis para debug:")
+            for el in adicionar_elements:
+                print(f"   - {el['tagName']}: '{el['text']}' - Classes: {el['classes']}")
+        
+        result = {
+            "success": True,
+            "screenshots": screenshots,
+            "adicionar_clicked": adicionar_clicked,
+            "total_elements": len(all_elements),
+            "adicionar_elements": len(adicionar_elements)
+        }
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ ERRO: {e}")
+        return {"error": str(e)}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
 
-# FUNÇÃO ORIGINAL REMOVIDA PARA DEBUG DE SINTAXE
-# (Função removida temporariamente para corrigir erro de sintaxe)
-#     # Configurar diretório de screenshots
-#     screenshots_dir = "/tmp/screenshots"
-#     os.makedirs(screenshots_dir, exist_ok=True)
-#     
-#     # Limpar screenshots anteriores
-#     for file in os.listdir(screenshots_dir):
-#         if file.startswith("direct_"):
-#             os.remove(os.path.join(screenshots_dir, file))
-#     
-#     playwright = await async_playwright().start()
-#     screenshots = []
-#     
-#     try:
-#         browser = await playwright.chromium.launch(
-#             headless=True,
-#             args=['--no-sandbox', '--disable-dev-shm-usage']
-#         )
-#         
-#         page = await browser.new_page()
-#         
-#         print("🚀 ACESSO DIRETO - Iniciando automação simplificada")
-#         print("🔧 CONFIGURAÇÃO - Ambiente configurado: headless=True, screenshots em /tmp/screenshots")
-#         
-#         # PASSO 1: Login
-#         print("🔐 LOGIN - Navegando para página: https://eace.org.br/login?login=login")
-#         await page.goto("https://eace.org.br/login?login=login")
-#         await page.wait_for_timeout(3000)
-#         print("✅ LOGIN - Página carregada com sucesso")
-#         
-#         print("🔐 LOGIN - Preenchendo campo email: raiseupbt@gmail.com")
-#         await page.fill('//input[@placeholder="seuemail@email.com"]', "raiseupbt@gmail.com")
-#         print("✅ LOGIN - Email preenchido")
-#         
-#         print("🔐 LOGIN - Preenchendo campo senha: ****** (oculta)")
-#         await page.fill('//input[@type="password"]', "@Uujpgi8u")
-#         print("✅ LOGIN - Senha preenchida")
-#         
-#         print("🔐 LOGIN - Clicando botão 'Log In'")
-#         await page.click('//button[contains(text(), "Log In")]')
-#         await page.wait_for_timeout(5000)
-#         print("✅ LOGIN - Botão clicado, aguardando resposta do servidor")
-#         
-#         await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
-#         screenshots.append("direct_01_login.png")
-#         print("📸 Screenshot: direct_01_login.png")
-#         
-#         # PASSO 2: Selecionar perfil
-#         print("👤 PERFIL - Verificando se precisa selecionar perfil")
-#         fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
-#         print(f"👤 PERFIL - Elementos 'Fornecedor' encontrados: {fornecedor_count}")
-#         
-#         if fornecedor_count > 0:
-#             print("👤 PERFIL - Clicando em 'Fornecedor'")
-#             await page.click('//*[contains(text(), "Fornecedor")]')
-#             await page.wait_for_timeout(5000)
-#             print("✅ PERFIL - Perfil 'Fornecedor' selecionado com sucesso")
-#         else:
-#             print("ℹ️ PERFIL - Elemento 'Fornecedor' não encontrado ou já selecionado")
-#         
-#         print("📱 DASHBOARD - Redirecionando para dashboard do fornecedor")
-#         await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
-#         screenshots.append("direct_02_dashboard.png")
-#         print("📸 Screenshot: direct_02_dashboard.png gerado")
-#         
-#         # PASSO 3: Ação que funciona - clicar em "portable_wifi_off"
-#         print("🎯 ACESSO OS - Executando ação que sabemos que funciona")
-#         print("🎯 ACESSO OS - Clicando em elemento com texto 'portable_wifi_off'")
-#         await page.click('text="portable_wifi_off"')
-#         await page.wait_for_timeout(3000)
-#         print("✅ ACESSO OS - Elemento clicado com sucesso")
-#         print("📱 PÁGINA OS - Navegando para página de controle de OS")
-#         
-#         await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
-#         screenshots.append("direct_03_os_page.png")
-#         print("📸 Screenshot: direct_03_os_page.png gerado")
-#         
-#         # PASSO 4: Aguardar página carregar completamente
-#         print("⏳ AGUARDO - Aguardando página de OS carregar completamente")
-#         await page.wait_for_timeout(5000)  # Aguardar 5 segundos para o botão ficar disponível
-#         print("✅ AGUARDO - Aguardo concluído, página deve estar carregada")
-#         
-#         # PASSO 5: Procurar e clicar em "Adicionar nova OS"
-#         print("🔍 ADICIONAR OS - Procurando botão 'Adicionar nova OS'")
-#         
-#         # Aguardar mais tempo para página carregar completamente
-#         print("⏳ AGUARDO - Aguardando página carregar completamente (10 segundos)")
-#         await page.wait_for_timeout(10000)
-# 
-#         # Screenshot antes da busca por botão
-#         await page.screenshot(path=f"{screenshots_dir}/direct_04_before_button_search.png")
-#         screenshots.append("direct_04_before_button_search.png")
-#         print("📸 Screenshot: direct_04_before_button_search.png")
-# 
-#         # Mapear todos os elementos visíveis para debug
-#         all_elements = await page.evaluate("""
-#             () => {
-#                 const elements = [];
-#                 const allElements = document.querySelectorAll('button, a, div, span');
-#                 
-#                 allElements.forEach((el, index) => {
-#                     const rect = el.getBoundingClientRect();
-#                     const text = el.textContent?.trim() || '';
-#                     const style = window.getComputedStyle(el);
-#                     
-#                     if (rect.width > 0 && rect.height > 0 && text.length > 0 && 
-#                         style.display !== 'none' && style.visibility !== 'hidden') {
-#                         elements.push({
-#                             tagName: el.tagName,
-#                             text: text,
-#                             classes: el.className,
-#                             id: el.id,
-#                             index: index,
-#                             visible: true,
-#                             clickable: !el.disabled
-#                         });
-#                     }
-#                 });
-#                 
-#                 return elements;
-#             }
-#         """)
-#         
-#         print(f"🔍 ADICIONAR OS - Total de elementos visíveis: {len(all_elements)}")
-#         
-#         # Procurar elementos que contenham "Adicionar" ou "Nova"
-#         adicionar_elements = [el for el in all_elements if 
-#                             'adicionar' in el['text'].lower() or 
-#                             'nova' in el['text'].lower() or 
-#                             'novo' in el['text'].lower() or
-#                             'add' in el['text'].lower() or
-#                             'create' in el['text'].lower() or
-#                             'criar' in el['text'].lower()]
-#         
-#         # Procurar também por elementos com ícones ou palavras-chave relacionadas
-#         os_elements = [el for el in all_elements if 
-#                       'os' in el['text'].lower() or 
-#                       'order' in el['text'].lower() or
-#                       'chamado' in el['text'].lower()]
-#         
-#         print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': {len(adicionar_elements)}")
-#         for el in adicionar_elements:
-#             print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - \"{el['text']}\" - Classes: {el['classes']} - Clickable: {el['clickable']}")
-#             
-#         print(f"🔍 OS ELEMENTS - Elementos com 'OS/Order/Chamado': {len(os_elements)}")
-#         for el in os_elements:
-#             print(f"🔍 OS ELEMENTS - Encontrado: {el['tagName']} - \"{el['text']}\" - Classes: {el['classes']} - Clickable: {el['clickable']}")
-#             
-#         # Salvar análise completa para debug
-#         debug_data = {
-#             'total_elements': len(all_elements),
-#             'adicionar_elements': len(adicionar_elements),
-#             'os_elements': len(os_elements),
-#             'all_elements_sample': all_elements[:20],  # Primeiros 20 elementos
-#             'adicionar_elements_full': adicionar_elements,
-#             'os_elements_full': os_elements
-#         }
-#         
-#         with open(f"{screenshots_dir}/debug_elements.json", "w") as f:
-#             json.dump(debug_data, f, indent=2)
-#         print(f"📄 DEBUG - Análise completa salva em debug_elements.json")
-#         
-#         adicionar_clicked = False
-#         
-#         # Seletores mais específicos e variados com diferentes estratégias
-#         adicionar_selectors = [
-#             # Seletores específicos para "Adicionar nova OS"
-#             "//button[contains(text(), 'Adicionar nova OS')]",
-#             "//a[contains(text(), 'Adicionar nova OS')]",
-#             "//*[contains(text(), 'Adicionar nova OS')]",
-#             
-#             # Seletores para "Adicionar OS" 
-#             "//button[contains(text(), 'Adicionar OS')]",
-#             "//a[contains(text(), 'Adicionar OS')]",
-#             "//*[contains(text(), 'Adicionar OS')]",
-#             
-#             # Seletores para "Nova OS"
-#             "//button[contains(text(), 'Nova OS')]",
-#             "//a[contains(text(), 'Nova OS')]",
-#             "//*[contains(text(), 'Nova OS')]",
-#             
-#             # Seletores genéricos para "Adicionar"
-#             "//button[contains(text(), 'Adicionar')]",
-#             "//a[contains(text(), 'Adicionar')]",
-#             "//*[contains(text(), 'Adicionar')]",
-#             
-#             # Seletores com classes comuns
-#             "//button[contains(@class, 'btn') and contains(text(), 'Adicionar')]",
-#             "//button[contains(@class, 'button') and contains(text(), 'Adicionar')]",
-#             "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]",
-#             
-#             # Seletores em inglês
-#             "//button[contains(text(), 'Add')]",
-#             "//button[contains(text(), 'Create')]",
-#             "//button[contains(text(), 'New')]",
-#             
-#             # Seletores por ícones ou símbolos
-#             "//button[contains(text(), '+')]",
-#             "//*[contains(text(), '+') and contains(text(), 'OS')]",
-#             "//*[contains(text(), '+') and contains(text(), 'Nova')]"
-#         ]
-#         
-#         # Primeira tentativa: seletores específicos
-#         for selector in adicionar_selectors:
-#             try:
-#                 elements = await page.locator(selector).count()
-#                 print(f"🔍 ADICIONAR OS - Testando: {selector} - {elements} elementos")
-#                 
-#                 if elements > 0:
-#                     print(f"📍 ADICIONAR OS - Clicando: {selector}")
-#                     
-#                     # Aguardar elemento estar visível e clicável
-#                     await page.wait_for_selector(selector, timeout=5000)
-#                     
-#                     # Capturar URL antes do clique
-#                     url_before = page.url
-#                     print(f"📍 ADICIONAR OS - URL antes do clique: {url_before}")
-#                     
-#                     await page.locator(selector).click()
-#                     print("🎯 ADICIONAR OS - Clique executado! Aguardando resposta...")
-#                     await page.wait_for_timeout(1000)
-#                     
-#                     # Screenshot imediatamente após o clique
-#                     await page.screenshot(path=f"{screenshots_dir}/direct_04_immediate_after_click.png")
-#                     screenshots.append("direct_04_immediate_after_click.png")
-#                     print("📸 Screenshot: direct_04_immediate_after_click.png")
-#                     
-#                     await page.wait_for_timeout(2000)
-#                     
-#                     # Capturar URL após o clique
-#                     url_after = page.url
-#                     print(f"📍 ADICIONAR OS - URL após o clique: {url_after}")
-#                     
-#                     await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
-#                     screenshots.append("direct_05_after_wait.png")
-#                     print("📸 Screenshot: direct_05_after_wait.png")
-#                     
-#                     # Verificar se modal ou nova página foi aberta
-#                     modal_opened = await page.evaluate("""
-#                         () => {
-#                             // Verificar se há modal aberto
-#                             const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
-#                             
-#                             // Verificar se há campo "Escola" específico
-#                             const escolaInputs = [];
-#                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
-#                             
-#                             allInputs.forEach(input => {
-#                                 const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
-#                                 const placeholder = input.placeholder || '';
-#                                 const labelText = label ? label.textContent : '';
-#                                 
-#                                 if (labelText.toLowerCase().includes('escola') || 
-#                                     placeholder.toLowerCase().includes('escola') ||
-#                                     labelText.toLowerCase().includes('inep') ||
-#                                     placeholder.toLowerCase().includes('inep')) {
-#                                     escolaInputs.push({
-#                                         placeholder: placeholder,
-#                                         label: labelText,
-#                                         id: input.id,
-#                                         classes: input.className
-#                                     });
-#                                 }
-#                             });
-#                             
-#                             // Verificar elementos de formulário geral
-#                             const forms = document.querySelectorAll('form');
-#                             const inputs = document.querySelectorAll('input[type="text"], textarea, select');
-#                             
-#                             return { 
-#                                 type: modals.length > 0 ? 'modal' : 'form_elements',
-#                                 modals: modals.length,
-#                                 forms: forms.length, 
-#                                 inputs: inputs.length,
-#                                 escolaFields: escolaInputs.length,
-#                                 escolaDetails: escolaInputs
-#                             };
-#                         }
-#                     """)
-#                     
-#                     print(f"📍 ADICIONAR OS - Verificação de modal/formulário: {modal_opened}")
-#                     
-#                     # Aguardar modal/página carregar (pode demorar 10-15 segundos)
-#                     print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
-#                     await page.wait_for_timeout(15000)
-#                     
-#                     # Screenshot final
-#                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
-#                     screenshots.append("direct_06_final.png")
-#                     print("📸 Screenshot: direct_06_final.png")
-#                     
-#                     # Verificar se realmente houve mudança na página
-#                     url_changed = url_before != url_after
-#                     modal_detected = modal_opened.get('modals', 0) > 0
-#                     escola_field_detected = modal_opened.get('escolaFields', 0) > 0
-#                     general_forms_detected = modal_opened.get('inputs', 0) > 0
-#                     
-#                     click_success = url_changed or modal_detected or escola_field_detected or general_forms_detected
-#                     
-#                     if click_success:
-#                         adicionar_clicked = True
-#                         print("✅ ADICIONAR OS - Botão clicado com sucesso! Modal/página aberta detectada!")
-#                         if url_changed:
-#                             print(f"✅ ADICIONAR OS - URL mudou: {url_before} → {url_after}")
-#                         if modal_detected:
-#                             print(f"✅ ADICIONAR OS - Modal detectado: {modal_opened['modals']} modais")
-#                         if escola_field_detected:
-#                             print(f"✅ ADICIONAR OS - Campo 'Escola' detectado! {modal_opened['escolaFields']} campos encontrados")
-#                             for field in modal_opened['escolaDetails']:
-#                                 print(f"   - Campo: \"{field['label']}\" | Placeholder: \"{field['placeholder']}\" | ID: {field['id']}")
-#                         if general_forms_detected:
-#                             print(f"✅ ADICIONAR OS - Formulário detectado: {modal_opened['inputs']} campos de input")
-#                     else:
-#                         print("⚠️ ADICIONAR OS - Clique executado mas nenhuma mudança detectada")
-#                         print("⚠️ ADICIONAR OS - Aguardando mais tempo... modal pode estar carregando")
-#                         
-#                         # Aguardar mais um pouco e verificar novamente
-#                         await page.wait_for_timeout(5000)
-#                         
-#                         # Verificação final
-#                         final_check = await page.evaluate("""
-#                             () => {
-#                                 const escolaInputs = [];
-#                                 const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
-#                                 
-#                                 allInputs.forEach(input => {
-#                                     const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
-#                                     const placeholder = input.placeholder || '';
-#                                     const labelText = label ? label.textContent : '';
-#                                     
-#                                     if (labelText.toLowerCase().includes('escola') || 
-#                                         placeholder.toLowerCase().includes('escola') ||
-#                                         labelText.toLowerCase().includes('inep') ||
-#                                         placeholder.toLowerCase().includes('inep')) {
-#                                         escolaInputs.push({
-#                                             placeholder: placeholder,
-#                                             label: labelText,
-#                                             id: input.id
-#                                         });
-#                                     }
-#                                 });
-#                                 
-#                                 return { escolaFields: escolaInputs.length, escolaDetails: escolaInputs };
-#                             }
-#                         """)
-#                         
-#                         if final_check['escolaFields'] > 0:
-#                             adicionar_clicked = True
-#                             print("✅ ADICIONAR OS - Campo 'Escola' detectado após aguardar!")
-#                             for field in final_check['escolaDetails']:
-#                                 print(f"   - Campo: \"{field['label']}\" | Placeholder: \"{field['placeholder']}\" | ID: {field['id']}")
-#                         else:
-#                             print("❌ ADICIONAR OS - Nenhum campo 'Escola' detectado mesmo após aguardar")
-#                     
-#                     # Se encontrou o campo escola, testar preenchimento com INEP de exemplo
-#                     if adicionar_clicked and (escola_field_detected or (final_check and final_check['escolaFields'] > 0)):
-#                         try:
-#                             print("🔍 ADICIONAR OS - Tentando preencher campo INEP com código de exemplo...")
-#                             
-#                             # Usar INEP recebido da requisição
-#                             inep_example = "{inep_value}"
-#                             
-#                             # Tentar preencher o campo escola com lógica melhorada
-#                             # filled = await page.evaluate(f"""
-#                                 () => {{
-#                                     const inepValue = '{inep_example}';
-#                                     const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                     
-#                                     console.log('Procurando por campos de entrada:', allInputs.length);
-#                                     
-#                                     for (let i = 0; i < allInputs.length; i++) {{
-#                                         const input = allInputs[i];
-#                                         const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
-#                                         const placeholder = input.placeholder || '';
-#                                         const labelText = label ? label.textContent : '';
-#                                         const name = input.name || '';
-#                                         const id = input.id || '';
-#                                         
-#                                         console.log(`Campo ${{i+1}}:`, {{
-#                                             placeholder: placeholder,
-#                                             labelText: labelText,
-#                                             name: name,
-#                                             id: id,
-#                                             tagName: input.tagName
-#                                         }});
-#                                         
-#                                         const isSchoolField = labelText.toLowerCase().includes('escola') || 
-#                                                              placeholder.toLowerCase().includes('escola') ||
-#                                                              labelText.toLowerCase().includes('inep') ||
-#                                                              placeholder.toLowerCase().includes('inep') ||
-#                                                              name.toLowerCase().includes('escola') ||
-#                                                              name.toLowerCase().includes('inep') ||
-#                                                              id.toLowerCase().includes('escola') ||
-#                                                              id.toLowerCase().includes('inep');
-#                                         
-#                                         if (isSchoolField) {{
-#                                             console.log('Campo de escola encontrado, preenchendo...');
-#                                             
-#                                             // Focar no campo primeiro
-#                                             input.focus();
-#                                             
-#                                             // Limpar campo existente
-#                                             input.value = '';
-#                                             
-#                                             // Preencher com INEP
-#                                             input.value = inepValue;
-#                                             
-#                                             // Disparar múltiplos eventos para garantir detecção
-#                                             input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
-#                                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-#                                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-#                                             input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
-#                                             input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
-#                                             
-#                                             // Verificar se o valor foi mantido
-#                                             const finalValue = input.value;
-#                                             
-#                                             return {{
-#                                                 success: true,
-#                                                 value: finalValue,
-#                                                 label: labelText,
-#                                                 placeholder: placeholder,
-#                                                 name: name,
-#                                                 id: id,
-#                                                 index: i
-#                                             }};
-#                                         }}
-#                                     }}
-#                                     
-#                                     return {{ success: false, message: 'Campo de escola não encontrado' }};
-#                                 }}
-#                             """)
-#                             
-#                             if filled['success']:
-#                                 print(f"✅ ADICIONAR OS - Campo preenchido com sucesso!")
-#                                 print(f"   - Valor: {filled['value']}")
-#                                 print(f"   - Label: {filled['label']}")
-#                                 print(f"   - Placeholder: {filled['placeholder']}")
-#                                 print(f"   - Name: {filled.get('name', 'N/A')}")
-#                                 print(f"   - ID: {filled.get('id', 'N/A')}")
-#                                 print(f"   - Índice: {filled.get('index', 'N/A')}")
-#                                 
-#                                 # Aguardar um pouco e verificar se o campo manteve o valor
-#                                 await page.wait_for_timeout(1000)
-#                                 
-#                                 # Verificar se o campo ainda contém o valor
-#                                 # value_check = await page.evaluate(f"""
-#                                     () => {{
-#                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                         const targetInput = allInputs[{index}];
-#                                         
-#                                         if (targetInput) {{
-#                                             return {{
-#                                                 hasValue: !!targetInput.value,
-#                                                 currentValue: targetInput.value,
-#                                                 isEmpty: targetInput.value === ''
-#                                             }};
-#                                         }}
-#                                         return {{ hasValue: false, currentValue: '', isEmpty: true }};
-#                                     }}
-#                                 """)
-#                                 
-#                                 print(f"🔍 ADICIONAR OS - Verificação do campo após 1 segundo:")
-#                                 print(f"   - Tem valor: {value_check['hasValue']}")
-#                                 print(f"   - Valor atual: \"{value_check['currentValue']}\"")
-#                                 print(f"   - Está vazio: {value_check['isEmpty']}")
-#                                 
-#                                 # Se o campo foi limpo, tentar preencher novamente
-#                                 if value_check['isEmpty']:
-#                                     print("⚠️ ADICIONAR OS - Campo foi limpo, tentando preencher novamente...")
-#                                     
-#                                     # refill_result = await page.evaluate(f"""
-#                                         () => {{
-#                                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                             const targetInput = allInputs[{index}];
-#                                             
-#                                             if (targetInput) {{
-#                                                 // Forçar preenchimento novamente
-#                                                 targetInput.focus();
-#                                                 targetInput.value = '{inep_example}';
-#                                                 
-#                                                 // Disparar eventos
-#                                                 targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-#                                                 targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-#                                                 
-#                                                 return {{
-#                                                     success: true,
-#                                                     value: targetInput.value
-#                                                 }};
-#                                             }}
-#                                             return {{ success: false }};
-#                                         }}
-#                                     """)
-#                                     
-#                                     if refill_result['success']:
-#                                         print(f"✅ ADICIONAR OS - Campo preenchido novamente: {refill_result['value']}")
-#                                     else:
-#                                         print("❌ ADICIONAR OS - Falha ao preencher novamente")
-#                                 
-#                                 # Screenshot após preencher - aguardar mais tempo para visualizar
-#                                 await page.wait_for_timeout(4000)
-#                                 await page.screenshot(path=f"{screenshots_dir}/direct_07_field_filled.png")
-#                                 screenshots.append("direct_07_field_filled.png")
-#                                 print("📸 Screenshot: direct_07_field_filled.png")
-#                                 
-#                                 # Analisar o que aparece na tela após preencher
-#                                 screen_analysis = await page.evaluate("""
-#                                     () => {
-#                                         const result = {
-#                                             dropdowns: [],
-#                                             suggestions: [],
-#                                             buttons: [],
-#                                             visible_text: []
-#                                         };
-#                                         
-#                                         // Procurar por dropdowns ou listas
-#                                         const dropdowns = document.querySelectorAll('select, ul.dropdown, .dropdown-menu, .suggestions, .autocomplete');
-#                                         dropdowns.forEach(dropdown => {
-#                                             const rect = dropdown.getBoundingClientRect();
-#                                             if (rect.width > 0 && rect.height > 0) {
-#                                                 const options = dropdown.querySelectorAll('option, li, .option-item');
-#                                                 const optionTexts = Array.from(options).map(opt => opt.textContent?.trim()).filter(text => text);
-#                                                 
-#                                                 result.dropdowns.push({
-#                                                     tagName: dropdown.tagName,
-#                                                     classes: dropdown.className,
-#                                                     options: optionTexts.slice(0, 5), // Primeiras 5 opções
-#                                                     totalOptions: optionTexts.length
-#                                                 });
-#                                             }
-#                                         });
-#                                         
-#                                         // Procurar por elementos com números (possíveis sugestões)
-#                                         const allElements = document.querySelectorAll('*');
-#                                         allElements.forEach(el => {
-#                                             const text = el.textContent?.trim();
-#                                             if (text && /^\d{8}$/.test(text)) { // Números de 8 dígitos (INEP)
-#                                                 const rect = el.getBoundingClientRect();
-#                                                 if (rect.width > 0 && rect.height > 0) {
-#                                                     result.suggestions.push({
-#                                                         text: text,
-#                                                         tagName: el.tagName,
-#                                                         classes: el.className,
-#                                                         clickable: el.tagName === 'BUTTON' || el.onclick !== null || el.style.cursor === 'pointer'
-#                                                     });
-#                                                 }
-#                                             }
-#                                         });
-#                                         
-#                                         // Procurar por botões próximos
-#                                         const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
-#                                         buttons.forEach(btn => {
-#                                             const rect = btn.getBoundingClientRect();
-#                                             if (rect.width > 0 && rect.height > 0) {
-#                                                 const text = btn.textContent?.trim() || btn.value;
-#                                                 if (text) {
-#                                                     result.buttons.push({
-#                                                         text: text,
-#                                                         type: btn.type || 'button',
-#                                                         classes: btn.className
-#                                                     });
-#                                                 }
-#                                             }
-#                                         });
-#                                         
-#                                         // Capturar texto visível relevante
-#                                         const textElements = document.querySelectorAll('span, div, p, label');
-#                                         textElements.forEach(el => {
-#                                             const text = el.textContent?.trim();
-#                                             if (text && text.length > 0 && text.length < 100) {
-#                                                 const rect = el.getBoundingClientRect();
-#                                                 if (rect.width > 0 && rect.height > 0) {
-#                                                     result.visible_text.push(text);
-#                                                 }
-#                                             }
-#                                         });
-#                                         
-#                                         return result;
-#                                     }
-#                                 """)
-#                                 
-#                                 print("🔍 ADICIONAR OS - Análise da tela após preenchimento:")
-#                                 print(f"   - Dropdowns encontrados: {len(screen_analysis['dropdowns'])}")
-#                                 for dropdown in screen_analysis['dropdowns']:
-#                                     print(f"     * {dropdown['tagName']}: {dropdown['totalOptions']} opções")
-#                                     print(f"       Opções: {dropdown['options']}")
-#                                 
-#                                 print(f"   - Números/sugestões encontrados: {len(screen_analysis['suggestions'])}")
-#                                 for suggestion in screen_analysis['suggestions']:
-#                                     print(f"     * {suggestion['text']} ({suggestion['tagName']}) - Clicável: {suggestion['clickable']}")
-#                                 
-#                                 print(f"   - Botões encontrados: {len(screen_analysis['buttons'])}")
-#                                 for button in screen_analysis['buttons'][:5]:  # Primeiros 5 botões
-#                                     print(f"     * \"{button['text']}\" ({button['type']})")
-#                                 
-#                                 # Salvar análise completa
-#                                 with open(f"{screenshots_dir}/screen_analysis.json", "w") as f:
-#                                     json.dump(screen_analysis, f, indent=2)
-#                                 print("📄 ADICIONAR OS - Análise completa salva em screen_analysis.json")
-#                                 
-#                                 # Aguardar validação do INEP e procurar sugestão para selecionar
-#                                 print("⏳ ADICIONAR OS - Aguardando sugestão do INEP aparecer...")
-#                                 await page.wait_for_timeout(3000)
-#                                 
-#                                 # Verificação final se o campo ainda contém o valor antes de procurar sugestões
-#                                 # final_check = await page.evaluate(f"""
-#                                     () => {{
-#                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                         const targetInput = allInputs[{index}];
-#                                         
-#                                         if (targetInput) {{
-#                                             return {{
-#                                                 hasValue: !!targetInput.value,
-#                                                 currentValue: targetInput.value
-#                                             }};
-#                                         }}
-#                                         return {{ hasValue: false, currentValue: '' }};
-#                                     }}
-#                                 """)
-#                                 
-#                                 print(f"🔍 ADICIONAR OS - Verificação final do campo:")
-#                                 print(f"   - Tem valor: {final_check['hasValue']}")
-#                                 print(f"   - Valor atual: \"{final_check['currentValue']}\"")
-#                                 
-#                                 if not final_check['hasValue']:
-#                                     print("❌ ADICIONAR OS - ERRO: Campo foi limpo antes de procurar sugestões")
-#                                     return {"error": "Campo INEP foi limpo antes de procurar sugestões"}
-#                                 
-#                                 # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
-#                                 # suggestions_found = await page.evaluate(f"""
-#                                     () => {{
-#                                         const inepValue = '{inep_example}';
-#                                         const suggestions = [];
-#                                         
-#                                         // Procurar especificamente por elementos de sugestão
-#                                         const suggestionSelectors = [
-#                                             'div[role="option"]',
-#                                             'li[role="option"]', 
-#                                             'div.suggestion',
-#                                             'li.suggestion',
-#                                             'div.dropdown-item',
-#                                             'li.dropdown-item',
-#                                             'div[data-value]',
-#                                             'li[data-value]',
-#                                             'div.autocomplete-item',
-#                                             'li.autocomplete-item'
-#                                         ];
-#                                         
-#                                         // Primeiro, procurar por elementos específicos de sugestão
-#                                         suggestionSelectors.forEach(selector => {{
-#                                             const elements = document.querySelectorAll(selector);
-#                                             elements.forEach((element, index) => {{
-#                                                 const text = element.textContent?.trim();
-#                                                 const rect = element.getBoundingClientRect();
-#                                                 
-#                                                 if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
-#                                                     const style = window.getComputedStyle(element);
-#                                                     
-#                                                     suggestions.push({{
-#                                                         index: Array.from(document.querySelectorAll('*')).indexOf(element),
-#                                                         text: text,
-#                                                         tagName: element.tagName,
-#                                                         classes: element.className,
-#                                                         id: element.id,
-#                                                         cursor: style.cursor,
-#                                                         hasOnclick: !!element.onclick,
-#                                                         selector: selector,
-#                                                         priority: 'high',
-#                                                         rect: {{
-#                                                             x: rect.x,
-#                                                             y: rect.y,
-#                                                             width: rect.width,
-#                                                             height: rect.height
-#                                                         }},
-#                                                         parent: element.parentElement?.tagName || 'none'
-#                                                     }});
-#                                                 }}
-#                                             }});
-#                                         }});
-#                                         
-#                                         // Se não encontrou sugestões específicas, procurar por todos os elementos
-#                                         if (suggestions.length === 0) {{
-#                                             const allElements = document.querySelectorAll('*');
-#                                             allElements.forEach((element, index) => {{
-#                                                 const text = element.textContent?.trim();
-#                                                 const rect = element.getBoundingClientRect();
-#                                                 
-#                                                 // Verificar se contém o INEP, é visível e tem indicadores de clicabilidade
-#                                                 if (rect.width > 0 && rect.height > 0 && text && text.includes(inepValue)) {{
-#                                                     const style = window.getComputedStyle(element);
-#                                                     const isClickable = style.cursor === 'pointer' || 
-#                                                                        element.onclick || 
-#                                                                        element.tagName === 'BUTTON' ||
-#                                                                        element.tagName === 'A' ||
-#                                                                        element.getAttribute('role') === 'button' ||
-#                                                                        element.getAttribute('role') === 'option';
-#                                                     
-#                                                     if (isClickable) {{
-#                                                         suggestions.push({{
-#                                                             index: index,
-#                                                             text: text,
-#                                                             tagName: element.tagName,
-#                                                             classes: element.className,
-#                                                             id: element.id,
-#                                                             cursor: style.cursor,
-#                                                             hasOnclick: !!element.onclick,
-#                                                             priority: 'low',
-#                                                             rect: {{
-#                                                                 x: rect.x,
-#                                                                 y: rect.y,
-#                                                                 width: rect.width,
-#                                                                 height: rect.height
-#                                                             }},
-#                                                             parent: element.parentElement?.tagName || 'none'
-#                                                         }});
-#                                                     }}
-#                                                 }}
-#                                             }});
-#                                         }}
-#                                         
-#                                         // Ordenar por prioridade (high primeiro)
-#                                         suggestions.sort((a, b) => a.priority === 'high' ? -1 : 1);
-#                                         
-#                                         return suggestions;
-#                                     }}
-#                                 """)
-#                                 
-#                                 print(f"🔍 ADICIONAR OS - Sugestões encontradas: {len(suggestions_found)}")
-#                                 for i, suggestion in enumerate(suggestions_found):
-#                                     priority_icon = "🔥" if suggestion.get('priority') == 'high' else "📍"
-#                                     print(f"   {priority_icon} {i+1}. {suggestion['tagName']} - \"{suggestion['text'][:50]}...\"")
-#                                     print(f"      Classes: {suggestion['classes']}")
-#                                     print(f"      Cursor: {suggestion['cursor']}")
-#                                     print(f"      Parent: {suggestion['parent']}")
-#                                     print(f"      OnClick: {suggestion['hasOnclick']}")
-#                                     print(f"      Prioridade: {suggestion.get('priority', 'normal')}")
-#                                     if suggestion.get('selector'):
-#                                         print(f"      Seletor: {suggestion['selector']}")
-#                                     print("")
-#                                 
-#                                 # Tentar clicar em cada sugestão até encontrar a que funciona
-#                                 suggestion_selected = {'success': False}
-#                                 
-#                                 for i, suggestion in enumerate(suggestions_found):
-#                                     try:
-#                                         print(f"🎯 ADICIONAR OS - Tentando clicar na sugestão {i+1}: {suggestion['tagName']} - \"{suggestion['text'][:30]}...\"")
-#                                         
-#                                         # Tentar clicar usando múltiplos métodos
-#                                         # clicked = await page.evaluate(f"""
-#                                             () => {{
-#                                                 const allElements = document.querySelectorAll('*');
-#                                                 const targetElement = allElements[{suggestion['index']}];
-#                                                 
-#                                                 if (targetElement) {{
-#                                                     console.log('Clicando no elemento:', targetElement);
-#                                                     
-#                                                     // Método 1: Click direto
-#                                                     targetElement.click();
-#                                                     
-#                                                     // Método 2: Eventos de mouse
-#                                                     targetElement.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
-#                                                     targetElement.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
-#                                                     targetElement.dispatchEvent(new MouseEvent('click', {{bubbles: true}}));
-#                                                     
-#                                                     // Método 3: Focus e trigger
-#                                                     if (targetElement.focus) {{
-#                                                         targetElement.focus();
-#                                                     }}
-#                                                     
-#                                                     // Método 4: Tentar clicar no parent se for um elemento complexo
-#                                                     const parent = targetElement.parentElement;
-#                                                     if (parent && parent.tagName !== 'BODY') {{
-#                                                         parent.click();
-#                                                     }}
-#                                                     
-#                                                     return true;
-#                                                 }}
-#                                                 return false;
-#                                             }}
-#                                         """)
-#                                         
-#                                         if clicked:
-#                                             print(f"✅ ADICIONAR OS - Clique executado na sugestão {i+1}")
-#                                             
-#                                             # Aguardar mais tempo para ver se houve mudança e verificar se nome da escola apareceu
-#                                             await page.wait_for_timeout(3000)
-#                                             
-#                                             # Verificar se o nome da escola apareceu após seleção
-#                                             # school_name_check = await page.evaluate(f"""
-#                                                 () => {{
-#                                                     const inepValue = '{inep_example}';
-#                                                     
-#                                                     // Primeiro, verificar se algum campo foi preenchido automaticamente
-#                                                     const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                                     for (let input of allInputs) {{
-#                                                         if (input.value && input.value !== inepValue && input.value.length > 5) {{
-#                                                             const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
-#                                                             const labelText = label ? label.textContent.toLowerCase() : '';
-#                                                             const placeholder = input.placeholder.toLowerCase();
-#                                                             
-#                                                             // Verificar se é campo de nome da escola
-#                                                             if (labelText.includes('escola') || labelText.includes('nome') || placeholder.includes('escola')) {{
-#                                                                 return {{
-#                                                                     found: true,
-#                                                                     schoolName: input.value.trim(),
-#                                                                     fieldType: 'input_field',
-#                                                                     element: input.tagName,
-#                                                                     label: labelText
-#                                                                 }};
-#                                                             }}
-#                                                         }}
-#                                                     }}
-#                                                     
-#                                                     // Se não encontrou em campos, procurar em elementos que podem mostrar o nome
-#                                                     const allElements = document.querySelectorAll('*');
-#                                                     for (let element of allElements) {{
-#                                                         const text = element.textContent?.trim();
-#                                                         const rect = element.getBoundingClientRect();
-#                                                         
-#                                                         // Verificar se é texto visível que pode ser nome de escola
-#                                                         if (rect.width > 0 && rect.height > 0 && text && text.length > 10) {{
-#                                                             const lowerText = text.toLowerCase();
-#                                                             const schoolWords = ['escola', 'colégio', 'instituto', 'centro educacional', 'ensino', 'educação'];
-#                                                             
-#                                                             for (let word of schoolWords) {{
-#                                                                 if (lowerText.includes(word) && !lowerText.includes('campo') && !lowerText.includes('digite')) {{
-#                                                                     // Verificar se não é um label ou instrução
-#                                                                     if (!lowerText.includes('selecione') && !lowerText.includes('escolha') && !lowerText.includes('buscar')) {{
-#                                                                         return {{
-#                                                                             found: true,
-#                                                                             schoolName: text.trim(),
-#                                                                             fieldType: 'display_element',
-#                                                                             element: element.tagName,
-#                                                                             classes: element.className
-#                                                                         }};
-#                                                                     }}
-#                                                                 }}
-#                                                             }}
-#                                                         }}
-#                                                     }}
-#                                                     
-#                                                     return {{ found: false }};
-#                                                 }}
-#                                             """)
-#                                             
-#                                             if school_name_check['found']:
-#                                                 print(f"🏫 ADICIONAR OS - Nome da escola detectado: {school_name_check['schoolName']}")
-#                                             else:
-#                                                 print("⚠️ ADICIONAR OS - Nome da escola não detectado ainda")
-#                                             
-#                                             # Verificar se o botão "Incluir" foi ativado
-#                                             button_check = await page.evaluate("""
-#                                                 () => {
-#                                                     const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
-#                                                     for (let btn of buttons) {
-#                                                         if (btn.textContent?.toLowerCase().includes('incluir')) {
-#                                                             return {
-#                                                                 found: true,
-#                                                                 disabled: btn.disabled,
-#                                                                 text: btn.textContent
-#                                                             };
-#                                                         }
-#                                                     }
-#                                                     return { found: false };
-#                                                 }
-#                                             """)
-#                                             
-#                                             if button_check['found'] and not button_check['disabled']:
-#                                                 print(f"🎉 ADICIONAR OS - SUCESSO! Botão 'Incluir' ativado após clicar na sugestão {i+1}")
-#                                                 
-#                                                 # Dados da sugestão selecionada
-#                                                 suggestion_selected = {
-#                                                     'success': True,
-#                                                     'text': suggestion['text'],
-#                                                     'tagName': suggestion['tagName'],
-#                                                     'classes': suggestion['classes'],
-#                                                     'attempt': i+1,
-#                                                     'priority': suggestion.get('priority', 'normal'),
-#                                                     'school_name': school_name_check.get('schoolName', 'Não detectado')
-#                                                 }
-#                                                 
-#                                                 # Screenshot imediato após sucesso
-#                                                 await page.screenshot(path=f"{screenshots_dir}/direct_08_suggestion_selected.png")
-#                                                 screenshots.append("direct_08_suggestion_selected.png")
-#                                                 print("📸 Screenshot: direct_08_suggestion_selected.png")
-#                                                 
-#                                                 # Clicar em área neutra para confirmar a seleção
-#                                                 print("👆 ADICIONAR OS - Clicando em área neutra para confirmar seleção...")
-#                                                 await page.click('body', position={'x': 100, 'y': 100})
-#                                                 await page.wait_for_timeout(1000)
-#                                                 
-#                                                 # Aguardar mais tempo para capturar o nome da escola que aparece
-#                                                 print("⏳ ADICIONAR OS - Aguardando nome da escola aparecer completamente...")
-#                                                 await page.wait_for_timeout(4000)
-#                                                 
-#                                                 # Screenshot adicional para confirmar nome da escola
-#                                                 await page.screenshot(path=f"{screenshots_dir}/direct_08b_school_name_visible.png")
-#                                                 screenshots.append("direct_08b_school_name_visible.png")
-#                                                 
-#                                                 # Verificar novamente se o nome da escola apareceu após clique em área neutra
-#                                                 # final_school_check = await page.evaluate(f"""
-#                                                     () => {{
-#                                                         const inepValue = '{inep_example}';
-#                                                         
-#                                                         // Verificar todos os campos de input novamente
-#                                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                                         for (let input of allInputs) {{
-#                                                             if (input.value && input.value !== inepValue && input.value.length > 5) {{
-#                                                                 return {{
-#                                                                     found: true,
-#                                                                     schoolName: input.value.trim(),
-#                                                                     method: 'after_neutral_click'
-#                                                                 }};
-#                                                             }}
-#                                                         }}
-#                                                         
-#                                                         // Verificar elementos visíveis na página
-#                                                         const allElements = document.querySelectorAll('*');
-#                                                         for (let element of allElements) {{
-#                                                             const text = element.textContent?.trim();
-#                                                             const rect = element.getBoundingClientRect();
-#                                                             
-#                                                             if (rect.width > 0 && rect.height > 0 && text && text.length > 10) {{
-#                                                                 const lowerText = text.toLowerCase();
-#                                                                 const schoolWords = ['escola', 'colégio', 'instituto', 'centro', 'educacional', 'ensino'];
-#                                                                 
-#                                                                 for (let word of schoolWords) {{
-#                                                                     if (lowerText.includes(word) && !lowerText.includes('digite') && !lowerText.includes('selecione')) {{
-#                                                                         return {{
-#                                                                             found: true,
-#                                                                             schoolName: text.trim(),
-#                                                                             method: 'text_element_scan'
-#                                                                         }};
-#                                                                     }}
-#                                                                 }}
-#                                                             }}
-#                                                         }}
-#                                                         
-#                                                         return {{ found: false }};
-#                                                     }}
-#                                                 """)
-#                                                 
-#                                                 if final_school_check['found']:
-#                                                     print(f"✅ ADICIONAR OS - Nome da escola detectado após clique neutro: {final_school_check['schoolName']}")
-#                                                     print(f"📍 ADICIONAR OS - Método de detecção: {final_school_check['method']}")
-#                                                 else:
-#                                                     print("⚠️ ADICIONAR OS - Nome da escola ainda não detectado após clique neutro")
-#                                                 print("📸 Screenshot: direct_08b_school_name_visible.png - Nome da escola visível")
-#                                                 
-#                                                 break
-#                                             else:
-#                                                 print(f"⚠️ ADICIONAR OS - Clique na sugestão {i+1} não ativou o botão 'Incluir'")
-#                                         else:
-#                                             print(f"❌ ADICIONAR OS - Falha ao clicar na sugestão {i+1}")
-#                                             
-#                                     except Exception as e:
-#                                         print(f"❌ ADICIONAR OS - Erro ao clicar na sugestão {i+1}: {e}")
-#                                         continue
-#                                 
-#                                 if not suggestion_selected['success']:
-#                                     print("❌ ADICIONAR OS - Nenhuma sugestão funcionou para ativar o botão 'Incluir'")
-#                                     print("💡 ADICIONAR OS - Pode ser necessário ajustar a estratégia de seleção")
-#                                 
-#                                 # Verificar estado dos botões (especialmente "Incluir" e "Fechar")
-#                                 button_status = await page.evaluate("""
-#                                     () => {
-#                                         const buttons = [];
-#                                         const allButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"], .btn');
-#                                         
-#                                         allButtons.forEach(btn => {
-#                                             const text = (btn.textContent || btn.value || '').trim();
-#                                             const rect = btn.getBoundingClientRect();
-#                                             
-#                                             if (rect.width > 0 && rect.height > 0 && text) {
-#                                                 buttons.push({
-#                                                     text: text,
-#                                                     type: btn.type || 'button',
-#                                                     classes: btn.className,
-#                                                     id: btn.id,
-#                                                     disabled: btn.disabled,
-#                                                     visible: true
-#                                                 });
-#                                             }
-#                                         });
-#                                         
-#                                         return { buttons: buttons };
-#                                     }
-#                                 """)
-#                                 
-#                                 print("🔍 ADICIONAR OS - Estado dos botões após seleção:")
-#                                 print(f"   - Total de botões encontrados: {len(button_status['buttons'])}")
-#                                 
-#                                 incluir_button = None
-#                                 fechar_button = None
-#                                 
-#                                 for button in button_status['buttons']:
-#                                     status = "DESABILITADO" if button['disabled'] else "HABILITADO"
-#                                     print(f"     * \"{button['text']}\" ({button['type']}) - {status}")
-#                                     
-#                                     # Identificar botões específicos
-#                                     if 'incluir' in button['text'].lower():
-#                                         incluir_button = button
-#                                     elif 'fechar' in button['text'].lower():
-#                                         fechar_button = button
-#                                 
-#                                 # Verificar se o botão "Incluir" foi ativado
-#                                 if incluir_button:
-#                                     if not incluir_button['disabled']:
-#                                         print("✅ ADICIONAR OS - Botão 'Incluir' está ATIVO!")
-#                                         print("🎯 ADICIONAR OS - Objetivo alcançado: botão ativado, mas NÃO clicando para não incluir ainda")
-#                                     else:
-#                                         print("⚠️ ADICIONAR OS - Botão 'Incluir' ainda está DESABILITADO")
-#                                         print("💡 ADICIONAR OS - Pode precisar selecionar novamente a sugestão do INEP")
-#                                 else:
-#                                     print("❌ ADICIONAR OS - Botão 'Incluir' não encontrado")
-#                                 
-#                                 if fechar_button:
-#                                     print(f"ℹ️ ADICIONAR OS - Botão 'Fechar' disponível: {fechar_button['text']}")
-#                                 
-#                                 # Screenshot final mostrando o estado do formulário
-#                                 await page.screenshot(path=f"{screenshots_dir}/direct_09_ready_to_include.png")
-#                                 screenshots.append("direct_09_ready_to_include.png")
-#                                 print("📸 Screenshot: direct_09_ready_to_include.png")
-#                                 
-#                                 # Mostrar resumo final
-#                                 print("📋 ADICIONAR OS - RESUMO FINAL:")
-#                                 # print(f"   - INEP preenchido: {inep_example}")
-#                                 print(f"   - Sugestão selecionada: {'Sim' if suggestion_selected.get('success') else 'Não'}")
-#                                 print(f"   - Botão 'Incluir' ativo: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
-#                                 print(f"   - Formulário pronto: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
-#                                 print("🚫 ADICIONAR OS - NÃO clicando em 'Incluir' conforme solicitado")
-#                                 
-#                             else:
-#                                 print("❌ ADICIONAR OS - Falha ao preencher campo INEP")
-#                                 
-#                         except Exception as e:
-#                             print(f"❌ ADICIONAR OS - Erro ao preencher campo: {e}")
-#                     
-#                     break
-#                     
-#             except Exception as e:
-#                 print(f"❌ ADICIONAR OS - Erro com {selector}: {e}")
-#                 continue
-#         
-#         # Segunda tentativa: força bruta em elementos que contêm palavras-chave
-#         if not adicionar_clicked:
-#             print("🔍 ADICIONAR OS - Tentativa 2: Força bruta em elementos identificados")
-#             
-#             # Combinar todos os elementos relevantes
-#             all_relevant_elements = adicionar_elements + os_elements
-#             
-#             for el in all_relevant_elements:
-#                 try:
-#                     print(f"🎯 ADICIONAR OS - Tentando clicar: {el['tagName']} - \"{el['text']}\"")
-#                     
-#                     # Tentar clicar usando JavaScript com busca mais robusta
-#                     # clicked = await page.evaluate(f"""
-#                         () => {{
-#                             const text = '{el['text']}';
-#                             const tagName = '{el['tagName'].lower()}';
-#                             
-#                             // Buscar por texto exato
-#                             const elements = document.querySelectorAll(tagName);
-#                             for (let elem of elements) {{
-#                                 if (elem.textContent?.trim() === text) {{
-#                                     elem.click();
-#                                     return true;
-#                                 }}
-#                             }}
-#                             
-#                             // Buscar por texto parcial
-#                             for (let elem of elements) {{
-#                                 if (elem.textContent?.includes(text)) {{
-#                                     elem.click();
-#                                     return true;
-#                                 }}
-#                             }}
-#                             
-#                             return false;
-#                         }}
-#                     """)
-#                     
-#                     if clicked:
-#                         await page.wait_for_timeout(3000)
-#                         
-#                         await page.screenshot(path=f"{screenshots_dir}/direct_05_adicionar_clicked.png")
-#                         screenshots.append("direct_05_adicionar_clicked.png")
-#                         print("📸 Screenshot: direct_05_adicionar_clicked.png")
-#                         
-#                         # Aguardar modal/página carregar
-#                         await page.wait_for_timeout(5000)
-#                         
-#                         # Screenshot final
-#                         await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
-#                         screenshots.append("direct_06_final.png")
-#                         print("📸 Screenshot: direct_06_final.png")
-#                         
-#                         # Verificar se realmente funcionou
-#                         modal_check = await page.evaluate("""
-#                             () => {
-#                                 const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
-#                                 const inputs = document.querySelectorAll('input[type="text"], textarea, select');
-#                                 return { modals: modals.length, inputs: inputs.length };
-#                             }
-#                         """)
-#                         
-#                         print(f"📍 ADICIONAR OS - Verificação JS: {modal_check}")
-#                         
-#                         if modal_check['modals'] > 0 or modal_check['inputs'] > 5:
-#                             adicionar_clicked = True
-#                             print("✅ ADICIONAR OS - Botão clicado com sucesso via JavaScript!")
-#                         else:
-#                             print("⚠️ ADICIONAR OS - Clique JS executado mas sem mudança detectada")
-#                         
-#                         break
-#                     else:
-#                         print(f"❌ ADICIONAR OS - JavaScript click falhou para: \"{el['text']}\"")
-#                         
-#                 except Exception as e:
-#                     print(f"❌ ADICIONAR OS - Erro com força bruta: {e}")
-#                     continue
-#         
-#         # Terceira tentativa: buscar qualquer elemento clicável que contenha palavras-chave
-#         if not adicionar_clicked:
-#             print("🔍 ADICIONAR OS - Tentativa 3: Busca universal por qualquer elemento clicável")
-#             try:
-#                 clicked = await page.evaluate("""
-#                     () => {
-#                         const keywords = ['adicionar', 'nova', 'novo', 'add', 'create', 'criar', '+'];
-#                         const clickableElements = document.querySelectorAll('button, a, div[onclick], span[onclick], *[role="button"]');
-#                         
-#                         for (let elem of clickableElements) {
-#                             const text = elem.textContent?.toLowerCase() || '';
-#                             const hasKeyword = keywords.some(keyword => text.includes(keyword));
-#                             
-#                             if (hasKeyword && text.includes('os')) {
-#                                 elem.click();
-#                                 return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
-#                             }
-#                         }
-#                         
-#                         // Se não encontrou com 'os', tentar só com keywords
-#                         for (let elem of clickableElements) {
-#                             const text = elem.textContent?.toLowerCase() || '';
-#                             const hasKeyword = keywords.some(keyword => text.includes(keyword));
-#                             
-#                             if (hasKeyword) {
-#                                 elem.click();
-#                                 return { success: true, text: elem.textContent?.trim(), tagName: elem.tagName };
-#                             }
-#                         }
-#                         
-#                         return { success: false };
-#                     }
-#                 """)
-#                 
-#                 if clicked and clicked.get('success'):
-#                     print(f"✅ ADICIONAR OS - Encontrado e clicado: {clicked['tagName']} - \"{clicked['text']}\"")
-#                     
-#                     await page.wait_for_timeout(3000)
-#                     
-#                     await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
-#                     screenshots.append("direct_05_after_wait.png")
-#                     print("📸 Screenshot: direct_05_after_wait.png")
-#                     
-#                     # Aguardar modal/página carregar (pode demorar 10-15 segundos)
-#                     print("⏳ AGUARDO - Aguardando modal carregar (até 15 segundos)...")
-#                     await page.wait_for_timeout(15000)
-#                     
-#                     # Screenshot final
-#                     await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
-#                     screenshots.append("direct_06_final.png")
-#                     print("📸 Screenshot: direct_06_final.png")
-#                     
-#                     # Verificar se realmente funcionou
-#                     final_check = await page.evaluate("""
-#                         () => {
-#                             const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
-#                             const inputs = document.querySelectorAll('input[type="text"], textarea, select');
-#                             return { modals: modals.length, inputs: inputs.length };
-#                         }
-#                     """)
-#                     
-#                     print(f"📍 ADICIONAR OS - Verificação final: {final_check}")
-#                     
-#                     if final_check['modals'] > 0 or final_check['inputs'] > 5:
-#                         adicionar_clicked = True
-#                         print("✅ ADICIONAR OS - Busca universal bem-sucedida!")
-#                     else:
-#                         print("⚠️ ADICIONAR OS - Busca universal executada mas sem mudança detectada")
-#                     
-#             except Exception as e:
-#                 print(f"❌ ADICIONAR OS - Erro na busca universal: {e}")
-#         
-#         if not adicionar_clicked:
-#             print("❌ ADICIONAR OS - Nenhum botão encontrado após todas as tentativas")
-#             print("🔍 ADICIONAR OS - Elementos disponíveis para debug:")
-#             for el in adicionar_elements:
-#                 print(f"   - {el['tagName']}: \"{el['text']}\" - Classes: {el['classes']}")
-#         
-#         result = {
-#             "success": True,
-#             "screenshots": screenshots,
-#             "adicionar_clicked": adicionar_clicked,
-#             "total_elements": len(all_elements),
-#             "adicionar_elements": len(adicionar_elements)
-#         }
-#         
-#         return result
-#         
-#     except Exception as e:
-#         print(f"❌ ERRO: {e}")
-#         return {"error": str(e)}
-#     
-#     finally:
-#         await browser.close()
-#         await playwright.stop()
-# 
-# if __name__ == "__main__":
-#     result = asyncio.run(direct_os_access())
-#     print(json.dumps(result, indent=2))
-# '''
-#                 
-#                 # Executar código Python
-#                 result = subprocess.run([
-#                     'python3', '-c', direct_code
-#                 ], capture_output=True, text=True, timeout=120)
-#                 
-#                 if result.returncode == 0:
-#                     try:
-#                         # Separar prints do JSON - o JSON sempre vem na última linha
-#                         output_lines = result.stdout.strip().split('\n')
-#                         
-#                         # Log dos prints para debug
-#                         for line in output_lines:
-#                             logger.info(f"Python output: {line}")
-#                         
-#                         # Procurar pela linha JSON (começa com { e termina com })
-#                         json_line = None
-#                         for line in reversed(output_lines):
-#                             line = line.strip()
-#                             if line.startswith('{') and line.endswith('}'):
-#                                 json_line = line
-#                                 break
-#                         
-#                         if json_line:
-#                             output = json.loads(json_line)
-#                             return output
-#                         else:
-#                             logger.error("Nenhuma linha JSON encontrada no stdout")
-#                             return {"error": "Nenhuma linha JSON encontrada", "stdout": result.stdout}
-#                             
-#                     except json.JSONDecodeError as e:
-#                         logger.error(f"Erro JSON decode: {e}")
-#                         logger.error(f"Stdout completo: {result.stdout}")
-#                         logger.error(f"Stderr: {result.stderr}")
-#                         return {"error": f"Erro ao decodificar JSON: {e}", "stdout": result.stdout, "stderr": result.stderr}
-#                 else:
-#                     logger.error(f"Subprocess falhou com código {result.returncode}")
-#                     logger.error(f"Stderr: {result.stderr}")
-#                     return {"error": result.stderr, "returncode": result.returncode}
-#                     
-#             except Exception as e:
-#                 return {"error": str(e)}
-#         
-#         # Executar em thread separada
-#         import threading
-#         result = {"status": "running"}
-#         
-#         def run_test():
-#             nonlocal result
-#             result = run_direct_access()
-#         
-#         thread = threading.Thread(target=run_test)
-#         thread.start()
-#         thread.join(timeout=120)
-#         
-#         if thread.is_alive():
-#             return jsonify({
-#                 'success': False,
-#                 'message': 'Timeout na execução do teste'
-#             })
-#         
-#         return jsonify({
-#             'success': True,
-#             'result': result
-#         })
-#         
-#     except Exception as e:
-#         logger.error(f"Erro no acesso direto OS: {e}")
-#         return jsonify({
-#             'success': False,
-#             'message': f'Erro no acesso direto OS: {e}'
-#         }), 500
-#     # Função removida temporariamente
-
+if __name__ == "__main__":
+    result = asyncio.run(direct_os_access())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', direct_code
+                ], capture_output=True, text=True, timeout=120)
+                
+                if result.returncode == 0:
+                    try:
+                        # Separar prints do JSON - o JSON sempre vem na última linha
+                        output_lines = result.stdout.strip().split('\n')
+                        
+                        # Log dos prints para debug
+                        for line in output_lines:
+                            logger.info(f"Python output: {line}")
+                        
+                        # Procurar pela linha JSON (começa com { e termina com })
+                        json_line = None
+                        for line in reversed(output_lines):
+                            line = line.strip()
+                            if line.startswith('{') and line.endswith('}'):
+                                json_line = line
+                                break
+                        
+                        if json_line:
+                            output = json.loads(json_line)
+                            return output
+                        else:
+                            logger.error("Nenhuma linha JSON encontrada no stdout")
+                            return {"error": "Nenhuma linha JSON encontrada", "stdout": result.stdout}
+                            
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Erro JSON decode: {e}")
+                        logger.error(f"Stdout completo: {result.stdout}")
+                        logger.error(f"Stderr: {result.stderr}")
+                        return {"error": f"Erro ao decodificar JSON: {e}", "stdout": result.stdout, "stderr": result.stderr}
+                else:
+                    logger.error(f"Subprocess falhou com código {result.returncode}")
+                    logger.error(f"Stderr: {result.stderr}")
+                    return {"error": result.stderr, "returncode": result.returncode}
+                    
+            except Exception as e:
+                return {"error": str(e)}
+        
+        # Executar em thread separada
+        import threading
+        result = {"status": "running"}
+        
+        def run_test():
+            nonlocal result
+            result = run_direct_access()
+        
+        thread = threading.Thread(target=run_test)
+        thread.start()
+        thread.join(timeout=120)
+        
+        if thread.is_alive():
+            return jsonify({
+                'success': False,
+                'message': 'Timeout na execução do teste'
+            })
+        
+        return jsonify({
+            'success': True,
+            'result': result
+        })
+        
     except Exception as e:
         logger.error(f"Erro no acesso direto OS: {e}")
         return jsonify({
