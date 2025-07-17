@@ -9473,7 +9473,7 @@ async def direct_os_access():
 #                                 value_check = await page.evaluate(f"""
 #                                     () => {{
 #                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                         const targetInput = allInputs[{filled.get('index', 0)}];
+#                                         const targetInput = allInputs[{index}];
 #                                         
 #                                         if (targetInput) {{
 #                                             return {{
@@ -9498,7 +9498,7 @@ async def direct_os_access():
 #                                     refill_result = await page.evaluate(f"""
 #                                         () => {{
 #                                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                             const targetInput = allInputs[{filled.get('index', 0)}];
+#                                             const targetInput = allInputs[{index}];
 #                                             
 #                                             if (targetInput) {{
 #                                                 // Forçar preenchimento novamente
@@ -9632,7 +9632,7 @@ async def direct_os_access():
 #                                 final_check = await page.evaluate(f"""
 #                                     () => {{
 #                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
-#                                         const targetInput = allInputs[{filled.get('index', 0)}];
+#                                         const targetInput = allInputs[{index}];
 #                                         
 #                                         if (targetInput) {{
 #                                             return {{
