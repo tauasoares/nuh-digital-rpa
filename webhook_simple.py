@@ -9300,149 +9300,214 @@ async def direct_os_access():
                     # Procurar por campo de entrada no modal
                     modal_filled = False
                     
-                    # Método 1: Simular digitação caractere por caractere
-                    try:
-                        print("🔍 MODAL - Tentando encontrar campo INEP...")
-                        await page.wait_for_selector('input[placeholder="Digite o código INEP da escola"]', timeout=5000)
-                        
-                        # Limpar campo e focar
-                        await page.focus('input[placeholder="Digite o código INEP da escola"]')
-                        await page.fill('input[placeholder="Digite o código INEP da escola"]', '')
-                        
-                        # Simular digitação do INEP caractere por caractere
-                        print(f"⌨️ MODAL - Digitando INEP: {inep_example}")
-                        await page.type('input[placeholder="Digite o código INEP da escola"]', inep_example, delay=100)
-                        
-                        # Aguardar um pouco para processar
-                        await page.wait_for_timeout(1000)
-                        
-                        # Verificar se o valor foi inserido
-                        current_value = await page.evaluate("""
-                            () => {
-                                const input = document.querySelector('input[placeholder="Digite o código INEP da escola"]');
-                                return input ? input.value : '';
-                            }
-                        """)
-                        
-                        if current_value == inep_example:
-                            modal_filled = True
-                            print(f"✅ MODAL - Campo INEP preenchido com sucesso: {current_value}")
-                        else:
-                            print(f"⚠️ MODAL - Valor no campo: '{current_value}' (esperado: '{inep_example}')")
-                            
-                    except Exception as e:
-                        print(f"⚠️ MODAL - Erro no método 1: {e}")
+                    # Primeiro, vamos mapear completamente a estrutura do AutocompleteDropdown
+                    print("🔍 MODAL - Mapeando estrutura do AutocompleteDropdown...")
                     
-                    # Método 2: Forçar com JavaScript se método 1 falhou
-                    if not modal_filled:
-                        try:
-                            print("🔧 MODAL - Tentando método JavaScript direto...")
+                    autocomplete_analysis = await page.evaluate("""
+                        () => {
+                            // Procurar pelo AutocompleteDropdown
+                            const autocompleteDiv = document.querySelector('.bubble-element.AutocompleteDropdown');
+                            if (!autocompleteDiv) {
+                                return { found: false, error: 'AutocompleteDropdown não encontrado' };
+                            }
                             
-                            filled_js = await page.evaluate(f"""
+                            // Analisar a estrutura interna
+                            const typeaheadSpan = autocompleteDiv.querySelector('.twitter-typeahead');
+                            if (!typeaheadSpan) {
+                                return { found: false, error: 'twitter-typeahead não encontrado' };
+                            }
+                            
+                            // Encontrar todos os inputs dentro
+                            const inputs = typeaheadSpan.querySelectorAll('input');
+                            const inputsData = [];
+                            
+                            inputs.forEach((input, index) => {
+                                const rect = input.getBoundingClientRect();
+                                inputsData.push({
+                                    index: index,
+                                    placeholder: input.placeholder,
+                                    className: input.className,
+                                    type: input.type,
+                                    readonly: input.readOnly,
+                                    value: input.value,
+                                    visible: rect.width > 0 && rect.height > 0,
+                                    rect: {
+                                        width: rect.width,
+                                        height: rect.height,
+                                        top: rect.top,
+                                        left: rect.left
+                                    }
+                                });
+                            });
+                            
+                            return {
+                                found: true,
+                                autocompleteDiv: {
+                                    className: autocompleteDiv.className,
+                                    style: autocompleteDiv.style.cssText
+                                },
+                                typeaheadSpan: {
+                                    className: typeaheadSpan.className,
+                                    style: typeaheadSpan.style.cssText
+                                },
+                                inputs: inputsData
+                            };
+                        }
+                    """)
+                    
+                    print(f"📋 MODAL - Análise do AutocompleteDropdown:")
+                    print(f"   - Encontrado: {autocomplete_analysis.get('found', False)}")
+                    if autocomplete_analysis.get('found'):
+                        print(f"   - Inputs encontrados: {len(autocomplete_analysis.get('inputs', []))}")
+                        for i, inp in enumerate(autocomplete_analysis.get('inputs', [])):
+                            print(f"     Input {i}: {inp}")
+                    else:
+                        print(f"   - Erro: {autocomplete_analysis.get('error', 'Desconhecido')}")
+                    
+                    # Método 1: Usar seletor específico para tt-input (input editável)
+                    if autocomplete_analysis.get('found'):
+                        try:
+                            print("🎯 MODAL - Tentando preencher input tt-input...")
+                            
+                            # Procurar especificamente pelo input editável (não readonly)
+                            filled_typeahead = await page.evaluate(f"""
                                 () => {{
-                                    const input = document.querySelector('input[placeholder="Digite o código INEP da escola"]');
-                                    if (input) {{
-                                        // Limpar campo
-                                        input.value = '';
-                                        input.focus();
+                                    const autocompleteDiv = document.querySelector('.bubble-element.AutocompleteDropdown');
+                                    const typeaheadSpan = autocompleteDiv.querySelector('.twitter-typeahead');
+                                    const inputs = typeaheadSpan.querySelectorAll('input');
+                                    
+                                    // Encontrar o input editável (não readonly)
+                                    let editableInput = null;
+                                    for (let input of inputs) {{
+                                        if (!input.readOnly && input.placeholder) {{
+                                            editableInput = input;
+                                            break;
+                                        }}
+                                    }}
+                                    
+                                    if (editableInput) {{
+                                        // Focar no input
+                                        editableInput.focus();
                                         
-                                        // Definir valor
-                                        input.value = '{inep_example}';
+                                        // Limpar valor existente
+                                        editableInput.value = '';
                                         
-                                        // Disparar eventos em sequência
-                                        input.dispatchEvent(new Event('focus', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
-                                        input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                        // Definir novo valor
+                                        editableInput.value = '{inep_example}';
                                         
-                                        // Verificar se o valor foi mantido
+                                        // Disparar eventos para trigger do autocomplete
+                                        editableInput.dispatchEvent(new Event('focus', {{ bubbles: true }}));
+                                        editableInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                        editableInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                        editableInput.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                        
+                                        // Aguardar um pouco para processar
+                                        setTimeout(() => {{
+                                            editableInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                                        }}, 100);
+                                        
                                         return {{
                                             success: true,
-                                            value: input.value,
-                                            placeholder: input.placeholder
+                                            value: editableInput.value,
+                                            placeholder: editableInput.placeholder,
+                                            className: editableInput.className
                                         }};
                                     }}
+                                    
+                                    return {{ success: false, error: 'Input editável não encontrado' }};
+                                }}
+                            """)
+                            
+                            if filled_typeahead.get('success') and filled_typeahead.get('value') == inep_example:
+                                modal_filled = True
+                                print(f"✅ MODAL - Campo INEP preenchido via Twitter Typeahead: {filled_typeahead.get('value')}")
+                            else:
+                                print(f"⚠️ MODAL - Twitter Typeahead falhou: {filled_typeahead}")
+                                
+                        except Exception as e:
+                            print(f"❌ MODAL - Erro no método Twitter Typeahead: {e}")
+                    
+                    # Método 2: Usar Playwright para simular digitação no input correto
+                    if not modal_filled:
+                        try:
+                            print("⌨️ MODAL - Tentando digitação com Playwright...")
+                            
+                            # Usar seletor mais específico
+                            await page.wait_for_selector('.twitter-typeahead input.tt-input', timeout=5000)
+                            
+                            # Focar no input correto
+                            await page.focus('.twitter-typeahead input.tt-input')
+                            
+                            # Limpar campo
+                            await page.fill('.twitter-typeahead input.tt-input', '')
+                            
+                            # Simular digitação
+                            await page.type('.twitter-typeahead input.tt-input', inep_example, delay=150)
+                            
+                            # Aguardar processamento
+                            await page.wait_for_timeout(1000)
+                            
+                            # Verificar se foi preenchido
+                            current_value = await page.evaluate("""
+                                () => {
+                                    const input = document.querySelector('.twitter-typeahead input.tt-input');
+                                    return input ? input.value : '';
+                                }
+                            """)
+                            
+                            if current_value == inep_example:
+                                modal_filled = True
+                                print(f"✅ MODAL - Campo preenchido via Playwright: {current_value}")
+                            else:
+                                print(f"⚠️ MODAL - Valor após digitação: '{current_value}' (esperado: '{inep_example}')")
+                                
+                        except Exception as e:
+                            print(f"❌ MODAL - Erro na digitação com Playwright: {e}")
+                    
+                    # Método 3: Fallback com seletor genérico
+                    if not modal_filled:
+                        try:
+                            print("🔄 MODAL - Tentando método fallback...")
+                            
+                            # Buscar qualquer input não readonly com placeholder de INEP
+                            fallback_filled = await page.evaluate(f"""
+                                () => {{
+                                    const inputs = document.querySelectorAll('input[type="text"]:not([readonly])');
+                                    
+                                    for (let input of inputs) {{
+                                        if (input.placeholder && input.placeholder.toLowerCase().includes('inep')) {{
+                                            input.focus();
+                                            input.value = '{inep_example}';
+                                            
+                                            // Disparar eventos
+                                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                            input.dispatchEvent(new Event('keyup', {{ bubbles: true }}));
+                                            
+                                            return {{
+                                                success: true,
+                                                value: input.value,
+                                                placeholder: input.placeholder
+                                            }};
+                                        }}
+                                    }}
+                                    
                                     return {{ success: false }};
                                 }}
                             """)
                             
-                            if filled_js['success'] and filled_js['value'] == inep_example:
+                            if fallback_filled.get('success'):
                                 modal_filled = True
-                                print(f"✅ MODAL - Campo INEP preenchido via JavaScript: {filled_js['value']}")
+                                print(f"✅ MODAL - Campo preenchido via fallback: {fallback_filled.get('value')}")
                             else:
-                                print(f"⚠️ MODAL - JavaScript falhou: {filled_js}")
+                                print("❌ MODAL - Fallback também falhou")
                                 
                         except Exception as e:
-                            print(f"❌ MODAL - Erro no método JavaScript: {e}")
-                    
-                    # Método 3: Tentar com seletor alternativo
-                    if not modal_filled:
-                        try:
-                            print("🔄 MODAL - Tentando seletor alternativo...")
-                            
-                            # Buscar todos os inputs visíveis
-                            inputs_found = await page.evaluate("""
-                                () => {
-                                    const inputs = document.querySelectorAll('input');
-                                    const visibleInputs = [];
-                                    
-                                    inputs.forEach((input, index) => {
-                                        const rect = input.getBoundingClientRect();
-                                        if (rect.width > 0 && rect.height > 0) {
-                                            visibleInputs.push({
-                                                index: index,
-                                                placeholder: input.placeholder,
-                                                type: input.type,
-                                                value: input.value,
-                                                className: input.className
-                                            });
-                                        }
-                                    });
-                                    
-                                    return visibleInputs;
-                                }
-                            """)
-                            
-                            print(f"🔍 MODAL - Inputs encontrados: {len(inputs_found)}")
-                            for inp in inputs_found:
-                                print(f"   - {inp}")
-                            
-                            # Tentar preencher o primeiro input que parece ser o INEP
-                            for inp in inputs_found:
-                                if inp['placeholder'] and 'inep' in inp['placeholder'].lower():
-                                    # Tentar preenchimento direto via JavaScript
-                                    filled_alt = await page.evaluate(f"""
-                                        () => {{
-                                            const inputs = document.querySelectorAll('input');
-                                            const targetInput = inputs[{inp['index']}];
-                                            
-                                            if (targetInput) {{
-                                                targetInput.focus();
-                                                targetInput.value = '{inep_example}';
-                                                targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                                                targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                                                
-                                                return {{
-                                                    success: true,
-                                                    value: targetInput.value
-                                                }};
-                                            }}
-                                            return {{ success: false }};
-                                        }}
-                                    """)
-                                    
-                                    if filled_alt['success']:
-                                        modal_filled = True
-                                        print(f"✅ MODAL - Campo preenchido via método alternativo: {filled_alt['value']}")
-                                        break
-                                        
-                        except Exception as e:
-                            print(f"❌ MODAL - Erro no método alternativo: {e}")
+                            print(f"❌ MODAL - Erro no método fallback: {e}")
                     
                     # Status final do preenchimento
                     if not modal_filled:
-                        print("❌ MODAL - FALHA: Não foi possível preencher o campo INEP")
+                        print("❌ MODAL - FALHA: Não foi possível preencher o campo INEP com nenhum método")
                     
                     # Screenshot após preenchimento
                     await page.screenshot(path=f"{screenshots_dir}/direct_07_inep_filled.png")
