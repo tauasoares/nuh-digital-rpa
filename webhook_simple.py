@@ -9291,6 +9291,118 @@ async def direct_os_access():
                     screenshots.append("direct_06_final.png")
                     print("📸 Screenshot: direct_06_final.png")
                     
+                    # PASSO 7: Preencher campo INEP no modal
+                    print("📝 MODAL - Preenchendo campo INEP no modal...")
+                    
+                    # Aguardar o modal carregar completamente
+                    await page.wait_for_timeout(3000)
+                    
+                    # Procurar por campo de entrada no modal
+                    modal_filled = False
+                    try:
+                        # Procurar especificamente pelo campo INEP no modal
+                        await page.wait_for_selector('input[placeholder*="Digite o código INEP"]', timeout=5000)
+                        await page.fill('input[placeholder*="Digite o código INEP"]', inep_example)
+                        modal_filled = True
+                        print("✅ MODAL - Campo INEP preenchido com sucesso")
+                    except Exception as e:
+                        print(f"⚠️ MODAL - Erro ao preencher campo INEP: {e}")
+                        
+                        # Tentar método alternativo
+                        try:
+                            # Buscar por qualquer input visível no modal
+                            inputs = await page.query_selector_all('input[type="text"], input:not([type])')
+                            for input_field in inputs:
+                                try:
+                                    is_visible = await input_field.is_visible()
+                                    if is_visible:
+                                        await input_field.fill(inep_example)
+                                        modal_filled = True
+                                        print("✅ MODAL - Campo INEP preenchido (método alternativo)")
+                                        break
+                                except:
+                                    continue
+                        except Exception as e2:
+                            print(f"❌ MODAL - Falha ao preencher campo: {e2}")
+                    
+                    # Screenshot após preenchimento
+                    await page.screenshot(path=f"{screenshots_dir}/direct_07_inep_filled.png")
+                    screenshots.append("direct_07_inep_filled.png")
+                    print("📸 Screenshot: direct_07_inep_filled.png - Campo INEP preenchido")
+                    
+                    # PASSO 8: Clicar em área neutra para ativar o botão
+                    print("👆 MODAL - Clicando em área neutra para ativar botão...")
+                    
+                    # Aguardar um pouco antes de clicar
+                    await page.wait_for_timeout(2000)
+                    
+                    # Clicar em área neutra do modal (evitar botões)
+                    try:
+                        await page.click('body', position={'x': 400, 'y': 300})
+                        await page.wait_for_timeout(2000)
+                        print("✅ MODAL - Clique em área neutra realizado")
+                    except Exception as e:
+                        print(f"⚠️ MODAL - Erro ao clicar em área neutra: {e}")
+                    
+                    # PASSO 9: Verificar se botão "Incluir" foi ativado
+                    print("🔍 MODAL - Verificando se botão 'Incluir' foi ativado...")
+                    
+                    # Aguardar possível processamento
+                    await page.wait_for_timeout(3000)
+                    
+                    # Verificar estado do botão "Incluir"
+                    button_active = False
+                    try:
+                        button_check = await page.evaluate("""
+                            () => {
+                                const buttons = document.querySelectorAll('button');
+                                for (let btn of buttons) {
+                                    const text = btn.textContent?.toLowerCase();
+                                    if (text && text.includes('incluir')) {
+                                        const disabled = btn.disabled;
+                                        const style = window.getComputedStyle(btn);
+                                        const backgroundColor = style.backgroundColor;
+                                        const color = style.color;
+                                        
+                                        return {
+                                            found: true,
+                                            disabled: disabled,
+                                            text: btn.textContent,
+                                            backgroundColor: backgroundColor,
+                                            color: color,
+                                            classes: btn.className
+                                        };
+                                    }
+                                }
+                                return { found: false };
+                            }
+                        """)
+                        
+                        if button_check['found']:
+                            if not button_check['disabled']:
+                                button_active = True
+                                print(f"🎉 MODAL - Botão 'Incluir' ATIVADO! Cor: {button_check['backgroundColor']}")
+                            else:
+                                print(f"⚠️ MODAL - Botão 'Incluir' ainda está desativado")
+                        else:
+                            print("❌ MODAL - Botão 'Incluir' não encontrado")
+                            
+                    except Exception as e:
+                        print(f"❌ MODAL - Erro ao verificar botão: {e}")
+                    
+                    # Screenshot final mostrando o botão ativado
+                    await page.screenshot(path=f"{screenshots_dir}/direct_08_button_active.png")
+                    screenshots.append("direct_08_button_active.png")
+                    print("📸 Screenshot: direct_08_button_active.png - Botão 'Incluir' ativado")
+                    
+                    # Log final do resultado
+                    if modal_filled and button_active:
+                        print("🎉 MODAL - SUCESSO COMPLETO! Campo preenchido e botão ativado")
+                    elif modal_filled:
+                        print("⚠️ MODAL - Campo preenchido mas botão não ativado")
+                    else:
+                        print("❌ MODAL - Falha ao preencher campo")
+                    
                     # Verificar se realmente houve mudança na página
                     url_changed = url_before != url_after
                     modal_detected = modal_opened.get('modals', 0) > 0
