@@ -8706,6 +8706,13 @@ def test_direct_os_access():
         </div>
         
         <div class="controls">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <label style="color: #00ff00; font-weight: bold;">INEP:</label>
+                <input type="text" id="inepInput" placeholder="Digite o código INEP (ex: 33099553)" 
+                       style="padding: 8px 12px; background: #2a2a2a; border: 2px solid #00ff00; 
+                              border-radius: 5px; color: #00ff00; font-family: 'Courier New', monospace;
+                              width: 200px;" maxlength="8" />
+            </div>
             <button class="btn" id="startBtn" onclick="startDirectTest()">
                 ⚡ Executar Acesso Direto
             </button>
@@ -8872,12 +8879,27 @@ def test_direct_os_access():
         function startDirectTest() {
             if (testRunning) return;
             
+            // Capturar o valor do campo INEP
+            const inepValue = document.getElementById('inepInput').value.trim();
+            
+            // Validar se o INEP foi preenchido
+            if (!inepValue) {
+                addLog('❌ Erro: Campo INEP deve ser preenchido', 'error');
+                return;
+            }
+            
+            // Validar formato do INEP (8 dígitos)
+            if (!/^\d{8}$/.test(inepValue)) {
+                addLog('❌ Erro: INEP deve conter exatamente 8 dígitos', 'error');
+                return;
+            }
+            
             testRunning = true;
             document.getElementById('startBtn').disabled = true;
             updateStatus('running', 'Executando acesso direto...');
             clearAll();
             
-            addLog('🚀 Iniciando acesso direto à página OS...', 'info');
+            addLog(`🚀 Iniciando acesso direto à página OS com INEP: ${inepValue}`, 'info');
             
             // Monitorar logs em tempo real
             const logMonitor = setInterval(() => {
@@ -8888,7 +8910,10 @@ def test_direct_os_access():
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify({
+                    inep: inepValue
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -8958,10 +8983,23 @@ def test_direct_os_access():
 def execute_direct_os_access():
     """Executa acesso direto simplificado à página OS"""
     try:
+        # Capturar o valor do INEP da requisição
+        request_data = request.get_json() or {}
+        inep_value = request_data.get('inep', '33099553')  # Valor padrão caso não seja fornecido
+        
+        # Validar formato do INEP
+        if not inep_value or not isinstance(inep_value, str) or len(inep_value) != 8 or not inep_value.isdigit():
+            return jsonify({
+                'success': False,
+                'message': 'INEP deve conter exatamente 8 dígitos numéricos'
+            }), 400
+        
+        logger.info(f"Executando acesso direto com INEP: {inep_value}")
+        
         def run_direct_access():
             try:
                 # Código Python simplificado
-                direct_code = '''
+                direct_code = f'''
 import asyncio
 import json
 from playwright.async_api import async_playwright
@@ -9328,8 +9366,8 @@ async def direct_os_access():
                         try:
                             print("🔍 ADICIONAR OS - Tentando preencher campo INEP com código de exemplo...")
                             
-                            # Usar INEP de exemplo dos logs (33099553)
-                            inep_example = "33099553"
+                            # Usar INEP recebido da requisição
+                            inep_example = "{inep_value}"
                             
                             # Tentar preencher o campo escola com lógica melhorada
                             filled = await page.evaluate(f"""
@@ -9756,28 +9794,62 @@ async def direct_os_access():
                                             # Aguardar mais tempo para ver se houve mudança e verificar se nome da escola apareceu
                                             await page.wait_for_timeout(3000)
                                             
-                                            # Verificar se o nome da escola apareceu
-                                            school_name_check = await page.evaluate("""
-                                                () => {
-                                                    // Procurar por texto que possa ser nome de escola
-                                                    const allText = document.body.innerText;
-                                                    const schoolWords = ['escola', 'colégio', 'instituto', 'centro', 'educacional', 'ensino'];
+                                            # Verificar se o nome da escola apareceu após seleção
+                                            school_name_check = await page.evaluate(f"""
+                                                () => {{
+                                                    const inepValue = '{inep_example}';
                                                     
-                                                    for (let word of schoolWords) {
-                                                        if (allText.toLowerCase().includes(word)) {
-                                                            const lines = allText.split('\n');
-                                                            for (let line of lines) {
-                                                                if (line.toLowerCase().includes(word) && line.length > 10) {
-                                                                    return {
-                                                                        found: true,
-                                                                        schoolName: line.trim()
-                                                                    };
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    return { found: false };
-                                                }
+                                                    // Primeiro, verificar se algum campo foi preenchido automaticamente
+                                                    const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                                    for (let input of allInputs) {{
+                                                        if (input.value && input.value !== inepValue && input.value.length > 5) {{
+                                                            const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
+                                                            const labelText = label ? label.textContent.toLowerCase() : '';
+                                                            const placeholder = input.placeholder.toLowerCase();
+                                                            
+                                                            // Verificar se é campo de nome da escola
+                                                            if (labelText.includes('escola') || labelText.includes('nome') || placeholder.includes('escola')) {{
+                                                                return {{
+                                                                    found: true,
+                                                                    schoolName: input.value.trim(),
+                                                                    fieldType: 'input_field',
+                                                                    element: input.tagName,
+                                                                    label: labelText
+                                                                }};
+                                                            }}
+                                                        }}
+                                                    }}
+                                                    
+                                                    // Se não encontrou em campos, procurar em elementos que podem mostrar o nome
+                                                    const allElements = document.querySelectorAll('*');
+                                                    for (let element of allElements) {{
+                                                        const text = element.textContent?.trim();
+                                                        const rect = element.getBoundingClientRect();
+                                                        
+                                                        // Verificar se é texto visível que pode ser nome de escola
+                                                        if (rect.width > 0 && rect.height > 0 && text && text.length > 10) {{
+                                                            const lowerText = text.toLowerCase();
+                                                            const schoolWords = ['escola', 'colégio', 'instituto', 'centro educacional', 'ensino', 'educação'];
+                                                            
+                                                            for (let word of schoolWords) {{
+                                                                if (lowerText.includes(word) && !lowerText.includes('campo') && !lowerText.includes('digite')) {{
+                                                                    // Verificar se não é um label ou instrução
+                                                                    if (!lowerText.includes('selecione') && !lowerText.includes('escolha') && !lowerText.includes('buscar')) {{
+                                                                        return {{
+                                                                            found: true,
+                                                                            schoolName: text.trim(),
+                                                                            fieldType: 'display_element',
+                                                                            element: element.tagName,
+                                                                            classes: element.className
+                                                                        }};
+                                                                    }}
+                                                                }}
+                                                            }}
+                                                        }}
+                                                    }}
+                                                    
+                                                    return {{ found: false }};
+                                                }}
                                             """)
                                             
                                             if school_name_check['found']:
@@ -9821,6 +9893,11 @@ async def direct_os_access():
                                                 screenshots.append("direct_08_suggestion_selected.png")
                                                 print("📸 Screenshot: direct_08_suggestion_selected.png")
                                                 
+                                                # Clicar em área neutra para confirmar a seleção
+                                                print("👆 ADICIONAR OS - Clicando em área neutra para confirmar seleção...")
+                                                await page.click('body', position={'x': 100, 'y': 100})
+                                                await page.wait_for_timeout(1000)
+                                                
                                                 # Aguardar mais tempo para capturar o nome da escola que aparece
                                                 print("⏳ ADICIONAR OS - Aguardando nome da escola aparecer completamente...")
                                                 await page.wait_for_timeout(4000)
@@ -9828,6 +9905,55 @@ async def direct_os_access():
                                                 # Screenshot adicional para confirmar nome da escola
                                                 await page.screenshot(path=f"{screenshots_dir}/direct_08b_school_name_visible.png")
                                                 screenshots.append("direct_08b_school_name_visible.png")
+                                                
+                                                # Verificar novamente se o nome da escola apareceu após clique em área neutra
+                                                final_school_check = await page.evaluate(f"""
+                                                    () => {{
+                                                        const inepValue = '{inep_example}';
+                                                        
+                                                        // Verificar todos os campos de input novamente
+                                                        const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
+                                                        for (let input of allInputs) {{
+                                                            if (input.value && input.value !== inepValue && input.value.length > 5) {{
+                                                                return {{
+                                                                    found: true,
+                                                                    schoolName: input.value.trim(),
+                                                                    method: 'after_neutral_click'
+                                                                }};
+                                                            }}
+                                                        }}
+                                                        
+                                                        // Verificar elementos visíveis na página
+                                                        const allElements = document.querySelectorAll('*');
+                                                        for (let element of allElements) {{
+                                                            const text = element.textContent?.trim();
+                                                            const rect = element.getBoundingClientRect();
+                                                            
+                                                            if (rect.width > 0 && rect.height > 0 && text && text.length > 10) {{
+                                                                const lowerText = text.toLowerCase();
+                                                                const schoolWords = ['escola', 'colégio', 'instituto', 'centro', 'educacional', 'ensino'];
+                                                                
+                                                                for (let word of schoolWords) {{
+                                                                    if (lowerText.includes(word) && !lowerText.includes('digite') && !lowerText.includes('selecione')) {{
+                                                                        return {{
+                                                                            found: true,
+                                                                            schoolName: text.trim(),
+                                                                            method: 'text_element_scan'
+                                                                        }};
+                                                                    }}
+                                                                }}
+                                                            }}
+                                                        }}
+                                                        
+                                                        return {{ found: false }};
+                                                    }}
+                                                """)
+                                                
+                                                if final_school_check['found']:
+                                                    print(f"✅ ADICIONAR OS - Nome da escola detectado após clique neutro: {final_school_check['schoolName']}")
+                                                    print(f"📍 ADICIONAR OS - Método de detecção: {final_school_check['method']}")
+                                                else:
+                                                    print("⚠️ ADICIONAR OS - Nome da escola ainda não detectado após clique neutro")
                                                 print("📸 Screenshot: direct_08b_school_name_visible.png - Nome da escola visível")
                                                 
                                                 break
