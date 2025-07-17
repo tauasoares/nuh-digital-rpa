@@ -9387,7 +9387,7 @@ async def direct_os_access():
 #                             inep_example = "{inep_value}"
 #                             
 #                             # Tentar preencher o campo escola com lógica melhorada
-#                             filled = await page.evaluate(f"""
+#                             # filled = await page.evaluate(f"""
 #                                 () => {{
 #                                     const inepValue = '{inep_example}';
 #                                     const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
@@ -9470,7 +9470,7 @@ async def direct_os_access():
 #                                 await page.wait_for_timeout(1000)
 #                                 
 #                                 # Verificar se o campo ainda contém o valor
-#                                 value_check = await page.evaluate(f"""
+#                                 # value_check = await page.evaluate(f"""
 #                                     () => {{
 #                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
 #                                         const targetInput = allInputs[{index}];
@@ -9495,7 +9495,7 @@ async def direct_os_access():
 #                                 if value_check['isEmpty']:
 #                                     print("⚠️ ADICIONAR OS - Campo foi limpo, tentando preencher novamente...")
 #                                     
-#                                     refill_result = await page.evaluate(f"""
+#                                     # refill_result = await page.evaluate(f"""
 #                                         () => {{
 #                                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
 #                                             const targetInput = allInputs[{index}];
@@ -9629,7 +9629,7 @@ async def direct_os_access():
 #                                 await page.wait_for_timeout(3000)
 #                                 
 #                                 # Verificação final se o campo ainda contém o valor antes de procurar sugestões
-#                                 final_check = await page.evaluate(f"""
+#                                 # final_check = await page.evaluate(f"""
 #                                     () => {{
 #                                         const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea, input:not([type])');
 #                                         const targetInput = allInputs[{index}];
@@ -9653,7 +9653,7 @@ async def direct_os_access():
 #                                     return {"error": "Campo INEP foi limpo antes de procurar sugestões"}
 #                                 
 #                                 # Mapear sugestões INEP focando em elementos clicáveis que aparecem após preenchimento
-#                                 suggestions_found = await page.evaluate(f"""
+#                                 # suggestions_found = await page.evaluate(f"""
 #                                     () => {{
 #                                         const inepValue = '{inep_example}';
 #                                         const suggestions = [];
@@ -9772,7 +9772,7 @@ async def direct_os_access():
 #                                         print(f"🎯 ADICIONAR OS - Tentando clicar na sugestão {i+1}: {suggestion['tagName']} - \"{suggestion['text'][:30]}...\"")
 #                                         
 #                                         # Tentar clicar usando múltiplos métodos
-#                                         clicked = await page.evaluate(f"""
+#                                         # clicked = await page.evaluate(f"""
 #                                             () => {{
 #                                                 const allElements = document.querySelectorAll('*');
 #                                                 const targetElement = allElements[{suggestion['index']}];
@@ -9812,7 +9812,7 @@ async def direct_os_access():
 #                                             await page.wait_for_timeout(3000)
 #                                             
 #                                             # Verificar se o nome da escola apareceu após seleção
-#                                             school_name_check = await page.evaluate(f"""
+#                                             # school_name_check = await page.evaluate(f"""
 #                                                 () => {{
 #                                                     const inepValue = '{inep_example}';
 #                                                     
@@ -9924,7 +9924,7 @@ async def direct_os_access():
 #                                                 screenshots.append("direct_08b_school_name_visible.png")
 #                                                 
 #                                                 # Verificar novamente se o nome da escola apareceu após clique em área neutra
-#                                                 final_school_check = await page.evaluate(f"""
+#                                                 # final_school_check = await page.evaluate(f"""
 #                                                     () => {{
 #                                                         const inepValue = '{inep_example}';
 #                                                         
@@ -10050,7 +10050,7 @@ async def direct_os_access():
 #                                 
 #                                 # Mostrar resumo final
 #                                 print("📋 ADICIONAR OS - RESUMO FINAL:")
-#                                 print(f"   - INEP preenchido: {inep_example}")
+#                                 # print(f"   - INEP preenchido: {inep_example}")
 #                                 print(f"   - Sugestão selecionada: {'Sim' if suggestion_selected.get('success') else 'Não'}")
 #                                 print(f"   - Botão 'Incluir' ativo: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
 #                                 print(f"   - Formulário pronto: {'Sim' if incluir_button and not incluir_button['disabled'] else 'Não'}")
@@ -10080,7 +10080,7 @@ async def direct_os_access():
 #                     print(f"🎯 ADICIONAR OS - Tentando clicar: {el['tagName']} - \"{el['text']}\"")
 #                     
 #                     # Tentar clicar usando JavaScript com busca mais robusta
-#                     clicked = await page.evaluate(f"""
+#                     # clicked = await page.evaluate(f"""
 #                         () => {{
 #                             const text = '{el['text']}';
 #                             const tagName = '{el['tagName'].lower()}';
