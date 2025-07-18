@@ -9417,7 +9417,10 @@ async def direct_os_access(inep_value="{inep_value}"):
             except Exception as e:
                 print("❌ ADICIONAR OS - Erro com " + selector + ": " + str(e))
                 continue
-        
+        else:
+            # Se nenhum seletor funcionou, definir adicionar_clicked como False
+            print("⚠️ ADICIONAR OS - Nenhum seletor funcionou, mas continuando com análise")
+            
         # Resultado final da operação
         print("📋 RESUMO FINAL:")
         print("   ✅ Login realizado com sucesso")
@@ -9434,7 +9437,7 @@ async def direct_os_access(inep_value="{inep_value}"):
             print("   ⚠️ Botão 'Incluir' ativo: " + ('Sim' if button_active else 'Não'))
         
         # Preparar resultado final
-        result = {{
+        result = {
             "success": True,
             "screenshots": screenshots,
             "adicionar_clicked": adicionar_clicked,
@@ -9444,13 +9447,13 @@ async def direct_os_access(inep_value="{inep_value}"):
             "total_elements": len(all_elements),
             "adicionar_elements": len(adicionar_elements),
             "message": "Automação concluída com sucesso - Modal aberto e INEP preenchido"
-        }}
+        }
         
         return result
         
     except Exception as e:
         print("❌ ERRO: " + str(e))
-        return {{"error": str(e)}}
+        return {"error": str(e)}
     
     finally:
         await browser.close()
