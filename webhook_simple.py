@@ -8992,6 +8992,9 @@ def execute_direct_os_access():
         def run_direct_access():
             try:
                 # Código Python simplificado
+                # Preparar variáveis para substituir nas f-strings
+                screenshots_dir = "/tmp/screenshots"
+                
                 direct_code = f'''
 import asyncio
 import json
@@ -9002,7 +9005,7 @@ async def direct_os_access(inep_value="{inep_value}"):
     """Acesso direto simplificado à página OS"""
     
     # Configurar diretório de screenshots
-    screenshots_dir = "/tmp/screenshots"
+    screenshots_dir = "{screenshots_dir}"
     os.makedirs(screenshots_dir, exist_ok=True)
     
     # Limpar screenshots anteriores
@@ -9043,14 +9046,14 @@ async def direct_os_access(inep_value="{inep_value}"):
         await page.wait_for_timeout(5000)
         print("✅ LOGIN - Botão clicado, aguardando resposta do servidor")
         
-        await page.screenshot(path=f"{screenshots_dir}/direct_01_login.png")
+        await page.screenshot(path=screenshots_dir + "/direct_01_login.png")
         screenshots.append("direct_01_login.png")
         print("📸 Screenshot: direct_01_login.png")
         
         # PASSO 2: Selecionar perfil
         print("👤 PERFIL - Verificando se precisa selecionar perfil")
         fornecedor_count = await page.locator('//*[contains(text(), "Fornecedor")]').count()
-        print(f"👤 PERFIL - Elementos 'Fornecedor' encontrados: {fornecedor_count}")
+        print("👤 PERFIL - Elementos 'Fornecedor' encontrados: " + str(fornecedor_count))
         
         if fornecedor_count > 0:
             print("👤 PERFIL - Clicando em 'Fornecedor'")
@@ -9061,7 +9064,7 @@ async def direct_os_access(inep_value="{inep_value}"):
             print("ℹ️ PERFIL - Elemento 'Fornecedor' não encontrado ou já selecionado")
         
         print("📱 DASHBOARD - Redirecionando para dashboard do fornecedor")
-        await page.screenshot(path=f"{screenshots_dir}/direct_02_dashboard.png")
+        await page.screenshot(path=screenshots_dir + "/direct_02_dashboard.png")
         screenshots.append("direct_02_dashboard.png")
         print("📸 Screenshot: direct_02_dashboard.png gerado")
         
@@ -9073,7 +9076,7 @@ async def direct_os_access(inep_value="{inep_value}"):
         print("✅ ACESSO OS - Elemento clicado com sucesso")
         print("📱 PÁGINA OS - Navegando para página de controle de OS")
         
-        await page.screenshot(path=f"{screenshots_dir}/direct_03_os_page.png")
+        await page.screenshot(path=screenshots_dir + "/direct_03_os_page.png")
         screenshots.append("direct_03_os_page.png")
         print("📸 Screenshot: direct_03_os_page.png gerado")
         
@@ -9090,24 +9093,24 @@ async def direct_os_access(inep_value="{inep_value}"):
         await page.wait_for_timeout(25000)  # Aumentado para 25 segundos
         
         # Screenshot antes da busca por botão
-        await page.screenshot(path=f"{screenshots_dir}/direct_04_before_button_search.png")
+        await page.screenshot(path=screenshots_dir + "/direct_04_before_button_search.png")
         screenshots.append("direct_04_before_button_search.png")
         print("📸 Screenshot: direct_04_before_button_search.png")
         
         # Mapear todos os elementos visíveis para debug
         all_elements = await page.evaluate("""
-            () => {
+            () => {{
                 const elements = [];
                 const allElements = document.querySelectorAll('button, a, div, span');
                 
-                allElements.forEach((el, index) => {
+                allElements.forEach((el, index) => {{
                     const rect = el.getBoundingClientRect();
                     const text = el.textContent?.trim() || '';
                     const style = window.getComputedStyle(el);
                     
                     if (rect.width > 0 && rect.height > 0 && text.length > 0 && 
-                        style.display !== 'none' && style.visibility !== 'hidden') {
-                        elements.push({
+                        style.display !== 'none' && style.visibility !== 'hidden') {{
+                        elements.push({{
                             tagName: el.tagName,
                             text: text,
                             classes: el.className,
@@ -9115,15 +9118,15 @@ async def direct_os_access(inep_value="{inep_value}"):
                             index: index,
                             visible: true,
                             clickable: !el.disabled
-                        });
-                    }
-                });
+                        }});
+                    }}
+                }});
                 
                 return elements;
-            }
+            }}
         """)
         
-        print(f"🔍 ADICIONAR OS - Total de elementos visíveis: {len(all_elements)}")
+        print("🔍 ADICIONAR OS - Total de elementos visíveis: " + str(len(all_elements)))
         
         # Procurar elementos que contenham "Adicionar" ou "Nova"
         adicionar_elements = [el for el in all_elements if 
@@ -9140,27 +9143,27 @@ async def direct_os_access(inep_value="{inep_value}"):
                       'order' in el['text'].lower() or
                       'chamado' in el['text'].lower()]
         
-        print(f"🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': {len(adicionar_elements)}")
+        print("🔍 ADICIONAR OS - Elementos com 'Adicionar/Nova/Novo/Add/Create': " + str(len(adicionar_elements)))
         for el in adicionar_elements:
-            print(f"🔍 ADICIONAR OS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            print("🔍 ADICIONAR OS - Encontrado: " + el['tagName'] + " - '" + el['text'] + "' - Classes: " + el['classes'] + " - Clickable: " + str(el['clickable']))
             
-        print(f"🔍 OS ELEMENTS - Elementos com 'OS/Order/Chamado': {len(os_elements)}")
+        print("🔍 OS ELEMENTS - Elementos com 'OS/Order/Chamado': " + str(len(os_elements)))
         for el in os_elements:
-            print(f"🔍 OS ELEMENTS - Encontrado: {el['tagName']} - '{el['text']}' - Classes: {el['classes']} - Clickable: {el['clickable']}")
+            print("🔍 OS ELEMENTS - Encontrado: " + el['tagName'] + " - '" + el['text'] + "' - Classes: " + el['classes'] + " - Clickable: " + str(el['clickable']))
             
         # Salvar análise completa para debug
-        debug_data = {
+        debug_data = {{
             'total_elements': len(all_elements),
             'adicionar_elements': len(adicionar_elements),
             'os_elements': len(os_elements),
             'all_elements_sample': all_elements[:20],  # Primeiros 20 elementos
             'adicionar_elements_full': adicionar_elements,
             'os_elements_full': os_elements
-        }
+        }}
         
-        with open(f"{screenshots_dir}/debug_elements.json", "w") as f:
+        with open(screenshots_dir + "/debug_elements.json", "w") as f:
             json.dump(debug_data, f, indent=2)
-        print(f"📄 DEBUG - Análise completa salva em debug_elements.json")
+        print("📄 DEBUG - Análise completa salva em debug_elements.json")
         
         adicionar_clicked = False
         
@@ -9206,24 +9209,24 @@ async def direct_os_access(inep_value="{inep_value}"):
         for selector in adicionar_selectors:
             try:
                 elements = await page.locator(selector).count()
-                print(f"🔍 ADICIONAR OS - Testando: {selector} - {elements} elementos")
+                print("🔍 ADICIONAR OS - Testando: " + selector + " - " + str(elements) + " elementos")
                 
                 if elements > 0:
-                    print(f"📍 ADICIONAR OS - Clicando: {selector}")
+                    print("📍 ADICIONAR OS - Clicando: " + selector)
                     
                     # Aguardar elemento estar visível e clicável
                     await page.wait_for_selector(selector, timeout=5000)
                     
                     # Capturar URL antes do clique
                     url_before = page.url
-                    print(f"📍 ADICIONAR OS - URL antes do clique: {url_before}")
+                    print("📍 ADICIONAR OS - URL antes do clique: " + url_before)
                     
                     await page.locator(selector).click()
                     print("🎯 ADICIONAR OS - Clique executado! Aguardando resposta...")
                     await page.wait_for_timeout(1000)
                     
                     # Screenshot imediatamente após o clique
-                    await page.screenshot(path=f"{screenshots_dir}/direct_04_immediate_after_click.png")
+                    await page.screenshot(path=screenshots_dir + "/direct_04_immediate_after_click.png")
                     screenshots.append("direct_04_immediate_after_click.png")
                     print("📸 Screenshot: direct_04_immediate_after_click.png")
                     
@@ -9231,15 +9234,15 @@ async def direct_os_access(inep_value="{inep_value}"):
                     
                     # Capturar URL após o clique
                     url_after = page.url
-                    print(f"📍 ADICIONAR OS - URL após o clique: {url_after}")
+                    print("📍 ADICIONAR OS - URL após o clique: " + url_after)
                     
-                    await page.screenshot(path=f"{screenshots_dir}/direct_05_after_wait.png")
+                    await page.screenshot(path=screenshots_dir + "/direct_05_after_wait.png")
                     screenshots.append("direct_05_after_wait.png")
                     print("📸 Screenshot: direct_05_after_wait.png")
                     
                     # Verificar se modal ou nova página foi aberta
                     modal_opened = await page.evaluate("""
-                        () => {
+                        () => {{
                             // Verificar se há modal aberto
                             const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
                             
@@ -9247,7 +9250,7 @@ async def direct_os_access(inep_value="{inep_value}"):
                             const escolaInputs = [];
                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
                             
-                            allInputs.forEach(input => {
+                            allInputs.forEach(input => {{
                                 const label = input.closest('label') || input.previousElementSibling || input.nextElementSibling;
                                 const placeholder = input.placeholder || '';
                                 const labelText = label ? label.textContent : '';
@@ -9255,45 +9258,45 @@ async def direct_os_access(inep_value="{inep_value}"):
                                 if (labelText.toLowerCase().includes('escola') || 
                                     placeholder.toLowerCase().includes('escola') ||
                                     labelText.toLowerCase().includes('inep') ||
-                                    placeholder.toLowerCase().includes('inep')) {
-                                    escolaInputs.push({
+                                    placeholder.toLowerCase().includes('inep')) {{
+                                    escolaInputs.push({{
                                         placeholder: placeholder,
                                         label: labelText,
                                         id: input.id,
                                         classes: input.className
-                                    });
-                                }
-                            });
+                                    }});
+                                }}
+                            }});
                             
                             // Verificar elementos de formulário geral
                             const forms = document.querySelectorAll('form');
                             const inputs = document.querySelectorAll('input[type="text"], textarea, select');
                             
-                            return { 
+                            return {{ 
                                 type: modals.length > 0 ? 'modal' : 'form_elements',
                                 modals: modals.length,
                                 forms: forms.length, 
                                 inputs: inputs.length,
                                 escolaFields: escolaInputs.length,
                                 escolaDetails: escolaInputs
-                            };
-                        }
+                            }};
+                        }}
                     """)
                     
-                    print(f"📍 ADICIONAR OS - Verificação de modal/formulário: {modal_opened}")
+                    print("📍 ADICIONAR OS - Verificação de modal/formulário: " + str(modal_opened))
                     
                     # Aguardar modal/página carregar (pode demorar mais tempo)
                     print("⏳ AGUARDO - Aguardando modal carregar (até 30 segundos)...")
                     await page.wait_for_timeout(30000)  # Aumentado para 30 segundos
                     
                     # Screenshot final
-                    await page.screenshot(path=f"{screenshots_dir}/direct_06_final.png")
+                    await page.screenshot(path=screenshots_dir + "/direct_06_final.png")
                     screenshots.append("direct_06_final.png")
                     print("📸 Screenshot: direct_06_final.png")
                     
                     # PASSO 7: Preencher campo INEP no modal (IMPLEMENTAÇÃO SIMPLIFICADA)
                     print("📝 MODAL - Preenchendo campo INEP no modal...")
-                    print(f"📝 MODAL - Usando INEP: {inep_value}")
+                    print("📝 MODAL - Usando INEP: " + inep_value)
                     
                     # Aguardar o modal carregar completamente
                     await page.wait_for_timeout(5000)  # Aumentado para 5 segundos
@@ -9305,7 +9308,7 @@ async def direct_os_access(inep_value="{inep_value}"):
                     print("🎯 MODAL - Método simplificado baseado no teste manual que funcionou")
                     try:
                         # Screenshot antes de começar
-                        await page.screenshot(path=f"{screenshots_dir}/direct_07_before_fill.png")
+                        await page.screenshot(path=screenshots_dir + "/direct_07_before_fill.png")
                         screenshots.append("direct_07_before_fill.png")
                         print("📸 Screenshot: direct_07_before_fill.png")
                         
@@ -9315,7 +9318,7 @@ async def direct_os_access(inep_value="{inep_value}"):
                         await page.wait_for_timeout(1000)
                         
                         # Digitar o INEP usando keyboard.type (simula digitação natural)
-                        print(f"⌨️ MODAL - Digitando INEP: {inep_value}")
+                        print("⌨️ MODAL - Digitando INEP: " + inep_value)
                         await page.keyboard.type(inep_value, delay=200)
                         await page.wait_for_timeout(1000)
                         
@@ -9324,7 +9327,7 @@ async def direct_os_access(inep_value="{inep_value}"):
                         await page.wait_for_timeout(3000)
                         
                         # Screenshot após digitar
-                        await page.screenshot(path=f"{screenshots_dir}/direct_08_typed.png")
+                        await page.screenshot(path=screenshots_dir + "/direct_08_typed.png")
                         screenshots.append("direct_08_typed.png")
                         print("📸 Screenshot: direct_08_typed.png")
                         
@@ -9342,11 +9345,11 @@ async def direct_os_access(inep_value="{inep_value}"):
                         print("🔍 MODAL - Verificando se botão 'Incluir' foi ativado...")
                         
                         button_check = await page.evaluate("""
-                            () => {
+                            () => {{
                                 const buttons = document.querySelectorAll('button');
-                                for (let btn of buttons) {
+                                for (let btn of buttons) {{
                                     const text = btn.textContent?.toLowerCase().trim();
-                                    if (text && text.includes('incluir')) {
+                                    if (text && text.includes('incluir')) {{
                                         const disabled = btn.disabled;
                                         const style = window.getComputedStyle(btn);
                                         const backgroundColor = style.backgroundColor;
@@ -9356,7 +9359,7 @@ async def direct_os_access(inep_value="{inep_value}"):
                                         // Verificar se o botão está ativado
                                         const isActive = !disabled && cursor === 'pointer' && opacity !== '0.5';
                                         
-                                        return {
+                                        return {{
                                             found: true,
                                             disabled: disabled,
                                             text: btn.textContent.trim(),
@@ -9364,33 +9367,33 @@ async def direct_os_access(inep_value="{inep_value}"):
                                             cursor: cursor,
                                             opacity: opacity,
                                             isActive: isActive
-                                        };
-                                    }
-                                }
-                                return { found: false };
-                            }
+                                        }};
+                                    }}
+                                }}
+                                return {{ found: false }};
+                            }}
                         """)
                         
                         if button_check['found']:
                             button_active = button_check['isActive']
                             if button_active:
-                                print(f"🎉 MODAL - Botão 'Incluir' ATIVADO! ✅")
-                                print(f"   - Texto: {button_check['text']}")
-                                print(f"   - Disabled: {button_check['disabled']}")
-                                print(f"   - Cursor: {button_check['cursor']}")
+                                print("🎉 MODAL - Botão 'Incluir' ATIVADO! ✅")
+                                print("   - Texto: " + button_check['text'])
+                                print("   - Disabled: " + str(button_check['disabled']))
+                                print("   - Cursor: " + button_check['cursor'])
                             else:
-                                print(f"⚠️ MODAL - Botão 'Incluir' ainda está desativado")
-                                print(f"   - Disabled: {button_check['disabled']}")
-                                print(f"   - Cursor: {button_check['cursor']}")
+                                print("⚠️ MODAL - Botão 'Incluir' ainda está desativado")
+                                print("   - Disabled: " + str(button_check['disabled']))
+                                print("   - Cursor: " + button_check['cursor'])
                         else:
                             print("❌ MODAL - Botão 'Incluir' não encontrado")
                             
                     except Exception as e:
-                        print(f"❌ MODAL - Erro no preenchimento: {e}")
+                        print("❌ MODAL - Erro no preenchimento: " + str(e))
                         modal_filled = False
                     
                     # Screenshot final mostrando o resultado
-                    await page.screenshot(path=f"{screenshots_dir}/direct_09_final_result.png")
+                    await page.screenshot(path=screenshots_dir + "/direct_09_final_result.png")
                     screenshots.append("direct_09_final_result.png")
                     print("📸 Screenshot: direct_09_final_result.png - Estado final do modal")
                     
@@ -9412,26 +9415,26 @@ async def direct_os_access(inep_value="{inep_value}"):
                     break
                     
             except Exception as e:
-                print(f"❌ ADICIONAR OS - Erro com {selector}: {e}")
+                print("❌ ADICIONAR OS - Erro com " + selector + ": " + str(e))
                 continue
         
         # Resultado final da operação
-        print(f"📋 RESUMO FINAL:")
-        print(f"   ✅ Login realizado com sucesso")
-        print(f"   ✅ Perfil Fornecedor selecionado")
-        print(f"   ✅ Navegação para página de OS")
-        print(f"   ✅ Modal 'Adicionar nova OS' aberto")
+        print("📋 RESUMO FINAL:")
+        print("   ✅ Login realizado com sucesso")
+        print("   ✅ Perfil Fornecedor selecionado")
+        print("   ✅ Navegação para página de OS")
+        print("   ✅ Modal 'Adicionar nova OS' aberto")
         if modal_filled and button_active:
-            print(f"   ✅ Campo INEP preenchido: {inep_value}")
-            print(f"   ✅ Sugestão selecionada automaticamente")
-            print(f"   ✅ Botão 'Incluir' ativado e pronto")
-            print(f"   🚫 Botão 'Incluir' NÃO foi clicado (conforme solicitado)")
+            print("   ✅ Campo INEP preenchido: " + inep_value)
+            print("   ✅ Sugestão selecionada automaticamente")
+            print("   ✅ Botão 'Incluir' ativado e pronto")
+            print("   🚫 Botão 'Incluir' NÃO foi clicado (conforme solicitado)")
         else:
-            print(f"   ⚠️ Preenchimento do INEP: {'Sim' if modal_filled else 'Não'}")
-            print(f"   ⚠️ Botão 'Incluir' ativo: {'Sim' if button_active else 'Não'}")
+            print("   ⚠️ Preenchimento do INEP: " + ('Sim' if modal_filled else 'Não'))
+            print("   ⚠️ Botão 'Incluir' ativo: " + ('Sim' if button_active else 'Não'))
         
         # Preparar resultado final
-        result = {
+        result = {{
             "success": True,
             "screenshots": screenshots,
             "adicionar_clicked": adicionar_clicked,
@@ -9441,13 +9444,13 @@ async def direct_os_access(inep_value="{inep_value}"):
             "total_elements": len(all_elements),
             "adicionar_elements": len(adicionar_elements),
             "message": "Automação concluída com sucesso - Modal aberto e INEP preenchido"
-        }
+        }}
         
         return result
         
     except Exception as e:
-        print(f"❌ ERRO: {e}")
-        return {"error": str(e)}
+        print("❌ ERRO: " + str(e))
+        return {{"error": str(e)}}
     
     finally:
         await browser.close()
