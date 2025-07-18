@@ -9418,7 +9418,19 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
             except Exception as e:
                 print("❌ ADICIONAR OS - Erro com " + selector + ": " + str(e))
                 continue
-        
+        else:
+            # Se nenhum seletor funcionou, definir valores padrão
+            print("⚠️ ADICIONAR OS - Nenhum seletor funcionou, definindo valores padrão")
+            modal_filled = False
+            button_active = False
+            adicionar_clicked = False
+            
+            # Garantir que as variáveis estão definidas para o resultado
+            if 'all_elements' not in locals():
+                all_elements = []
+            if 'adicionar_elements' not in locals():
+                adicionar_elements = []
+            
         # Resultado final da operação
         print("📋 RESUMO FINAL:")
         print("   ✅ Login realizado com sucesso")

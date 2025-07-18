@@ -101,9 +101,49 @@ direct_code = direct_code_template.format(
 **Status atual:**
 - ✅ Arquivo `webhook_simple.py` tem sintaxe válida
 - ✅ Endpoint `/test-direct-os-access` funcionando
-- ✅ Erro de format specifier eliminado
+- ✅ Erro de format specifier eliminado DEFINITIVAMENTE
+- ✅ Template string + .format() implementada com sucesso
 - ✅ Automação Tab → Type → ArrowDown → Enter preservada
 - ✅ Timeout de 8 minutos (480s) mantido
+
+## 🚨 **REGRA DEFINITIVA PARA GERAÇÃO DE CÓDIGO - NUNCA MAIS ESQUECER!**
+
+**❌ NUNCA MAIS USAR F-STRINGS PARA CÓDIGO COMPLEXO:**
+```python
+# ❌ PROIBIDO - F-string com JavaScript + dicionários
+direct_code = f'''
+import asyncio
+result = {
+    "success": True,
+    "inep": "{inep_value}"
+}
+'''
+```
+
+**✅ SEMPRE USAR TEMPLATE STRING + .FORMAT():**
+```python
+# ✅ CORRETO - Template string + .format()
+direct_code_template = '''
+import asyncio
+result = {{
+    "success": True,
+    "inep": "{INEP_VALUE}"
+}}
+'''
+direct_code = direct_code_template.format(
+    INEP_VALUE=inep_value,
+    SCREENSHOTS_DIR=screenshots_dir
+)
+```
+
+**📋 CHECKLIST OBRIGATÓRIO:**
+1. ✅ Código complexo? → USE TEMPLATE STRING
+2. ✅ Dicionários Python? → USE CHAVES DUPLAS {{}}
+3. ✅ Variáveis? → USE PLACEHOLDERS {VARIAVEL}
+4. ✅ Aplicação? → USE .format(VARIAVEL=valor)
+5. ✅ JavaScript? → DEIXE {{ }} INTACTO
+
+Esta solução é DEFINITIVA e funcionou 100%. Nunca mais usar f-strings para código complexo!
 
 ## 📋 ESTADO ATUAL DO PROJETO (2025-07-18)
 ### ✅ O que está funcionando 100%:
