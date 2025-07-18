@@ -54,23 +54,23 @@ Invalid format specifier ' True, "screenshots": screenshots, "adicionar_clicked"
 ```
 
 **🚨 SOLUÇÃO DEFINITIVA PARA F-STRINGS:**
-- ✅ **CAUSA RAIZ**: Linha 9008 tentando usar variável externa `screenshots_dir = "{screenshots_dir}"` dentro da f-string
-- ✅ **PROBLEMA**: Conflito entre f-string externa e referência a variável externa
-- ✅ **CORREÇÃO DEFINITIVA**: `screenshots_dir = "/tmp/screenshots"` (valor direto, não referência)
+- ✅ **CAUSA RAIZ**: Chaves duplas `{{` e `}}` nas linhas 9437 e 9453 dentro da f-string
+- ✅ **PROBLEMA**: Escape incorreto de chaves em dicionários Python dentro da f-string
+- ✅ **CORREÇÃO DEFINITIVA**: `result = {` em vez de `result = {{` (chaves simples)
 - ✅ **RESULTADO**: Eliminado o erro de format specifier completamente
 
 **📋 REGRAS DEFINITIVAS PARA F-STRINGS NO PROJETO:**
-1. ✅ **NUNCA** usar variáveis externas dentro de f-strings: `screenshots_dir = "{screenshots_dir}"` ❌
-2. ✅ **SEMPRE** usar valores diretos: `screenshots_dir = "/tmp/screenshots"` ✅
-3. ✅ **SEMPRE** usar concatenação de strings: `screenshots_dir + "/arquivo.png"` ✅
-4. ✅ **NUNCA** usar f-strings aninhadas: `f"{variavel}"` dentro de f-string ❌
+1. ✅ **CHAVES SIMPLES** para dicionários Python: `result = {` ✅
+2. ✅ **CHAVES DUPLAS** apenas para JavaScript: `{{ }}` em page.evaluate() ✅
+3. ✅ **USAR VARIÁVEIS EXTERNAS** em f-strings: `screenshots_dir = "{screenshots_dir}"` ✅
+4. ✅ **SEMPRE** usar concatenação de strings: `screenshots_dir + "/arquivo.png"` ✅
 5. ✅ **SEMPRE** usar `str()` para conversões: `"Total: " + str(len(lista))` ✅
 
 **Correções implementadas:**
-1. ✅ Linha 9008: `screenshots_dir = "/tmp/screenshots"` (valor direto)
-2. ✅ Todas as f-strings internas substituídas por concatenação `+`
-3. ✅ JavaScript do `page.evaluate()` com escape duplo: `{{ }}`
-4. ✅ Objetos dict convertidos para string com `str()`
+1. ✅ Linha 9437: `result = {` (chaves simples, não duplas)
+2. ✅ Linha 9453: `return {"error": str(e)}` (chaves simples, não duplas)
+3. ✅ Linha 9008: `screenshots_dir = "{screenshots_dir}"` (mantido como estava no commit c975651)
+4. ✅ JavaScript do `page.evaluate()` com escape duplo: `{{ }}`
 5. ✅ Sintaxe validada: `ast.parse()` passou sem erros
 
 **Status atual:**

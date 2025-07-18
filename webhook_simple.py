@@ -2415,7 +2415,7 @@ async def map_os_page():
         if adicionar_os_buttons:
             result['target_button'] = adicionar_os_buttons[0]
         
-        print(f"✅ Mapeamento concluído: {str(result)}")
+        print(f"✅ Mapeamento concluído: {result}")
         return result
         
     except Exception as e:
@@ -3118,7 +3118,7 @@ async def map_adicionar_os_button():
             'target_button': adicionar_os_buttons[0] if adicionar_os_buttons else None
         }
         
-        print(f"✅ Mapeamento concluído: {str(result)}")
+        print(f"✅ Mapeamento concluído: {result}")
         return result
         
     except Exception as e:
@@ -3511,7 +3511,7 @@ async def map_os_button_fixed():
             'target_buttons': adicionar_os_buttons
         }
         
-        print(f"✅ Mapeamento corrigido concluído: {str(result)}")
+        print(f"✅ Mapeamento corrigido concluído: {result}")
         return result
         
     except Exception as e:
@@ -4110,7 +4110,7 @@ async def analyze_dashboard():
             'current_url': page.url
         }
         
-        print(f"✅ Análise concluída: {str(result)}")
+        print(f"✅ Análise concluída: {result}")
         return result
         
     except Exception as e:
@@ -8882,7 +8882,7 @@ def test_direct_os_access():
             const inepValue = document.getElementById('inepInput').value.trim();
             
             // Validar INEP
-            if (!inepValue || !/^\\d{8}$/.test(inepValue)) {
+            if (!inepValue || !/^\d{8}$/.test(inepValue)) {
                 addLog('❌ INEP inválido! Deve conter exatamente 8 dígitos numéricos.', 'error');
                 return;
             }
@@ -9005,7 +9005,7 @@ async def direct_os_access(inep_value="{inep_value}"):
     """Acesso direto simplificado à página OS"""
     
     # Configurar diretório de screenshots
-    screenshots_dir = "/tmp/screenshots"
+    screenshots_dir = "{screenshots_dir}"
     os.makedirs(screenshots_dir, exist_ok=True)
     
     # Limpar screenshots anteriores
@@ -9417,10 +9417,7 @@ async def direct_os_access(inep_value="{inep_value}"):
             except Exception as e:
                 print("❌ ADICIONAR OS - Erro com " + selector + ": " + str(e))
                 continue
-        else:
-            # Se nenhum seletor funcionou, definir adicionar_clicked como False
-            print("⚠️ ADICIONAR OS - Nenhum seletor funcionou, mas continuando com análise")
-            
+        
         # Resultado final da operação
         print("📋 RESUMO FINAL:")
         print("   ✅ Login realizado com sucesso")
