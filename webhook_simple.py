@@ -2415,7 +2415,7 @@ async def map_os_page():
         if adicionar_os_buttons:
             result['target_button'] = adicionar_os_buttons[0]
         
-        print(f"✅ Mapeamento concluído: {result}")
+        print(f"✅ Mapeamento concluído: {str(result)}")
         return result
         
     except Exception as e:
@@ -3118,7 +3118,7 @@ async def map_adicionar_os_button():
             'target_button': adicionar_os_buttons[0] if adicionar_os_buttons else None
         }
         
-        print(f"✅ Mapeamento concluído: {result}")
+        print(f"✅ Mapeamento concluído: {str(result)}")
         return result
         
     except Exception as e:
@@ -3511,7 +3511,7 @@ async def map_os_button_fixed():
             'target_buttons': adicionar_os_buttons
         }
         
-        print(f"✅ Mapeamento corrigido concluído: {result}")
+        print(f"✅ Mapeamento corrigido concluído: {str(result)}")
         return result
         
     except Exception as e:
@@ -4110,7 +4110,7 @@ async def analyze_dashboard():
             'current_url': page.url
         }
         
-        print(f"✅ Análise concluída: {result}")
+        print(f"✅ Análise concluída: {str(result)}")
         return result
         
     except Exception as e:
@@ -8882,7 +8882,7 @@ def test_direct_os_access():
             const inepValue = document.getElementById('inepInput').value.trim();
             
             // Validar INEP
-            if (!inepValue || !/^\d{8}$/.test(inepValue)) {
+            if (!inepValue || !/^\\d{8}$/.test(inepValue)) {
                 addLog('❌ INEP inválido! Deve conter exatamente 8 dígitos numéricos.', 'error');
                 return;
             }
