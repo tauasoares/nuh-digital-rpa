@@ -9168,51 +9168,29 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
         
         adicionar_clicked = False
         
-        # Seletores mais específicos e variados com diferentes estratégias
+        # Seletores simplificados baseados no teste manual que funcionou
         adicionar_selectors = [
-            # Seletores específicos para "Adicionar nova OS"
+            # Seletores mais prováveis baseados no teste manual
+            "text='Adicionar nova OS'",
+            "button:has-text('Adicionar nova OS')",
             "//button[contains(text(), 'Adicionar nova OS')]",
-            "//a[contains(text(), 'Adicionar nova OS')]",
             "//*[contains(text(), 'Adicionar nova OS')]",
             
-            # Seletores para "Adicionar OS" 
-            "//button[contains(text(), 'Adicionar OS')]",
-            "//a[contains(text(), 'Adicionar OS')]",
-            "//*[contains(text(), 'Adicionar OS')]",
-            
-            # Seletores para "Nova OS"
-            "//button[contains(text(), 'Nova OS')]",
-            "//a[contains(text(), 'Nova OS')]",
-            "//*[contains(text(), 'Nova OS')]",
-            
-            # Seletores genéricos para "Adicionar"
-            "//button[contains(text(), 'Adicionar')]",
-            "//a[contains(text(), 'Adicionar')]",
-            "//*[contains(text(), 'Adicionar')]",
-            
-            # Seletores com classes comuns
-            "//button[contains(@class, 'btn') and contains(text(), 'Adicionar')]",
-            "//button[contains(@class, 'button') and contains(text(), 'Adicionar')]",
-            "//div[contains(@class, 'clickable') and contains(text(), 'Adicionar')]",
-            
-            # Seletores em inglês
-            "//button[contains(text(), 'Add')]",
-            "//button[contains(text(), 'Create')]",
-            "//button[contains(text(), 'New')]",
-            
-            # Seletores por ícones ou símbolos
-            "//button[contains(text(), '+')]",
-            "//*[contains(text(), '+') and contains(text(), 'OS')]",
-            "//*[contains(text(), '+') and contains(text(), 'Nova')]"
+            # Seletores alternativos simples
+            "text='Adicionar OS'",
+            "button:has-text('Adicionar OS')",
+            "//button[contains(text(), 'Adicionar')]"
         ]
         
         # Primeira tentativa: seletores específicos
-        for selector in adicionar_selectors:
+        for i, selector in enumerate(adicionar_selectors):
             try:
+                print("🔍 ADICIONAR OS - Testando seletor " + str(i+1) + "/" + str(len(adicionar_selectors)) + ": " + selector)
                 elements = await page.locator(selector).count()
-                print("🔍 ADICIONAR OS - Testando: " + selector + " - " + str(elements) + " elementos")
+                print("📊 ADICIONAR OS - Elementos encontrados: " + str(elements))
                 
                 if elements > 0:
+                    print("✅ ADICIONAR OS - Seletor funcionou! Elementos encontrados: " + str(elements))
                     print("📍 ADICIONAR OS - Clicando: " + selector)
                     
                     # Aguardar elemento estar visível e clicável
@@ -9224,7 +9202,7 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
                     
                     await page.locator(selector).click()
                     print("🎯 ADICIONAR OS - Clique executado! Aguardando resposta...")
-                    await page.wait_for_timeout(1000)
+                    await page.wait_for_timeout(2000)
                     
                     # Screenshot imediatamente após o clique
                     await page.screenshot(path=screenshots_dir + "/direct_04_immediate_after_click.png")
@@ -9247,8 +9225,8 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
                             // Verificar se há modal aberto
                             const modals = document.querySelectorAll('[role="dialog"], .modal, .popup, .overlay');
                             
-                            // Verificar se há campo "Escola" específico
-                            const escolaInputs = [];
+                            // Verificar especificamente campo INEP
+                            const inepInputs = [];
                             const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], textarea');
                             
                             allInputs.forEach(input => {{
@@ -9256,15 +9234,18 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
                                 const placeholder = input.placeholder || '';
                                 const labelText = label ? label.textContent : '';
                                 
-                                if (labelText.toLowerCase().includes('escola') || 
+                                // Procurar especificamente por INEP
+                                if (labelText.toLowerCase().includes('inep') ||
+                                    placeholder.toLowerCase().includes('inep') ||
+                                    labelText.toLowerCase().includes('escola') || 
                                     placeholder.toLowerCase().includes('escola') ||
-                                    labelText.toLowerCase().includes('inep') ||
-                                    placeholder.toLowerCase().includes('inep')) {{
-                                    escolaInputs.push({{
+                                    placeholder.toLowerCase().includes('código')) {{
+                                    inepInputs.push({{
                                         placeholder: placeholder,
                                         label: labelText,
                                         id: input.id,
-                                        classes: input.className
+                                        classes: input.className,
+                                        value: input.value
                                     }});
                                 }}
                             }});
@@ -9278,8 +9259,8 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
                                 modals: modals.length,
                                 forms: forms.length, 
                                 inputs: inputs.length,
-                                escolaFields: escolaInputs.length,
-                                escolaDetails: escolaInputs
+                                inepFields: inepInputs.length,
+                                inepDetails: inepInputs
                             }};
                         }}
                     """)
@@ -9313,14 +9294,49 @@ async def direct_os_access(inep_value="{INEP_VALUE}"):
                         screenshots.append("direct_07_before_fill.png")
                         print("📸 Screenshot: direct_07_before_fill.png")
                         
-                        # Pressionar Tab para focar no campo de input (método que funcionou no teste manual)
-                        print("🎯 MODAL - Focando no campo com Tab...")
-                        await page.keyboard.press('Tab')
-                        await page.wait_for_timeout(1000)
+                        # Múltiplas tentativas para focar no campo INEP
+                        print("🎯 MODAL - Tentando focar no campo INEP...")
                         
-                        # Digitar o INEP usando keyboard.type (simula digitação natural)
-                        print("⌨️ MODAL - Digitando INEP: " + inep_value)
-                        await page.keyboard.type(inep_value, delay=200)
+                        # Método 1: Procurar campo por placeholder
+                        inep_field_found = False
+                        try:
+                            # Tentar encontrar campo específico do INEP
+                            inep_selectors = [
+                                "input[placeholder*='INEP']",
+                                "input[placeholder*='código']",
+                                "input[placeholder*='escola']",
+                                "input[type='text']"
+                            ]
+                            
+                            for selector in inep_selectors:
+                                try:
+                                    field_count = await page.locator(selector).count()
+                                    print("🔍 MODAL - Testando campo: " + selector + " - " + str(field_count) + " campos")
+                                    
+                                    if field_count > 0:
+                                        print("✅ MODAL - Campo encontrado: " + selector)
+                                        await page.locator(selector).first.click()
+                                        await page.wait_for_timeout(500)
+                                        await page.locator(selector).first.fill(inep_value)
+                                        print("⌨️ MODAL - INEP digitado no campo: " + inep_value)
+                                        inep_field_found = True
+                                        break
+                                except Exception as e:
+                                    print("❌ MODAL - Erro com campo " + selector + ": " + str(e))
+                                    continue
+                                    
+                        except Exception as e:
+                            print("❌ MODAL - Erro ao procurar campo INEP: " + str(e))
+                        
+                        # Método 2: Fallback com Tab + Type (método original)
+                        if not inep_field_found:
+                            print("🎯 MODAL - Fallback: Usando Tab + Type...")
+                            await page.keyboard.press('Tab')
+                            await page.wait_for_timeout(1000)
+                            await page.keyboard.type(inep_value, delay=200)
+                            print("⌨️ MODAL - INEP digitado com Tab+Type: " + inep_value)
+                            inep_field_found = True
+                            
                         await page.wait_for_timeout(1000)
                         
                         # Aguardar sugestões aparecerem (3 segundos como no teste manual)
