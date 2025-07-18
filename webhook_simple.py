@@ -9005,7 +9005,7 @@ async def direct_os_access(inep_value="{inep_value}"):
     """Acesso direto simplificado à página OS"""
     
     # Configurar diretório de screenshots
-    screenshots_dir = "{screenshots_dir}"
+    screenshots_dir = "/tmp/screenshots"
     os.makedirs(screenshots_dir, exist_ok=True)
     
     # Limpar screenshots anteriores
