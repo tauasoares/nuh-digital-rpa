@@ -54,23 +54,48 @@ Invalid format specifier ' True, "screenshots": screenshots, "adicionar_clicked"
 ```
 
 **🚨 SOLUÇÃO DEFINITIVA PARA F-STRINGS:**
-- ✅ **CAUSA RAIZ**: Chaves duplas `{{` e `}}` nas linhas 9437 e 9453 dentro da f-string
-- ✅ **PROBLEMA**: Escape incorreto de chaves em dicionários Python dentro da f-string
-- ✅ **CORREÇÃO DEFINITIVA**: `result = {` em vez de `result = {{` (chaves simples)
+- ✅ **CAUSA RAIZ**: F-strings complexas com JavaScript e dicionários Python causavam conflitos
+- ✅ **PROBLEMA**: Chaves {} eram interpretadas como placeholders em contextos incorretos
+- ✅ **CORREÇÃO DEFINITIVA**: Substituir f-string por template string + .format()
 - ✅ **RESULTADO**: Eliminado o erro de format specifier completamente
 
-**📋 REGRAS DEFINITIVAS PARA F-STRINGS NO PROJETO:**
-1. ✅ **CHAVES SIMPLES** para dicionários Python: `result = {` ✅
-2. ✅ **CHAVES DUPLAS** apenas para JavaScript: `{{ }}` em page.evaluate() ✅
-3. ✅ **USAR VARIÁVEIS EXTERNAS** em f-strings: `screenshots_dir = "{screenshots_dir}"` ✅
-4. ✅ **SEMPRE** usar concatenação de strings: `screenshots_dir + "/arquivo.png"` ✅
-5. ✅ **SEMPRE** usar `str()` para conversões: `"Total: " + str(len(lista))` ✅
+**📋 SOLUÇÃO TEMPLATE STRING IMPLEMENTADA:**
+```python
+# ❌ ANTES (f-string problemática):
+direct_code = f'''
+import asyncio
+result = {
+    "success": True,
+    "inep_used": "{inep_value}"
+}
+'''
+
+# ✅ DEPOIS (template + .format()):
+direct_code_template = '''
+import asyncio  
+result = {{
+    "success": True,
+    "inep_used": "{INEP_VALUE}"
+}}
+'''
+direct_code = direct_code_template.format(
+    INEP_VALUE=inep_value,
+    SCREENSHOTS_DIR=screenshots_dir
+)
+```
+
+**📋 REGRAS DEFINITIVAS PARA GERAÇÃO DE CÓDIGO:**
+1. ✅ **TEMPLATE STRINGS** para código complexo: `template = '''...'''` ✅
+2. ✅ **CHAVES DUPLAS** para dicionários Python: `result = {{` ✅
+3. ✅ **PLACEHOLDERS** para variáveis: `{INEP_VALUE}` ✅
+4. ✅ **MÉTODO .format()** para substituição: `template.format(VAR=value)` ✅
+5. ✅ **EVITAR F-STRINGS** em código complexo com JavaScript ✅
 
 **Correções implementadas:**
-1. ✅ Linha 9437: `result = {` (chaves simples, não duplas)
-2. ✅ Linha 9453: `return {"error": str(e)}` (chaves simples, não duplas)
-3. ✅ Linha 9008: `screenshots_dir = "{screenshots_dir}"` (mantido como estava no commit c975651)
-4. ✅ JavaScript do `page.evaluate()` com escape duplo: `{{ }}`
+1. ✅ Substituída f-string por template string + .format()
+2. ✅ Chaves duplas {{ }} para dicionários Python
+3. ✅ Placeholders {INEP_VALUE} e {SCREENSHOTS_DIR}
+4. ✅ JavaScript preservado com {{ }} intacto
 5. ✅ Sintaxe validada: `ast.parse()` passou sem erros
 
 **Status atual:**

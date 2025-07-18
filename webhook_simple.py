@@ -8992,20 +8992,21 @@ def execute_direct_os_access():
         def run_direct_access():
             try:
                 # Código Python simplificado
-                # Preparar variáveis para substituir nas f-strings
+                # Preparar variáveis para substituir na template
                 screenshots_dir = "/tmp/screenshots"
                 
-                direct_code = f'''
+                # Usar template string regular em vez de f-string para evitar conflitos
+                direct_code_template = '''
 import asyncio
 import json
 from playwright.async_api import async_playwright
 import os
 
-async def direct_os_access(inep_value="{inep_value}"):
+async def direct_os_access(inep_value="{INEP_VALUE}"):
     """Acesso direto simplificado à página OS"""
     
     # Configurar diretório de screenshots
-    screenshots_dir = "{screenshots_dir}"
+    screenshots_dir = "{SCREENSHOTS_DIR}"
     os.makedirs(screenshots_dir, exist_ok=True)
     
     # Limpar screenshots anteriores
@@ -9434,7 +9435,7 @@ async def direct_os_access(inep_value="{inep_value}"):
             print("   ⚠️ Botão 'Incluir' ativo: " + ('Sim' if button_active else 'Não'))
         
         # Preparar resultado final
-        result = {
+        result = {{
             "success": True,
             "screenshots": screenshots,
             "adicionar_clicked": adicionar_clicked,
@@ -9444,13 +9445,13 @@ async def direct_os_access(inep_value="{inep_value}"):
             "total_elements": len(all_elements),
             "adicionar_elements": len(adicionar_elements),
             "message": "Automação concluída com sucesso - Modal aberto e INEP preenchido"
-        }
+        }}
         
         return result
         
     except Exception as e:
         print("❌ ERRO: " + str(e))
-        return {"error": str(e)}
+        return {{"error": str(e)}}
     
     finally:
         await browser.close()
@@ -9460,6 +9461,12 @@ if __name__ == "__main__":
     result = asyncio.run(direct_os_access())
     print(json.dumps(result, indent=2))
 '''
+                
+                # Aplicar substituições na template
+                direct_code = direct_code_template.format(
+                    INEP_VALUE=inep_value,
+                    SCREENSHOTS_DIR=screenshots_dir
+                )
                 
                 # Executar código Python
                 result = subprocess.run([
