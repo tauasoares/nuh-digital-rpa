@@ -8538,6 +8538,605 @@ if __name__ == "__main__":
         }), 500
 
 
+@app.route('/create-os-with-inep', methods=['GET', 'POST'])
+def create_os_with_inep():
+    """Criar OS com INEP e identificar número da OS criada"""
+    try:
+        # Se for GET, retornar interface HTML
+        if request.method == 'GET':
+            # Verificar se é uma requisição AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # Processar a execução
+                pass
+            else:
+                # Retornar interface HTML
+                html_content = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar OS com INEP</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #161b22;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+        h1 {
+            color: #f78166;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .info-box {
+            background: #21262d;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #58a6ff;
+            margin-bottom: 20px;
+        }
+        .warning-box {
+            background: #21262d;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #f85149;
+            margin-bottom: 20px;
+        }
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        input[type="text"] {
+            background: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px;
+            width: 200px;
+        }
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #2ea043;
+        }
+        button:disabled {
+            background: #484f58;
+            cursor: not-allowed;
+        }
+        .logs {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 20px;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-success { color: #56d364; }
+        .log-error { color: #f85149; }
+        .log-warning { color: #d29922; }
+        .log-info { color: #58a6ff; }
+        .screenshots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .screenshot {
+            width: 200px;
+            height: 150px;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .screenshot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .result-box {
+            background: #21262d;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #56d364;
+            margin-top: 20px;
+            display: none;
+        }
+        .os-number {
+            font-size: 1.5em;
+            color: #56d364;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Criar OS com INEP</h1>
+        
+        <div class="info-box">
+            <h3>ℹ️ Informações</h3>
+            <p><strong>Função:</strong> Criar OS completa com INEP e identificar número da OS criada</p>
+            <p><strong>Processo:</strong> Login → Perfil → Página OS → Adicionar nova OS → Preencher INEP → Incluir → Identificar número da OS</p>
+            <p><strong>Tempo estimado:</strong> 3-5 minutos</p>
+        </div>
+        
+        <div class="warning-box">
+            <h3>⚠️ Atenção</h3>
+            <p>Este endpoint <strong>REALMENTE CRIA</strong> uma OS no sistema EACE. Use apenas para testes controlados!</p>
+        </div>
+        
+        <div class="controls">
+            <label>Código INEP:</label>
+            <input type="text" id="inepInput" value="33099553" placeholder="Ex: 33099553">
+            <br><br>
+            <button onclick="executarCriacaoOS()" id="executeBtn">🚀 Criar OS com INEP</button>
+        </div>
+        
+        <div class="result-box" id="resultBox">
+            <h3>✅ OS Criada com Sucesso!</h3>
+            <p>Número da OS: <span class="os-number" id="osNumber"></span></p>
+            <p>INEP utilizado: <span id="inepUsed"></span></p>
+        </div>
+        
+        <h3>📋 Logs Simplificados</h3>
+        <div class="logs" id="logs"></div>
+        
+        <h3>📸 Screenshots</h3>
+        <div class="screenshots" id="screenshots"></div>
+    </div>
+    
+    <script>
+        let executando = false;
+        
+        function adicionarLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function executarCriacaoOS() {
+            if (executando) return;
+            
+            executando = true;
+            const btn = document.getElementById('executeBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Criando OS...';
+            
+            const inep = document.getElementById('inepInput').value;
+            const logs = document.getElementById('logs');
+            const screenshots = document.getElementById('screenshots');
+            const resultBox = document.getElementById('resultBox');
+            
+            // Limpar logs e screenshots anteriores
+            logs.innerHTML = '';
+            screenshots.innerHTML = '';
+            resultBox.style.display = 'none';
+            
+            adicionarLog(`🚀 Iniciando criação de OS com INEP: ${inep}`, 'info');
+            
+            // Fazer requisição para execução
+            fetch('/execute-create-os-with-inep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inep: inep
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    adicionarLog('✅ OS criada com sucesso!', 'success');
+                    
+                    if (data.os_number) {
+                        adicionarLog(`🎉 NÚMERO DA OS: ${data.os_number}`, 'success');
+                        document.getElementById('osNumber').textContent = data.os_number;
+                        document.getElementById('inepUsed').textContent = data.inep_used;
+                        resultBox.style.display = 'block';
+                    } else {
+                        adicionarLog('⚠️ OS criada, mas número não foi identificado', 'warning');
+                    }
+                    
+                    // Carregar screenshots
+                    if (data.screenshots && data.screenshots.length > 0) {
+                        data.screenshots.forEach(screenshot => {
+                            const div = document.createElement('div');
+                            div.className = 'screenshot';
+                            div.innerHTML = `<img src="/screenshot/${screenshot}" alt="${screenshot}">`;
+                            screenshots.appendChild(div);
+                        });
+                    }
+                } else {
+                    adicionarLog(`❌ Erro: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                adicionarLog(`❌ Erro na requisição: ${error}`, 'error');
+            })
+            .finally(() => {
+                executando = false;
+                btn.disabled = false;
+                btn.textContent = '🚀 Criar OS com INEP';
+            });
+        }
+    </script>
+</body>
+</html>
+'''
+                return html_content
+        
+        # Obter dados da requisição
+        data = request.json if request.method == 'POST' else {}
+        inep_value = data.get('inep', request.args.get('inep', '33099553'))
+        
+        logger.info(f"Criando OS com INEP: {inep_value}")
+        
+        def run_os_creation():
+            try:
+                # Código Python para criar OS e identificar número
+                # Preparar variáveis para substituir na template
+                screenshots_dir = "/tmp/screenshots"
+                
+                # Usar template string regular em vez de f-string para evitar conflitos
+                create_os_template = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+import re
+
+async def create_os_with_inep(inep_value="{INEP_VALUE}"):
+    """Criar OS com INEP e identificar número da OS criada"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "{SCREENSHOTS_DIR}"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("create_os_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    screenshots = []
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        page = await browser.new_page()
+        
+        # ETAPA 1: Login
+        print("🔐 LOGIN - Acessando página de login...")
+        await page.goto("https://eace.org.br/login?login=login", timeout=30000)
+        await page.wait_for_timeout(2000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_01_login.png")
+        screenshots.append("create_os_01_login.png")
+        print("📸 Screenshot: create_os_01_login.png")
+        
+        # Preencher credenciais
+        await page.fill("//input[@placeholder='seuemail@email.com']", "raiseupbt@gmail.com")
+        await page.fill("//input[@type='password']", "@Uujpgi8u")
+        await page.click("//button[contains(text(), 'Log In')]")
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_02_after_login.png")
+        screenshots.append("create_os_02_after_login.png")
+        print("📸 Screenshot: create_os_02_after_login.png")
+        
+        # ETAPA 2: Selecionar perfil Fornecedor
+        print("👤 PERFIL - Selecionando perfil Fornecedor...")
+        await page.click("//*[contains(text(), 'Fornecedor')]")
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_03_dashboard.png")
+        screenshots.append("create_os_03_dashboard.png")
+        print("📸 Screenshot: create_os_03_dashboard.png")
+        
+        # ETAPA 3: Navegar para página de OS (usando código que funciona)
+        print("🧭 NAVEGAÇÃO - Expandindo menu lateral...")
+        
+        # Expandir menu lateral
+        menu_selectors = [
+            "//button[contains(@class, 'sidebar') or contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[not(@disabled)]"
+        ]
+        
+        for selector in menu_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).first.click()
+                    await page.wait_for_timeout(2000)
+                    break
+            except:
+                continue
+        
+        # Clicar em "Gerenciar chamados"
+        chamados_selectors = [
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]"
+        ]
+        
+        for selector in chamados_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    break
+            except:
+                continue
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_04_os_page.png")
+        screenshots.append("create_os_04_os_page.png")
+        print("📸 Screenshot: create_os_04_os_page.png")
+        
+        # ETAPA 4: Clicar em "Adicionar nova OS"
+        print("➕ ADICIONAR OS - Clicando em 'Adicionar nova OS'...")
+        
+        adicionar_selectors = [
+            "text='Adicionar nova OS'",
+            "button:has-text('Adicionar nova OS')",
+            "//button[contains(text(), 'Adicionar nova OS')]",
+            "//*[contains(text(), 'Adicionar nova OS')]"
+        ]
+        
+        os_created = False
+        for selector in adicionar_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    
+                    await page.screenshot(path=screenshots_dir + "/create_os_05_modal_opened.png")
+                    screenshots.append("create_os_05_modal_opened.png")
+                    print("📸 Screenshot: create_os_05_modal_opened.png")
+                    
+                    # ETAPA 5: Preencher campo INEP
+                    print("⌨️ INEP - Preenchendo campo com: " + inep_value)
+                    
+                    # Tentar encontrar campo específico do INEP
+                    inep_selectors = [
+                        "input[placeholder*='INEP']",
+                        "input[placeholder*='código']",
+                        "input[placeholder*='escola']",
+                        "input[type='text']"
+                    ]
+                    
+                    inep_filled = False
+                    for inep_selector in inep_selectors:
+                        try:
+                            field_count = await page.locator(inep_selector).count()
+                            if field_count > 0:
+                                await page.locator(inep_selector).first.click()
+                                await page.wait_for_timeout(500)
+                                await page.locator(inep_selector).first.fill(inep_value)
+                                await page.wait_for_timeout(2000)
+                                
+                                # Aguardar sugestão e clicar
+                                await page.keyboard.press('ArrowDown')
+                                await page.keyboard.press('Enter')
+                                await page.wait_for_timeout(2000)
+                                
+                                inep_filled = True
+                                break
+                        except:
+                            continue
+                    
+                    if not inep_filled:
+                        # Fallback com Tab + Type
+                        await page.keyboard.press('Tab')
+                        await page.wait_for_timeout(1000)
+                        await page.keyboard.type(inep_value, delay=200)
+                        await page.wait_for_timeout(3000)
+                        await page.keyboard.press('ArrowDown')
+                        await page.keyboard.press('Enter')
+                        await page.wait_for_timeout(2000)
+                    
+                    await page.screenshot(path=screenshots_dir + "/create_os_06_inep_filled.png")
+                    screenshots.append("create_os_06_inep_filled.png")
+                    print("📸 Screenshot: create_os_06_inep_filled.png")
+                    
+                    # ETAPA 6: Clicar em "Incluir"
+                    print("✅ INCLUIR - Clicando no botão 'Incluir'...")
+                    
+                    incluir_selectors = [
+                        "button:has-text('Incluir')",
+                        "//button[contains(text(), 'Incluir')]",
+                        "//*[contains(text(), 'Incluir')]"
+                    ]
+                    
+                    for incluir_selector in incluir_selectors:
+                        try:
+                            incluir_count = await page.locator(incluir_selector).count()
+                            if incluir_count > 0:
+                                await page.locator(incluir_selector).click()
+                                await page.wait_for_timeout(5000)
+                                os_created = True
+                                break
+                        except:
+                            continue
+                    
+                    break
+            except:
+                continue
+        
+        if not os_created:
+            print("❌ ERRO - Não foi possível criar a OS")
+            return {{"error": "Não foi possível criar a OS"}}
+        
+        # ETAPA 7: Identificar número da OS criada
+        print("🔍 IDENTIFICAÇÃO - Procurando número da OS criada...")
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_07_final_page.png")
+        screenshots.append("create_os_07_final_page.png")
+        print("📸 Screenshot: create_os_07_final_page.png")
+        
+        # Procurar pela OS mais recente na lista
+        os_numbers = await page.evaluate("""
+            () => {{
+                const osElements = document.querySelectorAll('*');
+                const osNumbers = [];
+                
+                osElements.forEach(el => {{
+                    const text = el.textContent || '';
+                    // Procurar por padrão OS: #XXXXXXXXXX
+                    const osMatch = text.match(/OS[:\\s]*#?(\\d{{10,}})/i);
+                    if (osMatch) {{
+                        osNumbers.push(osMatch[1]);
+                    }}
+                }});
+                
+                // Remover duplicatas e ordenar
+                const uniqueNumbers = [...new Set(osNumbers)];
+                return uniqueNumbers.sort((a, b) => b.localeCompare(a));
+            }}
+        """)
+        
+        # A OS mais recente deve ser a primeira da lista
+        os_number = None
+        if os_numbers and len(os_numbers) > 0:
+            os_number = os_numbers[0]
+            print("🎉 SUCESSO - OS criada com número: " + os_number)
+        else:
+            print("⚠️ AVISO - Não foi possível identificar o número da OS")
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_08_final_result.png")
+        screenshots.append("create_os_08_final_result.png")
+        print("📸 Screenshot: create_os_08_final_result.png")
+        
+        # Resultado final
+        result = {{
+            "success": True,
+            "inep_used": inep_value,
+            "os_number": os_number,
+            "os_created": os_created,
+            "screenshots": screenshots,
+            "message": "OS criada com sucesso!" if os_number else "OS criada, mas número não identificado"
+        }}
+        
+        return result
+        
+    except Exception as e:
+        print("❌ ERRO: " + str(e))
+        return {{"error": str(e)}}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(create_os_with_inep())
+    print(json.dumps(result, indent=2))
+'''
+                
+                # Aplicar substituições na template
+                create_os_code = create_os_template.format(
+                    INEP_VALUE=inep_value,
+                    SCREENSHOTS_DIR=screenshots_dir
+                )
+                
+                # Executar código Python
+                result = subprocess.run([
+                    'python3', '-c', create_os_code
+                ], capture_output=True, text=True, timeout=600)  # 10 minutos
+                
+                if result.returncode == 0:
+                    try:
+                        # Separar prints do JSON
+                        output_lines = result.stdout.strip().split('\n')
+                        
+                        # Log dos prints para debug
+                        for line in output_lines:
+                            logger.info(f"Python output: {line}")
+                        
+                        # Procurar pela linha JSON
+                        json_line = None
+                        for line in reversed(output_lines):
+                            line = line.strip()
+                            if line.startswith('{') and line.endswith('}'):
+                                json_line = line
+                                break
+                        
+                        if json_line:
+                            output = json.loads(json_line)
+                            return output
+                        else:
+                            logger.error("Nenhuma linha JSON encontrada no stdout")
+                            return {"error": "Nenhuma linha JSON encontrada", "stdout": result.stdout}
+                            
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Erro JSON decode: {e}")
+                        return {"error": f"Erro ao decodificar JSON: {e}", "stdout": result.stdout}
+                else:
+                    logger.error(f"Subprocess falhou com código {result.returncode}")
+                    return {"error": f"Subprocess falhou: {result.stderr}", "stdout": result.stdout}
+                    
+            except subprocess.TimeoutExpired:
+                logger.error("Timeout na execução do código Python")
+                return {"error": "Timeout na execução (10 minutos)", "timeout": True}
+            except Exception as e:
+                logger.error(f"Erro na execução: {e}")
+                return {"error": str(e)}
+        
+        # Executar em thread separada para não bloquear
+        thread = threading.Thread(target=run_os_creation)
+        thread.start()
+        thread.join(timeout=620)  # 10 minutos + buffer
+        
+        if thread.is_alive():
+            logger.error("Thread ainda executando após timeout")
+            return jsonify({"error": "Operação ainda executando, tente novamente"})
+        
+        # Tentar obter resultado
+        try:
+            result = run_os_creation()
+            return jsonify(result)
+        except Exception as e:
+            logger.error(f"Erro ao obter resultado: {e}")
+            return jsonify({"error": str(e)})
+            
+    except Exception as e:
+        logger.error(f"Erro no endpoint create-os-with-inep: {e}")
+        return jsonify({"error": str(e)})
+
 @app.route('/test-direct-os-access', methods=['GET'])
 def test_direct_os_access():
     """Endpoint simplificado - vai direto para página OS e clica em Adicionar nova OS"""
@@ -9952,6 +10551,326 @@ def test_expandable_detailed_logs():
             'status': 'error',
             'message': f'Erro no endpoint test-expandable-detailed-logs: {e}'
         }), 500
+
+@app.route('/execute-create-os-with-inep', methods=['POST'])
+def execute_create_os_with_inep():
+    """Executar criação de OS com INEP via AJAX"""
+    try:
+        data = request.json or {}
+        inep_value = data.get('inep', '33099553')
+        
+        logger.info(f"Executando criação de OS com INEP: {inep_value}")
+        
+        # Preparar variáveis para substituir na template
+        screenshots_dir = "/tmp/screenshots"
+        
+        # Usar template string regular em vez de f-string para evitar conflitos
+        create_os_template = '''
+import asyncio
+import json
+from playwright.async_api import async_playwright
+import os
+import re
+
+async def create_os_with_inep(inep_value="{INEP_VALUE}"):
+    """Criar OS com INEP e identificar número da OS criada"""
+    
+    # Configurar diretório de screenshots
+    screenshots_dir = "{SCREENSHOTS_DIR}"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    # Limpar screenshots anteriores
+    for file in os.listdir(screenshots_dir):
+        if file.startswith("create_os_"):
+            os.remove(os.path.join(screenshots_dir, file))
+    
+    playwright = await async_playwright().start()
+    screenshots = []
+    
+    try:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
+        page = await browser.new_page()
+        
+        # ETAPA 1: Login
+        print("🔐 LOGIN - Acessando página de login...")
+        await page.goto("https://eace.org.br/login?login=login", timeout=30000)
+        await page.wait_for_timeout(2000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_01_login.png")
+        screenshots.append("create_os_01_login.png")
+        print("📸 Screenshot: create_os_01_login.png")
+        
+        # Preencher credenciais
+        await page.fill("//input[@placeholder='seuemail@email.com']", "raiseupbt@gmail.com")
+        await page.fill("//input[@type='password']", "@Uujpgi8u")
+        await page.click("//button[contains(text(), 'Log In')]")
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_02_after_login.png")
+        screenshots.append("create_os_02_after_login.png")
+        print("📸 Screenshot: create_os_02_after_login.png")
+        
+        # ETAPA 2: Selecionar perfil Fornecedor
+        print("👤 PERFIL - Selecionando perfil Fornecedor...")
+        await page.click("//*[contains(text(), 'Fornecedor')]")
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_03_dashboard.png")
+        screenshots.append("create_os_03_dashboard.png")
+        print("📸 Screenshot: create_os_03_dashboard.png")
+        
+        # ETAPA 3: Navegar para página de OS (usando código que funciona)
+        print("🧭 NAVEGAÇÃO - Expandindo menu lateral...")
+        
+        # Expandir menu lateral
+        menu_selectors = [
+            "//button[contains(@class, 'sidebar') or contains(@class, 'menu')]",
+            "//button[@focusable='true']",
+            "//button[not(@disabled)]"
+        ]
+        
+        for selector in menu_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).first.click()
+                    await page.wait_for_timeout(2000)
+                    break
+            except:
+                continue
+        
+        # Clicar em "Gerenciar chamados"
+        chamados_selectors = [
+            "//a[contains(text(), 'Gerenciar chamados')]",
+            "//button[contains(text(), 'Gerenciar chamados')]",
+            "//*[contains(text(), 'Gerenciar chamados')]"
+        ]
+        
+        for selector in chamados_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    break
+            except:
+                continue
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_04_os_page.png")
+        screenshots.append("create_os_04_os_page.png")
+        print("📸 Screenshot: create_os_04_os_page.png")
+        
+        # ETAPA 4: Clicar em "Adicionar nova OS"
+        print("➕ ADICIONAR OS - Clicando em 'Adicionar nova OS'...")
+        
+        adicionar_selectors = [
+            "text='Adicionar nova OS'",
+            "button:has-text('Adicionar nova OS')",
+            "//button[contains(text(), 'Adicionar nova OS')]",
+            "//*[contains(text(), 'Adicionar nova OS')]"
+        ]
+        
+        os_created = False
+        for selector in adicionar_selectors:
+            try:
+                elements = await page.locator(selector).count()
+                if elements > 0:
+                    await page.locator(selector).click()
+                    await page.wait_for_timeout(3000)
+                    
+                    await page.screenshot(path=screenshots_dir + "/create_os_05_modal_opened.png")
+                    screenshots.append("create_os_05_modal_opened.png")
+                    print("📸 Screenshot: create_os_05_modal_opened.png")
+                    
+                    # ETAPA 5: Preencher campo INEP
+                    print("⌨️ INEP - Preenchendo campo com: " + inep_value)
+                    
+                    # Tentar encontrar campo específico do INEP
+                    inep_selectors = [
+                        "input[placeholder*='INEP']",
+                        "input[placeholder*='código']",
+                        "input[placeholder*='escola']",
+                        "input[type='text']"
+                    ]
+                    
+                    inep_filled = False
+                    for inep_selector in inep_selectors:
+                        try:
+                            field_count = await page.locator(inep_selector).count()
+                            if field_count > 0:
+                                await page.locator(inep_selector).first.click()
+                                await page.wait_for_timeout(500)
+                                await page.locator(inep_selector).first.fill(inep_value)
+                                await page.wait_for_timeout(2000)
+                                
+                                # Aguardar sugestão e clicar
+                                await page.keyboard.press('ArrowDown')
+                                await page.keyboard.press('Enter')
+                                await page.wait_for_timeout(2000)
+                                
+                                inep_filled = True
+                                break
+                        except:
+                            continue
+                    
+                    if not inep_filled:
+                        # Fallback com Tab + Type
+                        await page.keyboard.press('Tab')
+                        await page.wait_for_timeout(1000)
+                        await page.keyboard.type(inep_value, delay=200)
+                        await page.wait_for_timeout(3000)
+                        await page.keyboard.press('ArrowDown')
+                        await page.keyboard.press('Enter')
+                        await page.wait_for_timeout(2000)
+                    
+                    await page.screenshot(path=screenshots_dir + "/create_os_06_inep_filled.png")
+                    screenshots.append("create_os_06_inep_filled.png")
+                    print("📸 Screenshot: create_os_06_inep_filled.png")
+                    
+                    # ETAPA 6: Clicar em "Incluir"
+                    print("✅ INCLUIR - Clicando no botão 'Incluir'...")
+                    
+                    incluir_selectors = [
+                        "button:has-text('Incluir')",
+                        "//button[contains(text(), 'Incluir')]",
+                        "//*[contains(text(), 'Incluir')]"
+                    ]
+                    
+                    for incluir_selector in incluir_selectors:
+                        try:
+                            incluir_count = await page.locator(incluir_selector).count()
+                            if incluir_count > 0:
+                                await page.locator(incluir_selector).click()
+                                await page.wait_for_timeout(5000)
+                                os_created = True
+                                break
+                        except:
+                            continue
+                    
+                    break
+            except:
+                continue
+        
+        if not os_created:
+            print("❌ ERRO - Não foi possível criar a OS")
+            return {{"error": "Não foi possível criar a OS"}}
+        
+        # ETAPA 7: Identificar número da OS criada
+        print("🔍 IDENTIFICAÇÃO - Procurando número da OS criada...")
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_07_final_page.png")
+        screenshots.append("create_os_07_final_page.png")
+        print("📸 Screenshot: create_os_07_final_page.png")
+        
+        # Procurar pela OS mais recente na lista
+        os_numbers = await page.evaluate("""
+            () => {{
+                const osElements = document.querySelectorAll('*');
+                const osNumbers = [];
+                
+                osElements.forEach(el => {{
+                    const text = el.textContent || '';
+                    // Procurar por padrão OS: #XXXXXXXXXX
+                    const osMatch = text.match(/OS[:\\s]*#?(\\d{{10,}})/i);
+                    if (osMatch) {{
+                        osNumbers.push(osMatch[1]);
+                    }}
+                }});
+                
+                // Remover duplicatas e ordenar
+                const uniqueNumbers = [...new Set(osNumbers)];
+                return uniqueNumbers.sort((a, b) => b.localeCompare(a));
+            }}
+        """)
+        
+        # A OS mais recente deve ser a primeira da lista
+        os_number = None
+        if os_numbers and len(os_numbers) > 0:
+            os_number = os_numbers[0]
+            print("🎉 SUCESSO - OS criada com número: " + os_number)
+        else:
+            print("⚠️ AVISO - Não foi possível identificar o número da OS")
+        
+        await page.screenshot(path=screenshots_dir + "/create_os_08_final_result.png")
+        screenshots.append("create_os_08_final_result.png")
+        print("📸 Screenshot: create_os_08_final_result.png")
+        
+        # Resultado final
+        result = {{
+            "success": True,
+            "inep_used": inep_value,
+            "os_number": os_number,
+            "os_created": os_created,
+            "screenshots": screenshots,
+            "message": "OS criada com sucesso!" if os_number else "OS criada, mas número não identificado"
+        }}
+        
+        return result
+        
+    except Exception as e:
+        print("❌ ERRO: " + str(e))
+        return {{"error": str(e)}}
+    
+    finally:
+        await browser.close()
+        await playwright.stop()
+
+if __name__ == "__main__":
+    result = asyncio.run(create_os_with_inep())
+    print(json.dumps(result, indent=2))
+'''
+        
+        # Aplicar substituições na template
+        create_os_code = create_os_template.format(
+            INEP_VALUE=inep_value,
+            SCREENSHOTS_DIR=screenshots_dir
+        )
+        
+        # Executar código Python
+        result = subprocess.run([
+            'python3', '-c', create_os_code
+        ], capture_output=True, text=True, timeout=600)  # 10 minutos
+        
+        if result.returncode == 0:
+            try:
+                # Separar prints do JSON
+                output_lines = result.stdout.strip().split('\n')
+                
+                # Log dos prints para debug
+                for line in output_lines:
+                    logger.info(f"Python output: {line}")
+                
+                # Procurar pela linha JSON
+                json_line = None
+                for line in reversed(output_lines):
+                    line = line.strip()
+                    if line.startswith('{') and line.endswith('}'):
+                        json_line = line
+                        break
+                
+                if json_line:
+                    output = json.loads(json_line)
+                    return jsonify(output)
+                else:
+                    logger.error("Nenhuma linha JSON encontrada no stdout")
+                    return jsonify({"error": "Nenhuma linha JSON encontrada", "stdout": result.stdout})
+                    
+            except json.JSONDecodeError as e:
+                logger.error(f"Erro JSON decode: {e}")
+                return jsonify({"error": f"Erro ao decodificar JSON: {e}", "stdout": result.stdout})
+        else:
+            logger.error(f"Subprocess falhou com código {result.returncode}")
+            return jsonify({"error": f"Subprocess falhou: {result.stderr}", "stdout": result.stdout})
+            
+    except subprocess.TimeoutExpired:
+        logger.error("Timeout na execução do código Python")
+        return jsonify({"error": "Timeout na execução (10 minutos)", "timeout": True})
+    except Exception as e:
+        logger.error(f"Erro na execução de create-os-with-inep: {e}")
+        return jsonify({"error": str(e)})
 
 
 if __name__ == '__main__':

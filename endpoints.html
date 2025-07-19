@@ -245,6 +245,27 @@
                 </div>
                 
                 <div class="endpoint-card">
+                    <h3>Criar OS com INEP <span class="status-badge status-working">COMPLETO</span></h3>
+                    <div class="endpoint-url">
+                        <span class="method-tag method-get">GET</span>
+                        <span class="method-tag method-post">POST</span>
+                        /create-os-with-inep
+                    </div>
+                    <div class="endpoint-description">
+                        <strong>🎯 CRIAÇÃO COMPLETA DE OS COM INEP!</strong><br>
+                        Login → Perfil → Página OS → Adicionar nova OS → Preencher INEP → Incluir → <strong>Identificar número da OS</strong>
+                        <br><br>
+                        <strong>Parâmetros:</strong><br>
+                        • <code>inep</code> - Código INEP da escola (padrão: 33099553)<br>
+                        <strong>Retorna:</strong> Número da OS criada na log simplificada
+                    </div>
+                    <div class="btn-group">
+                        <a href="/create-os-with-inep" class="btn btn-success" target="_blank">Criar OS</a>
+                        <a href="/create-os-with-inep?inep=33099553" class="btn btn-primary" target="_blank">Criar OS (INEP: 33099553)</a>
+                    </div>
+                </div>
+                
+                <div class="endpoint-card">
                     <h3>Teste Detecção OS <span class="status-badge status-testing">DEBUG</span></h3>
                     <div class="endpoint-url">
                         <span class="method-tag method-get">GET</span>
